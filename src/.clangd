@@ -1,0 +1,5 @@
+CompileFlags:
+  Add:
+	- "-std=c++17"
+    - "-I../antlr4/cpp_runtime_headers/"
+  Compiler: clang++

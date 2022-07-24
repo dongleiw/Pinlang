@@ -1,0 +1,6 @@
+-xc++
+-std=c++17
+-I
+../antlr4/cpp_runtime/
+-I
+../src_parser/
