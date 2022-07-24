@@ -3,6 +3,7 @@
 #include "type.h"
 #include "type_int.h"
 #include "type_mgr.h"
+#include "type_type.h"
 
 TypeMgr g_typemgr;
 
@@ -22,6 +23,12 @@ void TypeMgr::set_primary_types() {
 		ti_infer->SetTypeId(allocate_typeid());
 		m_typeinfos.push_back(ti_infer);
 		assert(TYPE_ID_INFER==ti_infer->GetTypeId());
+	}
+	{
+		TypeInfoType* ti_type = new TypeInfoType();
+		ti_type->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti_type);
+		assert(TYPE_ID_TYPE==ti_type->GetTypeId());
 	}
 	{
 		TypeInfoInt* ti_int = new TypeInfoInt();

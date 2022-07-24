@@ -2,10 +2,7 @@ grammar Pinlang;
 import Pinlang_lex;
 
 type
-    : INT
-    | FLOAT
-    | BOOL
-    | STR
+    : TYPE
 	| Identifier
 	;
 
@@ -23,8 +20,14 @@ expr
     | expr op=(LOGICAL_OR| LOGICAL_AND) expr											# expr_logical
     ;
 
+stmt_vardef
+	: VAR Identifier type ';'
+	| VAR Identifier type? ASSIGN expr ';'
+	;
+
 statement
 	: expr ';'
+	| stmt_vardef
     ;
 
 literal

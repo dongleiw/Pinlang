@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
 	block_stmt->Verify(vctx);
 
 	ExecuteContext ectx;
+	ectx.PushStack();
 	block_stmt->Execute(ectx);
 	return 0;
 }

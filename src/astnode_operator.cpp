@@ -21,8 +21,8 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 	VerifyContextResult vr_left = m_left_expr->Verify(ctx);
 	VerifyContextResult vr_right = m_right_expr->Verify(ctx);
 
-	TypeId tid_left = vr_left.GetTypeId();
-	TypeId tid_right = vr_right.GetTypeId();
+	TypeId tid_left = vr_left.GetResultTypeId();
+	TypeId tid_right = vr_right.GetResultTypeId();
 
 	if (tid_left != tid_right) {
 		panicf("not support yet: left[%s] right[%s]", g_typemgr.GetTypeDesc(tid_left), g_typemgr.GetTypeDesc(tid_right));
@@ -38,7 +38,7 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 			panicf("int not support op[%s]", m_op.c_str());
 		}
 		m_result_typeid = TYPE_ID_INT;
-		vr.SetTypeId(TYPE_ID_INT);
+		vr.SetResultTypeId(TYPE_ID_INT);
 	} else {
 		panicf("unknown type of left expr[%d]", tid_left);
 	}

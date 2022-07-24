@@ -21,13 +21,14 @@ BoolLiteral
 
 // keywords
 FN			: 'fn';
-LET			: 'let';
+VAR			: 'var';
 TRUE		: 'true';
 FALSE		: 'false';
-INT			: 'int';
-FLOAT		: 'float';
-BOOL		: 'bool';
-STR			: 'str';
+TYPE		: 'type';
+//INT			: 'int';
+//FLOAT		: 'float';
+//BOOL		: 'bool';
+//STR			: 'str';
 RETURN		: 'return';
 CLASS		: 'class';
 PUBLIC		: 'public';
