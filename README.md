@@ -19,3 +19,13 @@ interpreter: C++写
 2. 创建build目录`mkdir -p build && cd build`
 3. 编译`cmake build .. && make`
 4. 编译完成后, 会在build目录下生成解释器`./pinlang`
+
+
+## 语法
+```
+// 变量定义
+var a=(1+2)*3;
+```
+
+## 历史
+* 2022-07-24 支持变量定义
