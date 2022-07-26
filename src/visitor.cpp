@@ -8,6 +8,7 @@
 #include "astnode_vardef.h"
 #include "log.h"
 #include "type.h"
+#include "type_mgr.h"
 #include "utils.h"
 #include <any>
 #include <ios>
@@ -15,19 +16,27 @@
 /*
  * 解析类型. 返回TypeId
  */
-std::any Visitor::visitType(PinlangParser::TypeContext* context) {
-	panicf("not implemented yet\n");
-	return NULL;
+std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
+	if (ctx->TYPE() != nullptr) {
+		return TYPE_ID_TYPE;
+	} else if (ctx->Identifier() != nullptr) {
+		std::string type_name = ctx->Identifier()->getText();
+		TypeId		tid		  = g_typemgr.GetTypeIdByName_or_unresolve(type_name);
+		return tid;
+	} else {
+		panicf("unknown type");
+	}
+	return nullptr;
 }
 std::any Visitor::visitPrimary_expr_literal(PinlangParser::Primary_expr_literalContext* ctx) {
 	auto literal = ctx->literal();
-	if (literal->IntegerLiteral() != NULL) {
+	if (literal->IntegerLiteral() != nullptr) {
 		int value = str_to_int(literal->IntegerLiteral()->getText());
 		return (AstNode*)new AstNodeLiteral(value);
 	} else {
 		panicf("unknown literal");
 	}
-	return NULL;
+	return nullptr;
 }
 std::any Visitor::visitPrimary_expr_identifier(PinlangParser::Primary_expr_identifierContext* ctx) {
 	return (AstNode*)new AstNodeIdentifier(ctx->getText());
@@ -80,7 +89,7 @@ std::any Visitor::visitExpr_primary_expr(PinlangParser::Expr_primary_exprContext
 std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 	if (ctx->expr() != NULL)
 		return ctx->expr()->accept(this);
-	else if(ctx->stmt_vardef()!=NULL)
+	else if (ctx->stmt_vardef() != NULL)
 		return ctx->stmt_vardef()->accept(this);
 	else
 		panicf("bug");
@@ -113,5 +122,7 @@ std::any Visitor::visitStmt_vardef(PinlangParser::Stmt_vardefContext* ctx) {
 		init_expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
 	}
 
-	return (AstNode*)new AstNodeVarDef(var_name, declared_tid, init_expr);
+	bool is_const = ctx->CONST() != nullptr;
+
+	return (AstNode*)new AstNodeVarDef(var_name, declared_tid, init_expr, is_const);
 }

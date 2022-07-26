@@ -1,1 +1,4 @@
-var a=(1+2)*3/2;
+// var a=(1+2)*3/2;
+var int1 int=1;
+var StudentId = int;
+const PId = int;

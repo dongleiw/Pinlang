@@ -25,16 +25,13 @@ VAR			: 'var';
 TRUE		: 'true';
 FALSE		: 'false';
 TYPE		: 'type';
-//INT			: 'int';
-//FLOAT		: 'float';
-//BOOL		: 'bool';
-//STR			: 'str';
 RETURN		: 'return';
 CLASS		: 'class';
 PUBLIC		: 'public';
 PRIVATE		: 'private';
 PROTECTED	: 'protected';
 STATIC		: 'static';
+CONST       : 'const';
 
 // Relation operators
 EQUALS                 : '==';

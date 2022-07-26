@@ -2,15 +2,18 @@
 
 #include "type.h"
 class Variable {
-  public:
-	Variable(TypeId tid): m_tid(tid){
+public:
+	Variable(TypeId tid) : m_tid(tid) {
 	}
 	Variable(int value);
 
-	TypeId GetTypeId() const { return m_tid; }
-	int GetValueInt() const { return m_value_int; }
+	static Variable* CreateTypeVariable(TypeId tid);
 
-  protected:
+	TypeId GetTypeId() const { return m_tid; }
+	int	   GetValueInt() const { return m_value_int; }
+
+protected:
 	TypeId m_tid;
-	int m_value_int;
+	TypeId m_value_tid;
+	int	   m_value_int;
 };

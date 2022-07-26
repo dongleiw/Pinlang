@@ -26,6 +26,7 @@ private:
 
 class VerifyContext {
 public:
+	VerifyContext();
 	VerifyContextParam GetParam() { return m_param; }
 	VerifyContext&	   SetParam(VerifyContextParam param) {
 		m_param = param;
@@ -35,6 +36,8 @@ public:
 	void   PopSTack();
 	Stack* GetCurStack() { return m_top_stack; }
 
+private:
+	void init_global_vt();
 private:
 	VerifyContextParam m_param;
 	Stack*			   m_top_stack;

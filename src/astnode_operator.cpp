@@ -25,7 +25,7 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 	TypeId tid_right = vr_right.GetResultTypeId();
 
 	if (tid_left != tid_right) {
-		panicf("not support yet: left[%s] right[%s]", g_typemgr.GetTypeDesc(tid_left), g_typemgr.GetTypeDesc(tid_right));
+		panicf("not support yet: left[%s] right[%s]", get_typedesc(tid_left), get_typedesc(tid_right));
 	}
 
 	if (tid_left == TYPE_ID_INT) {

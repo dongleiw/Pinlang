@@ -15,6 +15,8 @@ public:
 	Stack* GetCurStack() { return m_top_stack; }
 
 private:
+	void init_global_vt();
+private:
 	Stack* m_top_stack;
 	VariableTable m_global_vt;
 };

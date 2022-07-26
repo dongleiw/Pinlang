@@ -27,13 +27,14 @@ int main(int argc, char* argv[]) {
 
 	PinlangParser parser(&tokens);
 	tree::ParseTree* tree = parser.start();
-	std::cout << tree->toStringTree(&parser, true) << std::endl << std::endl;
+	//std::cout << tree->toStringTree(&parser, true) << std::endl << std::endl;
 
 	Visitor visitor;
 	AstNodeBlockStmt* block_stmt = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
 
 
 	VerifyContext vctx;
+	vctx.PushStack();
 	block_stmt->Verify(vctx);
 
 	ExecuteContext ectx;

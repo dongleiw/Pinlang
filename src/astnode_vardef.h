@@ -12,13 +12,13 @@
  * 变量定义
  */
 class AstNodeVarDef : public AstNode {
-  public:
-	AstNodeVarDef(std::string var_name, TypeId declared_tid, AstNode* init_expr);
+public:
+	AstNodeVarDef(std::string var_name, TypeId declared_tid, AstNode* init_expr, bool is_const);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
 	virtual Variable*			Execute(ExecuteContext& ctx);
 
-  private:
+private:
 	std::string m_varname;
 	/*
 	 * 声明的类型
@@ -27,4 +27,5 @@ class AstNodeVarDef : public AstNode {
 	 */
 	TypeId	 m_declared_tid;
 	AstNode* m_init_expr;
+	bool	 m_is_const;
 };

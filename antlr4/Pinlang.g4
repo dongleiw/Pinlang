@@ -23,6 +23,7 @@ expr
 stmt_vardef
 	: VAR Identifier type ';'
 	| VAR Identifier type? ASSIGN expr ';'
+	| CONST Identifier type? ASSIGN expr ';'
 	;
 
 statement

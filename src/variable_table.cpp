@@ -27,6 +27,6 @@ void VariableTable::AddVariable(std::string name, Variable* variable) {
 	if (HasVariable(name)) {
 		panicf("var[%s] already exists", name.c_str());
 	}
-	log_debug("add var[%s] to vt", name.c_str());
+	log_debug("add var{name:%s type:%d} to vt", name.c_str(), variable->GetTypeId());
 	m_table[name] = variable;
 }
