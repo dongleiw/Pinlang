@@ -13,13 +13,13 @@
  * 操作符可以转换为方法调用, 但是目前还没不支持方法
  */
 class AstNodeOperator : public AstNode {
-  public:
+public:
 	AstNodeOperator(AstNode* left_expr, std::string op, AstNode* right_expr);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
 	virtual Variable*			Execute(ExecuteContext& ctx);
 
-  private:
+private:
 	AstNode*	m_left_expr;
 	std::string m_op;
 	AstNode*	m_right_expr;

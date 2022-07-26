@@ -1,4 +1,5 @@
 #include "astnode_operator.h"
+#include "astnode_literal.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
@@ -6,9 +7,9 @@
 #include "verify_context.h"
 
 AstNodeOperator::AstNodeOperator(AstNode* left_expr, std::string op, AstNode* right_expr) {
-	m_left_expr = left_expr;
+	m_left_expr	 = left_expr;
 	m_right_expr = right_expr;
-	m_op = op;
+	m_op		 = op;
 }
 
 /*
@@ -18,10 +19,10 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 	log_debug("verify operator[%s]", m_op.c_str());
 	VerifyContextResult vr;
 
-	VerifyContextResult vr_left = m_left_expr->Verify(ctx);
+	VerifyContextResult vr_left	 = m_left_expr->Verify(ctx);
 	VerifyContextResult vr_right = m_right_expr->Verify(ctx);
 
-	TypeId tid_left = vr_left.GetResultTypeId();
+	TypeId tid_left	 = vr_left.GetResultTypeId();
 	TypeId tid_right = vr_right.GetResultTypeId();
 
 	if (tid_left != tid_right) {
@@ -42,11 +43,49 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 	} else {
 		panicf("unknown type of left expr[%d]", tid_left);
 	}
+
+	{
+		Variable* left_v = vr_left.GetConstResult();
+		if (left_v != nullptr) {
+			if (nullptr == dynamic_cast<AstNodeLiteral*>(m_left_expr)) {
+				AstNodeLiteral* node = new AstNodeLiteral(left_v->GetValueInt());
+				m_left_expr			 = node;
+				log_debug("replace left-expr with constant value");
+			}
+		}
+		Variable* right_v = vr_right.GetConstResult();
+		if (right_v != nullptr) {
+			if (nullptr == dynamic_cast<AstNodeLiteral*>(m_right_expr)) {
+				AstNodeLiteral* node = new AstNodeLiteral(right_v->GetValueInt());
+				m_right_expr		 = node;
+				log_debug("replace right-expr with constant value");
+			}
+		}
+		if (left_v != nullptr && right_v != nullptr) {
+			int result;
+			if (m_op == "+") {
+				result = left_v->GetValueInt() + right_v->GetValueInt();
+			} else if (m_op == "-") {
+				result = left_v->GetValueInt() - right_v->GetValueInt();
+			} else if (m_op == "*") {
+				result = left_v->GetValueInt() * right_v->GetValueInt();
+			} else if (m_op == "/") {
+				result = left_v->GetValueInt() / right_v->GetValueInt();
+			} else if (m_op == "%") {
+				result = left_v->GetValueInt() % right_v->GetValueInt();
+			} else {
+				panicf("int not support op[%s]", m_op.c_str());
+			}
+			log_debug("%d%s%d=%d", left_v->GetValueInt(), m_op.c_str(), right_v->GetValueInt(), result);
+			vr.SetConstResult(new Variable(result));
+		}
+	}
+
 	return vr;
 }
 Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
 	if (m_result_typeid == TYPE_ID_INT) {
-		Variable* left_v = m_left_expr->Execute(ctx);
+		Variable* left_v  = m_left_expr->Execute(ctx);
 		Variable* right_v = m_right_expr->Execute(ctx);
 		int		  result;
 		if (m_op == "+") {
@@ -67,5 +106,5 @@ Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
 	} else {
 		panicf("unknown type of left expr[%d]", m_result_typeid);
 	}
-	return NULL;
+	return nullptr;
 }

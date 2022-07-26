@@ -11,9 +11,11 @@ public:
 
 	TypeId GetTypeId() const { return m_tid; }
 	int	   GetValueInt() const { return m_value_int; }
+	bool   IsConst() const { return m_is_const; }
 
 protected:
 	TypeId m_tid;
+	bool   m_is_const;
 	TypeId m_value_tid;
 	int	   m_value_int;
 };

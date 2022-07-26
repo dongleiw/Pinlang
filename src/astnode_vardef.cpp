@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <ios>
+#include <iterator>
 
 #include "astnode_vardef.h"
 #include "log.h"
@@ -8,6 +9,7 @@
 #include "type_mgr.h"
 #include "variable.h"
 #include "verify_context.h"
+#include "astnode_literal.h"
 
 AstNodeVarDef::AstNodeVarDef(std::string var_name, TypeId declared_tid, AstNode* init_expr, bool is_const) {
 	m_varname	   = var_name;
@@ -20,8 +22,9 @@ VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx) {
 
 	// VerifyContextParam param = ctx.GetParam();
 
+	VerifyContextResult vr_init_expr;
 	if (m_init_expr != nullptr) {
-		VerifyContextResult vr_init_expr = m_init_expr->Verify(ctx.SetParam(VerifyContextParam(m_declared_tid)));
+		vr_init_expr = m_init_expr->Verify(ctx.SetParam(VerifyContextParam(m_declared_tid)));
 		if (m_declared_tid == TYPE_ID_INFER) {
 			m_declared_tid = vr_init_expr.GetResultTypeId();
 		} else {
@@ -36,6 +39,17 @@ VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx) {
 		/*
 		 * 定义了一个const的type类型的变量. 这种形式的变量可以作为类型使用, 需要注册
 		 */
+	}
+
+	if (m_init_expr != nullptr) {
+		Variable* v = vr_init_expr.GetConstResult();
+		if (v != nullptr) {
+			if (nullptr == dynamic_cast<AstNodeLiteral*>(m_init_expr)) {
+				AstNodeLiteral* node = new AstNodeLiteral(v->GetValueInt());
+				m_init_expr = node;
+				log_debug("replace init-expr with constant value");
+			}
+		}
 	}
 
 	return VerifyContextResult();
