@@ -29,8 +29,8 @@ VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx) {
 			m_declared_tid = vr_init_expr.GetResultTypeId();
 		} else {
 			if (m_declared_tid != vr_init_expr.GetResultTypeId()) {
-				panicf("var[%s] declared type[%s] != init expr type[%s]", m_varname.c_str(), get_typedesc(m_declared_tid),
-					   get_typedesc(vr_init_expr.GetResultTypeId()));
+				panicf("var[%s] declared type[%s] != init expr type[%s]", m_varname.c_str(), GET_TYPENAME_C(m_declared_tid),
+					   GET_TYPENAME_C(vr_init_expr.GetResultTypeId()));
 			}
 		}
 	}

@@ -53,11 +53,11 @@ std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeConte
 	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
 	std::string op;
 	if (ctx->MUL() != NULL) {
-		op = "*";
+		op = "mul";
 	} else if (ctx->DIV() != NULL) {
-		op = "/";
+		op = "div";
 	} else if (ctx->MOD() != NULL) {
-		op = "%";
+		op = "mod";
 	} else {
 		panicf("unknown op");
 	}
@@ -72,9 +72,9 @@ std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
 	std::string op;
 	if (ctx->ADD() != NULL) {
-		op = "+";
+		op = "add";
 	} else if (ctx->SUB() != NULL) {
-		op = "+";
+		op = "sub";
 	} else {
 		panicf("unknown op");
 	}
@@ -105,7 +105,7 @@ std::any Visitor::visitStart(PinlangParser::StartContext* ctx) {
 		if (!ret.has_value()) {
 			panicf("visitor returns null");
 		} else {
-			log_debug("visitor returns %s", ret.type().name());
+			//log_debug("visitor returns %s", ret.type().name());
 		}
 		stmts.push_back(std::any_cast<AstNode*>(ret));
 	}

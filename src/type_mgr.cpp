@@ -1,18 +1,19 @@
 #include <assert.h>
 
+#include "log.h"
 #include "type.h"
+#include "type_fn.h"
 #include "type_int.h"
 #include "type_mgr.h"
-#include "log.h"
 #include "type_type.h"
 
 TypeMgr g_typemgr;
 
 TypeMgr::TypeMgr() {
-	set_primary_types();
+	init_types();
 }
 
-void TypeMgr::set_primary_types() {
+void TypeMgr::init_types() {
 	{
 		TypeInfo* ti_none = new TypeInfo();
 		ti_none->SetTypeId(allocate_typeid());
@@ -39,6 +40,9 @@ void TypeMgr::set_primary_types() {
 		assert(TYPE_ID_INT == ti_int->GetTypeId());
 		m_typename_2_typeid["int"] = TYPE_ID_INT;
 	}
+
+	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods();
+	m_typeinfos.at(TYPE_ID_INT)->InitBuiltinMethods();
 }
 
 TypeId TypeMgr::allocate_typeid() {
@@ -49,17 +53,44 @@ TypeInfo* TypeMgr::GetTypeInfo(TypeId tid) const {
 	assert(tid >= 0);
 	return m_typeinfos.at(tid);
 }
-std::string TypeMgr::GetTypeDesc(TypeId tid) const {
-	return this->GetTypeInfo(tid)->GetDesc();
+std::string TypeMgr::GetTypeName(TypeId tid) const {
+	return this->GetTypeInfo(tid)->GetName();
+}
+TypeId TypeMgr::GetTypeIdByName(std::string type_name) {
+	auto iter = m_typename_2_typeid.find(type_name);
+	if (iter != m_typename_2_typeid.end()) {
+		return iter->second;
+	}
+	panicf("typename[%s] not exists", type_name.c_str());
+}
+bool TypeMgr::HasTypeIdByName(std::string type_name) {
+	return m_typename_2_typeid.end() != m_typename_2_typeid.find(type_name);
 }
 TypeId TypeMgr::GetTypeIdByName_or_unresolve(std::string type_name) {
 	auto iter = m_typename_2_typeid.find(type_name);
 	if (iter != m_typename_2_typeid.end()) {
 		return iter->second;
 	}
-	TypeId new_tid				   = allocate_typeid();
+	TypeId new_tid = allocate_typeid();
 	log_info("unresolved type name[%s] tid[%d]", type_name.c_str(), new_tid);
 	m_typename_2_typeid[type_name] = new_tid;
 	m_typeinfos.push_back(nullptr);
 	return new_tid;
+}
+TypeId TypeMgr::add_type(TypeInfo* ti) {
+	assert(!HasTypeIdByName(ti->GetName()));
+
+	ti->SetTypeId(allocate_typeid());
+	m_typename_2_typeid[ti->GetName()] = ti->GetTypeId();
+	log_info("add new type: name[%s] typeid[%d]", ti->GetName().c_str(), ti->GetTypeId());
+	m_typeinfos.push_back(ti);
+
+	return ti->GetTypeId();
+}
+TypeId TypeMgr::GetOrAddTypeFn(std::vector<Parameter> params, TypeId return_tid) {
+	TypeInfoFn ti(params, return_tid);
+	if (HasTypeIdByName(ti.GetName())) {
+		return GetTypeIdByName(ti.GetName());
+	}
+	return add_type(new TypeInfoFn(params, return_tid));
 }

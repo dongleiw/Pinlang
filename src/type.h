@@ -1,7 +1,9 @@
 #pragma once
 
+#include <map>
 #include <string>
 
+class Function;
 /*
  * 类型的分类(tgid)
  */
@@ -36,14 +38,25 @@ enum TypeId {
  */
 class TypeInfo {
 public:
-	TypeInfo() {}
+	TypeInfo() : m_typeid(TYPE_ID_NONE), m_typegroup_id(TYPE_GROUP_ID_UNRESOLVE) {
+	}
 
 	TypeId		GetTypeId() { return m_typeid; }
 	void		SetTypeId(TypeId tid) { m_typeid = tid; }
-	std::string GetDesc() { return m_desc; }
+	std::string GetName() { return m_name; }
+
+	void		 AddMethod(std::string method_name, Function* function);
+	Function*	 GetMethodOrNilByName(std::string method_name);
+	Function*	 GetMethodByName(std::string method_name);
+	virtual void InitBuiltinMethods() {}
 
 protected:
 	TypeId		m_typeid;
 	TypeGroupId m_typegroup_id;
-	std::string m_desc;
+	std::string m_name;
+	/*
+	 * 该类型的方法
+	 * 方法没有定义顺序
+	 */
+	std::map<std::string, Function*> m_methods;
 };

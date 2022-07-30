@@ -1,5 +1,5 @@
 #include "variable_table.h"
-
+#include "type_mgr.h"
 #include "log.h"
 
 Variable* VariableTable::GetVariable(std::string name) {
@@ -27,6 +27,6 @@ void VariableTable::AddVariable(std::string name, Variable* variable) {
 	if (HasVariable(name)) {
 		panicf("var[%s] already exists", name.c_str());
 	}
-	log_debug("add var{name:%s type:%d} to vt", name.c_str(), variable->GetTypeId());
+	log_debug("add var name[%s] type[%d:%s] to vt", name.c_str(), variable->GetTypeId(), GET_TYPENAME_C(variable->GetTypeId()));
 	m_table[name] = variable;
 }
