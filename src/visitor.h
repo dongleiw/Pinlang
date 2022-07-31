@@ -3,7 +3,7 @@
 #include "PinlangBaseVisitor.h"
 
 class Visitor : public PinlangBaseVisitor {
-  public:
+public:
 	virtual std::any visitType(PinlangParser::TypeContext* context) override;
 	virtual std::any visitPrimary_expr_literal(PinlangParser::Primary_expr_literalContext* context) override;
 	virtual std::any visitPrimary_expr_identifier(PinlangParser::Primary_expr_identifierContext* context) override;
@@ -17,4 +17,9 @@ class Visitor : public PinlangBaseVisitor {
 	virtual std::any visitLiteral(PinlangParser::LiteralContext* context) override;
 	virtual std::any visitStart(PinlangParser::StartContext* context) override;
 	virtual std::any visitStmt_vardef(PinlangParser::Stmt_vardefContext* ctx) override;
+	virtual std::any visitParameter(PinlangParser::ParameterContext* context) override;
+	virtual std::any visitParameter_list(PinlangParser::Parameter_listContext* context) override;
+	virtual std::any visitStmt_fndef(PinlangParser::Stmt_fndefContext* context) override;
+	virtual std::any visitStmt_block(PinlangParser::Stmt_blockContext* context) override;
+	virtual std::any visitStmt_return(PinlangParser::Stmt_returnContext* context) override;
 };

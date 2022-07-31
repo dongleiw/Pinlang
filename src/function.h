@@ -16,10 +16,11 @@ public:
 	typedef Variable* (*BuiltinCallback)(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);
 
 public:
-	Function(TypeId tid, AstNodeBlockStmt* body) {
+	Function(TypeId tid, std::vector<std::string> params_name, AstNodeBlockStmt* body) {
 		m_typeid		   = tid;
 		m_thisobj		   = nullptr;
 		m_builtin_callback = nullptr;
+		m_params_name	   = params_name;
 		m_body			   = body;
 	}
 	Function(TypeId tid, BuiltinCallback builtin_callback) {
@@ -37,12 +38,13 @@ public:
 	/*
 	 * 检查函数的参数类型是否匹配
 	 */
-	bool VerifyArgsType(std::vector<TypeId> args_type)const;
-	TypeId GetReturnTypeId()const;
+	bool   VerifyArgsType(std::vector<TypeId> args_type) const;
+	TypeId GetReturnTypeId() const;
 
 private:
-	TypeId			  m_typeid;
-	Variable*		  m_thisobj; // 所属对象. 普通函数则为null
-	BuiltinCallback	  m_builtin_callback;
-	AstNodeBlockStmt* m_body;
+	TypeId					 m_typeid;
+	Variable*				 m_thisobj; // 所属对象. 普通函数则为null
+	BuiltinCallback			 m_builtin_callback;
+	std::vector<std::string> m_params_name;
+	AstNodeBlockStmt*		 m_body;
 };

@@ -8,6 +8,10 @@ Variable::Variable(int value) {
 	m_tid		= TYPE_ID_INT;
 	m_value_int = value;
 }
+Variable::Variable(Function* fn) {
+	m_tid	   = fn->GetTypeId();
+	m_value_fn = fn;
+}
 Variable* Variable::CreateTypeVariable(TypeId tid) {
 	Variable* v	   = new Variable(TYPE_ID_TYPE);
 	v->m_value_tid = tid;

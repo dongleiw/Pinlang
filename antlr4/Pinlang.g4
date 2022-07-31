@@ -9,7 +9,7 @@ type
 primary_expr
     : literal											# primary_expr_literal
     | Identifier										# primary_expr_identifier
-    | LPAREN expr RPAREN								# primary_expr_parens
+    | L_PAREN expr R_PAREN								# primary_expr_parens
 	;
 
 expr
@@ -26,9 +26,27 @@ stmt_vardef
 	| CONST Identifier type? ASSIGN expr ';'
 	;
 
+stmt_block: L_CURLY statement* R_CURLY;
+
+parameter: Identifier? type ;
+parameter_list
+	: 
+	| parameter (',' parameter)*
+	;
+stmt_fndef
+	: FN Identifier L_PAREN parameter_list R_PAREN type? stmt_block
+	;
+
+stmt_return
+	: RETURN expr? ';'
+	;
+
 statement
 	: expr ';'
 	| stmt_vardef
+	| stmt_fndef
+	| stmt_block
+	| stmt_return
     ;
 
 literal

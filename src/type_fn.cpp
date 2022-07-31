@@ -15,11 +15,11 @@ void TypeInfoFn::set_name() {
 	for (size_t i = 0; i < m_params.size(); i++) {
 		std::string arg_name = GET_TYPENAME(m_params[i].arg_tid);
 		m_name += arg_name;
-		if (i + 1 == m_params.size()) {
+		if (i + 1 != m_params.size()) {
 			m_name += ", ";
 		}
 	}
-	m_name += ")";
+	m_name += ")" + GET_TYPENAME(m_return_tid);
 }
 bool TypeInfoFn::VerifyArgsType(std::vector<TypeId> args_type){
 	if(args_type.size() != m_params.size()){

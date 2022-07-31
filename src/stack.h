@@ -13,18 +13,23 @@ class Stack {
 public:
 	Stack(Stack* next);
 
-	void EnterBlock(VariableTable* vt);
-	void LeaveBlock();
-	bool IsBottomStck() const { return m_next == NULL; }
+	void   EnterBlock(VariableTable* vt);
+	void   LeaveBlock();
+	bool   IsBottomStck() const { return m_next == NULL; }
 	Stack* GetNextStack() { return m_next; }
+
 	VariableTable* GetCurVariableTable();
-	bool IsVariableExist(std::string name);
+	bool		   IsVariableExist(std::string name);
 	// 如果找不到, 返回NULL
 	Variable* GetVariableOrNull(std::string name);
 	// 如果找不到, panic
 	Variable* GetVariable(std::string name);
 
+	Variable* GetReturnedValue() const { return m_returned_value; }
+	void	  SetReturnedValue(Variable* v) { m_returned_value = v; }
+
 private:
 	Stack*					  m_next;	 // 下一层栈
 	std::list<VariableTable*> m_vt_list; // 变量表列表. 后面vt是前面vt的孩子
+	Variable*				  m_returned_value;
 };

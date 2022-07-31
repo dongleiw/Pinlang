@@ -9,19 +9,27 @@ class VerifyContextParam {
 public:
 	VerifyContextParam() : m_expect_result_tid(TYPE_ID_NONE) {}
 	VerifyContextParam(TypeId expect_result_tid) : m_expect_result_tid(expect_result_tid) {}
+	VerifyContextParam(TypeId expect_result_tid, TypeId expect_return_tid) : m_expect_result_tid(expect_result_tid), m_expect_return_tid(expect_return_tid) {}
+
+	void SetResultTid(TypeId tid) { m_expect_result_tid = tid; }
+	void SetReturnTid(TypeId tid) { m_expect_return_tid = tid; }
+
+	TypeId GetResultTid() const { return m_expect_result_tid; }
+	TypeId GetReturnTid() const { return m_expect_return_tid; }
 
 private:
 	TypeId m_expect_result_tid;
+	TypeId m_expect_return_tid;
 };
 
 class VerifyContextResult {
 public:
-	VerifyContextResult() { 
-		m_result_tid = TYPE_ID_NONE; 
+	VerifyContextResult() {
+		m_result_tid   = TYPE_ID_NONE;
 		m_const_result = nullptr;
 	}
-	VerifyContextResult(TypeId result_tid) { 
-		m_result_tid = result_tid; 
+	VerifyContextResult(TypeId result_tid) {
+		m_result_tid   = result_tid;
 		m_const_result = nullptr;
 	}
 	VerifyContextResult(TypeId result_tid, Variable* const_result) {
@@ -43,7 +51,7 @@ private:
 class VerifyContext {
 public:
 	VerifyContext();
-	VerifyContextParam GetParam() { return m_param; }
+	VerifyContextParam& GetParam() { return m_param; }
 	VerifyContext&	   SetParam(VerifyContextParam param) {
 		m_param = param;
 		return *this;

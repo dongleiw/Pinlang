@@ -2,16 +2,20 @@
 
 #include "astnode.h"
 #include "astnode_blockstmt.h"
+#include "astnode_fndef.h"
 #include "astnode_identifier.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
+#include "astnode_return.h"
 #include "astnode_vardef.h"
 #include "log.h"
 #include "type.h"
+#include "type_fn.h"
 #include "type_mgr.h"
 #include "utils.h"
 #include <any>
 #include <ios>
+#include <memory>
 
 /*
  * 解析类型. 返回TypeId
@@ -65,15 +69,15 @@ std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeConte
 }
 std::any Visitor::visitExpr_logical(PinlangParser::Expr_logicalContext* ctx) {
 	panicf("not implemented yet\n");
-	return NULL;
+	return nullptr;
 }
 std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
 	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
 	std::string op;
-	if (ctx->ADD() != NULL) {
+	if (ctx->ADD() != nullptr) {
 		op = "add";
-	} else if (ctx->SUB() != NULL) {
+	} else if (ctx->SUB() != nullptr) {
 		op = "sub";
 	} else {
 		panicf("unknown op");
@@ -87,12 +91,19 @@ std::any Visitor::visitExpr_primary_expr(PinlangParser::Expr_primary_exprContext
  * 解析一个statement, 返回AstNode*
  */
 std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
-	if (ctx->expr() != NULL)
+	if (ctx->expr() != nullptr)
 		return ctx->expr()->accept(this);
-	else if (ctx->stmt_vardef() != NULL)
+	else if (ctx->stmt_vardef() != nullptr)
 		return ctx->stmt_vardef()->accept(this);
-	else
+	else if (ctx->stmt_fndef() != nullptr) {
+		return ctx->stmt_fndef()->accept(this);
+	} else if (ctx->stmt_block() != nullptr) {
+		return ctx->stmt_block()->accept(this);
+	} else if (ctx->stmt_return() != nullptr) {
+		return ctx->stmt_return()->accept(this);
+	} else {
 		panicf("bug");
+	}
 }
 std::any Visitor::visitLiteral(PinlangParser::LiteralContext* context) {
 	panicf("not implemented yet\n");
@@ -105,7 +116,7 @@ std::any Visitor::visitStart(PinlangParser::StartContext* ctx) {
 		if (!ret.has_value()) {
 			panicf("visitor returns null");
 		} else {
-			//log_debug("visitor returns %s", ret.type().name());
+			// log_debug("visitor returns %s", ret.type().name());
 		}
 		stmts.push_back(std::any_cast<AstNode*>(ret));
 	}
@@ -125,4 +136,70 @@ std::any Visitor::visitStmt_vardef(PinlangParser::Stmt_vardefContext* ctx) {
 	bool is_const = ctx->CONST() != nullptr;
 
 	return (AstNode*)new AstNodeVarDef(var_name, declared_tid, init_expr, is_const);
+}
+struct ParserParameter {
+	std::string name;
+	TypeId		tid;
+};
+/*
+ * 解析参数
+ * @return 返回ParserParameter
+ */
+std::any Visitor::visitParameter(PinlangParser::ParameterContext* ctx) {
+	ParserParameter param;
+	if (ctx->Identifier() != nullptr) {
+		param.name = ctx->Identifier()->getText();
+	}
+	param.tid = std::any_cast<TypeId>(ctx->type()->accept(this));
+	return param;
+}
+/*
+ * 解析一组参数
+ * @return std::vector<ParserParameter>
+ */
+std::any Visitor::visitParameter_list(PinlangParser::Parameter_listContext* ctx) {
+	std::vector<ParserParameter> params;
+	for (auto iter : ctx->parameter()) {
+		params.push_back(std::any_cast<ParserParameter>(iter->accept(this)));
+	}
+	return params;
+}
+/*
+ * 解析一个函数定义
+ * @return
+ */
+std::any Visitor::visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) {
+	std::string					 fn_name	= ctx->Identifier()->getText();
+	std::vector<ParserParameter> params		= std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
+	AstNodeBlockStmt*			 body		= dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
+	TypeId						 return_tid = TYPE_ID_NONE;
+	if (ctx->type() != nullptr) {
+		return_tid = std::any_cast<TypeId>(ctx->type()->accept(this));
+	}
+
+	std::vector<Parameter> params_type;
+	for (auto iter : params) {
+		params_type.push_back({.arg_tid = iter.tid});
+	}
+	TypeId fn_tid = g_typemgr.GetOrAddTypeFn(params_type, return_tid);
+
+	std::vector<std::string> params_name;
+	for (auto iter : params) {
+		params_name.push_back(iter.name);
+	}
+	return (AstNode*)new AstNodeFnDef(fn_tid, fn_name, params_name, body);
+}
+std::any Visitor::visitStmt_block(PinlangParser::Stmt_blockContext* ctx) {
+	std::vector<AstNode*> stmts;
+	for (auto iter : ctx->statement()) {
+		stmts.push_back(std::any_cast<AstNode*>(iter->accept(this)));
+	}
+	return (AstNode*)new AstNodeBlockStmt(stmts);
+}
+std::any Visitor::visitStmt_return(PinlangParser::Stmt_returnContext* ctx) {
+	AstNode* expr=nullptr;
+	if (ctx->expr() != nullptr) {
+		expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
+	}
+	return (AstNode*) new AstNodeReturn(expr);
 }
