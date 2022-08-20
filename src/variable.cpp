@@ -20,7 +20,8 @@ Variable* Variable::CreateTypeVariable(TypeId tid) {
 Variable* Variable::CallMethod(ExecuteContext& ctx, std::string method_name, std::vector<Variable*> args) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
 	Function* f	 = ti->GetMethodByName(method_name);
-	return f->Call(ctx, this, args);
+	f->SetThisObj(this);
+	return f->Call(ctx, args);
 }
 std::string Variable::ToString() const {
 	std::string s;

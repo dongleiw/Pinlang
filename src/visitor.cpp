@@ -2,6 +2,7 @@
 
 #include "astnode.h"
 #include "astnode_blockstmt.h"
+#include "astnode_fncall.h"
 #include "astnode_fndef.h"
 #include "astnode_identifier.h"
 #include "astnode_literal.h"
@@ -32,7 +33,7 @@ std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
 	}
 	return nullptr;
 }
-std::any Visitor::visitPrimary_expr_literal(PinlangParser::Primary_expr_literalContext* ctx) {
+std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalContext* ctx) {
 	auto literal = ctx->literal();
 	if (literal->IntegerLiteral() != nullptr) {
 		int value = str_to_int(literal->IntegerLiteral()->getText());
@@ -42,10 +43,10 @@ std::any Visitor::visitPrimary_expr_literal(PinlangParser::Primary_expr_literalC
 	}
 	return nullptr;
 }
-std::any Visitor::visitPrimary_expr_identifier(PinlangParser::Primary_expr_identifierContext* ctx) {
+std::any Visitor::visitExpr_primary_identifier(PinlangParser::Expr_primary_identifierContext* ctx) {
 	return (AstNode*)new AstNodeIdentifier(ctx->getText());
 }
-std::any Visitor::visitPrimary_expr_parens(PinlangParser::Primary_expr_parensContext* ctx) {
+std::any Visitor::visitExpr_primary_parens(PinlangParser::Expr_primary_parensContext* ctx) {
 	return ctx->expr()->accept(this);
 }
 std::any Visitor::visitExpr_relational(PinlangParser::Expr_relationalContext* context) {
@@ -85,7 +86,7 @@ std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	return (AstNode*)new AstNodeOperator(left, op, right);
 }
 std::any Visitor::visitExpr_primary_expr(PinlangParser::Expr_primary_exprContext* ctx) {
-	return ctx->primary_expr()->accept(this);
+	return ctx->expr_primary()->accept(this);
 }
 /*
  * 解析一个statement, 返回AstNode*
@@ -197,9 +198,27 @@ std::any Visitor::visitStmt_block(PinlangParser::Stmt_blockContext* ctx) {
 	return (AstNode*)new AstNodeBlockStmt(stmts);
 }
 std::any Visitor::visitStmt_return(PinlangParser::Stmt_returnContext* ctx) {
-	AstNode* expr=nullptr;
+	AstNode* expr = nullptr;
 	if (ctx->expr() != nullptr) {
 		expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
 	}
-	return (AstNode*) new AstNodeReturn(expr);
+	return (AstNode*)new AstNodeReturn(expr);
+}
+/*
+ * 解析expr列表
+ * 返回 std::vector<AstNode*>
+ */
+std::any Visitor::visitExpr_list(PinlangParser::Expr_listContext* ctx) {
+	std::vector<AstNode*> list;
+	for (auto iter : ctx->expr()) {
+		list.push_back(std::any_cast<AstNode*>(iter->accept(this)));
+	}
+	return list;
+}
+std::any Visitor::visitExpr_primary_fncall(PinlangParser::Expr_primary_fncallContext* ctx) {
+	AstNode* fn_expr = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
+
+	std::vector<AstNode*> list = std::any_cast<std::vector<AstNode*>>(ctx->expr_list()->accept(this));
+
+	return (AstNode*)new AstNodeFnCall(fn_expr, list);
 }

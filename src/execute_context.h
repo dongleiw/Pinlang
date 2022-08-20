@@ -11,7 +11,7 @@ public:
 	ExecuteContext();
 
 	void PushStack();
-	void PopSTack();
+	void PopStack();
 	Stack* GetCurStack() { return m_top_stack; }
 
 private:

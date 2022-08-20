@@ -35,10 +35,14 @@ int main(int argc, char* argv[]) {
 
 	VerifyContext vctx;
 	vctx.PushStack();
+	log_info("verify begin");
 	block_stmt->Verify(vctx);
+	log_info("verify end");
 
 	ExecuteContext ectx;
 	ectx.PushStack();
+	log_info("execute begin");
 	block_stmt->Execute(ectx);
+	log_info("execute end");
 	return 0;
 }

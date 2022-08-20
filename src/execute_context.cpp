@@ -12,7 +12,7 @@ void ExecuteContext::PushStack() {
 	new_stack->EnterBlock(&m_global_vt);
 	m_top_stack = new_stack;
 }
-void ExecuteContext::PopSTack() {
+void ExecuteContext::PopStack() {
 	assert(m_top_stack != NULL);
 	m_top_stack = m_top_stack->GetNextStack();
 }

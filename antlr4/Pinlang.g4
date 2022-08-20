@@ -6,14 +6,20 @@ type
 	| Identifier
 	;
 
-primary_expr
-    : literal											# primary_expr_literal
-    | Identifier										# primary_expr_identifier
-    | L_PAREN expr R_PAREN								# primary_expr_parens
+expr_primary
+    : literal											# expr_primary_literal
+    | Identifier										# expr_primary_identifier
+    | L_PAREN expr R_PAREN								# expr_primary_parens
+	| expr_primary L_PAREN expr_list R_PAREN			# expr_primary_fncall
+	;
+
+expr_list
+	:
+	| expr (',' expr)*
 	;
 
 expr
-	: primary_expr																		# expr_primary_expr
+	: expr_primary																		# expr_primary_expr
     | expr op=(MUL|DIV|MOD) expr														# expr_muliplicative
     | expr op=(ADD|SUB) expr      														# expr_additive
     | expr op=(EQUALS|NOT_EQUALS|LESS|GREATER|LESS_OR_EQUALS|GREATER_OR_EQUALS) expr  	# expr_relational

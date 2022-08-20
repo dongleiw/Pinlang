@@ -26,7 +26,7 @@ static std::string timenow() {
 										 "] [%s" ":" stringfy(__LINE__) ":%s] " fmts "\n", \
 										 timenow().c_str(), SHORT_FILE, __FUNCTION__, ##__VA_ARGS__)
 
-#define log_info(fmts, ...) _log("INFO", fmts, ##__VA_ARGS__)
+#define log_info(fmts, ...) _log("INFO ", fmts, ##__VA_ARGS__)
 #define log_debug(fmts, ...) _log("DEBUG", fmts, ##__VA_ARGS__)
 #define log_error(fmts, ...) _log("ERROR", fmts, ##__VA_ARGS__)
 

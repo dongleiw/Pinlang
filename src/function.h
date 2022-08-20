@@ -33,7 +33,7 @@ public:
 	TypeId				GetTypeId() const { return m_typeid; }
 	void				SetThisObj(Variable* thisobj) { m_thisobj = thisobj; }
 	VerifyContextResult Verify(VerifyContext& ctx);
-	Variable*			Call(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);
+	Variable*			Call(ExecuteContext& ctx, std::vector<Variable*> args);
 
 	/*
 	 * 检查函数的参数类型是否匹配

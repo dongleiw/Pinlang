@@ -1,6 +1,6 @@
 // 变量定义
 {
-	var i int=(1+2)*3/2;
+	var i = (3+5-4)*3/2;
 	var StudentId = int;
 	const PId = int;
 }
@@ -15,4 +15,14 @@
 	fn f_int_int_return_int(a int, b int) int{
 		return a+b;
 	}
+}
+
+
+// 函数调用
+{
+	fn f1()int{
+		var i=1;
+		return i;
+	}
+	var r = f1();
 }

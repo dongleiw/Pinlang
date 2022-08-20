@@ -23,7 +23,7 @@ private:
 	/*
 	 * 声明的类型
 	 *		var name declared_type = 3;
-	 * 如果缺省, 则为TYPE_ID_INFER. 在verify完成后设置为推得到的的实际类型
+	 * 如果缺省, 则为TYPE_ID_INFER
 	 */
 	TypeId	 m_declared_tid;
 	AstNode* m_init_expr;
