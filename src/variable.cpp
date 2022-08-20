@@ -28,21 +28,22 @@ std::string Variable::ToString() const {
 	char		buf[128];
 	switch (m_tid) {
 	case TYPE_ID_TYPE:
-		snprintf(buf, sizeof(buf) - 1, "type(%d)", m_value_tid);
+		snprintf(buf, sizeof(buf) - 1, "type(%d:%s)", m_value_tid, GET_TYPENAME_C(m_value_tid));
 		s += buf;
 		break;
 	case TYPE_ID_INT:
 		snprintf(buf, sizeof(buf) - 1, "int(%d)", m_value_int);
 		s += buf;
 		break;
-	case TYPE_ID_FLOAT:
-		break;
-	case TYPE_ID_STR:
-		break;
-	case TYPE_ID_BOOL:
-		break;
+	//case TYPE_ID_FLOAT:
+	//	break;
+	//case TYPE_ID_STR:
+	//	break;
+	//case TYPE_ID_BOOL:
+	//	break;
 	default:
-		panicf("unexpected typeid[%d]", m_tid);
+		snprintf(buf, sizeof(buf) - 1, "unknown");
+		s += buf;
 		break;
 	}
 	return s;
