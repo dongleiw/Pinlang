@@ -1,5 +1,6 @@
 #include "astnode_blockstmt.h"
 #include "type.h"
+#include "variable_table.h"
 #include "verify_context.h"
 
 AstNodeBlockStmt::AstNodeBlockStmt(const std::vector<AstNode*>& stmts) {
@@ -17,8 +18,10 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx) {
 	return vr;
 }
 Variable* AstNodeBlockStmt::Execute(ExecuteContext& ctx) {
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
 	for (auto n : m_stmts) {
 		n->Execute(ctx);
 	}
-	return NULL;
+	ctx.GetCurStack()->LeaveBlock();
+	return nullptr;
 }

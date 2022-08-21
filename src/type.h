@@ -50,6 +50,10 @@ public:
 	Function*	 GetMethodByName(std::string method_name);
 	virtual void InitBuiltinMethods() {}
 
+	void SetTypeGroupId(TypeGroupId tgid) { m_typegroup_id = tgid; }
+	bool IsFn() const { return m_typegroup_id == TYPE_GROUP_ID_FUNCTION; }
+	bool IsType() const { return m_typeid == TYPE_ID_TYPE; }
+
 protected:
 	TypeId		m_typeid;
 	TypeGroupId m_typegroup_id;

@@ -7,19 +7,44 @@
 
 class VerifyContextParam {
 public:
-	VerifyContextParam() : m_expect_result_tid(TYPE_ID_NONE) {}
-	VerifyContextParam(TypeId expect_result_tid) : m_expect_result_tid(expect_result_tid) {}
-	VerifyContextParam(TypeId expect_result_tid, TypeId expect_return_tid) : m_expect_result_tid(expect_result_tid), m_expect_return_tid(expect_return_tid) {}
+	VerifyContextParam() {
+		Clear();
+	}
+	VerifyContextParam(TypeId expect_result_tid) {
+		Clear();
+		m_expect_result_tid = expect_result_tid;
+	}
+	VerifyContextParam(TypeId expect_result_tid, TypeId expect_return_tid) {
+		Clear();
+		m_expect_result_tid = expect_result_tid;
+		m_expect_return_tid = expect_return_tid;
+	}
 
-	void SetResultTid(TypeId tid) { m_expect_result_tid = tid; }
-	void SetReturnTid(TypeId tid) { m_expect_return_tid = tid; }
-
+	void   SetResultTid(TypeId tid) { m_expect_result_tid = tid; }
 	TypeId GetResultTid() const { return m_expect_result_tid; }
+
+	void   SetReturnTid(TypeId tid) { m_expect_return_tid = tid; }
 	TypeId GetReturnTid() const { return m_expect_return_tid; }
 
+	void SetFnCallArgs(std::vector<TypeId> args_tid) {
+		m_args_tid_is_set = true;
+		m_args_tid		  = args_tid;
+	}
+	bool				HasFnCallArgs() const { return m_args_tid_is_set; }
+	std::vector<TypeId> GetFnCallArgs() const { return m_args_tid; }
+
+	void Clear() {
+		m_expect_result_tid = TYPE_ID_INFER;
+		m_expect_return_tid = TYPE_ID_NONE;
+		m_args_tid_is_set	= false;
+		m_args_tid.clear();
+	}
+
 private:
-	TypeId m_expect_result_tid;
-	TypeId m_expect_return_tid;
+	TypeId				m_expect_result_tid;
+	TypeId				m_expect_return_tid;
+	bool				m_args_tid_is_set;
+	std::vector<TypeId> m_args_tid;
 };
 
 class VerifyContextResult {
@@ -52,9 +77,9 @@ class VerifyContext {
 public:
 	VerifyContext();
 	VerifyContextParam& GetParam() { return m_param; }
-	VerifyContext&	   SetParam(VerifyContextParam param) {
-		m_param = param;
-		return *this;
+	VerifyContext&		SetParam(VerifyContextParam param) {
+		 m_param = param;
+		 return *this;
 	}
 	void   PushStack();
 	void   PopSTack();

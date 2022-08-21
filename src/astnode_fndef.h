@@ -22,6 +22,7 @@ public:
 private:
 	TypeId					 m_tid;
 	std::string				 m_fnname;
+	std::string				 m_uniq_fnname;
 	std::vector<std::string> m_params_name;
 	AstNodeBlockStmt*		 m_body;
 };

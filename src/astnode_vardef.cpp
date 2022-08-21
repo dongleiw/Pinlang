@@ -22,9 +22,11 @@ VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx) {
 
 	// VerifyContextParam param = ctx.GetParam();
 
-	VerifyContextResult vr_init_expr;
 	if (m_init_expr != nullptr) {
-		vr_init_expr = m_init_expr->Verify(ctx.SetParam(VerifyContextParam(m_declared_tid)));
+		const VerifyContextResult vr_init_expr = m_init_expr->Verify(ctx.SetParam(VerifyContextParam(m_declared_tid)));
+		if(vr_init_expr.GetResultTypeId()==TYPE_ID_NONE){
+			panicf("init expr should be expression");
+		}
 		if (m_declared_tid == TYPE_ID_INFER) {
 		} else {
 			if (m_declared_tid != vr_init_expr.GetResultTypeId()) {

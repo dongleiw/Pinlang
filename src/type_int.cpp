@@ -30,7 +30,8 @@ static Variable* builtin_fn_mod_int(ExecuteContext& ctx, Variable* thisobj, std:
 	return new Variable(result);
 }
 TypeInfoInt::TypeInfoInt() {
-	m_name = "int";
+	m_name		   = "int";
+	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
 }
 void TypeInfoInt::InitBuiltinMethods() {
 	std::vector<Parameter> params_int;

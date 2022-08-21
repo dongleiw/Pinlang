@@ -21,12 +21,12 @@ VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 	if (ctx.GetCurStack()->IsVariableExist(m_fnname)) {
 		panicf("fnname[%s] conflict", m_fnname.c_str());
 	}
+	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_tid));
 
 	ctx.PushStack();
 	{
 		// 将参数放入vt
 		VariableTable* vt_args = new VariableTable();
-		TypeInfoFn*	   tifn	   = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_tid));
 		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
 			Variable* v = new Variable(tifn->GetParamType(i));
 			vt_args->AddVariable(m_params_name.at(i), v);
@@ -41,15 +41,17 @@ VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 
 	// 将函数放到vt
 	Function* fn = new Function(m_tid, m_params_name, m_body);
-	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_fnname, new Variable(fn));
+	m_uniq_fnname = m_fnname + "_" + tifn->GetUniqFnNameSuffix();
+	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fn));
+	ctx.GetCurStack()->GetCurVariableTable()->AddCandidateFn(m_fnname, fn);
 
-	log_debug("end to verify fndef: fnname[%s]", m_fnname.c_str());
+	log_debug("end to verify fndef: fnname[%s] uniqfnname[%s]", m_fnname.c_str(), m_uniq_fnname.c_str());
 
 	VerifyContextResult vr(m_result_typeid);
 	return vr;
 }
 Variable* AstNodeFnDef::Execute(ExecuteContext& ctx) {
 	Function* fn = new Function(m_tid, m_params_name, m_body);
-	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_fnname, new Variable(fn));
+	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fn));
 	return nullptr;
 }

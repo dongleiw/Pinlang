@@ -28,6 +28,7 @@ public:
 	Variable* GetReturnedValue() const { return m_returned_value; }
 	void	  SetReturnedValue(Variable* v) { m_returned_value = v; }
 
+	VariableTable* GetVariableTableByFnName(std::string fnname);
 private:
 	Stack*					  m_next;	 // 下一层栈
 	std::list<VariableTable*> m_vt_list; // 变量表列表. 后面vt是前面vt的孩子
