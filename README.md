@@ -26,15 +26,15 @@ const PersonId = int;
 // 定义变量 支持+-*/%
 var i = (3+5-4)*3/2; 
 // 定义函数
-fn max(a int, b int) int{
+fn sum(a int, b int) int{
     return a+b;
 }
-fn max(a int) int{
+fn sum(a int) int{
     return a;
 }
 // 调用函数
-var r1=max(1,2); // call max(int,int)int
-var r2=max(3);   // call max(int)int
+var r1=sum(1,2); // call sum(int,int)int
+var r2=sum(3);   // call sum(int)int
 ```
 
 ## 想法
