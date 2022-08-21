@@ -12,9 +12,11 @@ AstNodeBlockStmt::AstNodeBlockStmt(const std::vector<AstNode*>& stmts) {
 VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx) {
 	VerifyContextResult vr(m_result_typeid);
 
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
 	for (auto n : m_stmts) {
 		n->Verify(ctx);
 	}
+	ctx.GetCurStack()->LeaveBlock();
 	return vr;
 }
 Variable* AstNodeBlockStmt::Execute(ExecuteContext& ctx) {
