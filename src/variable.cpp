@@ -1,4 +1,5 @@
 #include "variable.h"
+#include "define.h"
 #include "function.h"
 #include "log.h"
 #include "type.h"
@@ -7,6 +8,10 @@
 Variable::Variable(int value) {
 	m_tid		= TYPE_ID_INT;
 	m_value_int = value;
+}
+Variable::Variable(float value) {
+	m_tid		= TYPE_ID_FLOAT;
+	m_value_float = value;
 }
 Variable::Variable(std::string value) {
 	m_tid		= TYPE_ID_STR;
@@ -43,8 +48,10 @@ std::string Variable::ToString() const {
 		snprintf(buf, sizeof(buf) - 1, "str(%s)", m_value_str.c_str());
 		s += buf;
 		break;
-	//case TYPE_ID_FLOAT:
-	//	break;
+	case TYPE_ID_FLOAT:
+		snprintf(buf, sizeof(buf) - 1, "float(%f)", m_value_float);
+		s += buf;
+		break;
 	//case TYPE_ID_BOOL:
 	//	break;
 	default:

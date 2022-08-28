@@ -9,6 +9,7 @@
 class AstNodeLiteral : public AstNode {
 public:
 	AstNodeLiteral(int value);
+	AstNodeLiteral(float value);
 	AstNodeLiteral(std::string value);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
@@ -16,6 +17,7 @@ public:
 	//virtual Variable*			GetConstantValue();
 
 private:
-	int m_value_int;
+	int			m_value_int;
+	float		m_value_float;
 	std::string m_value_str;
 };

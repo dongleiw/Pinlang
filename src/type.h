@@ -20,6 +20,7 @@ public:
 	std::string GetName() { return m_name; }
 
 	void		 AddMethod(std::string method_name, Function* function);
+	bool		 HasMethod(std::string method_name) const;
 	void		 AddBuiltinMethod(std::string method_name, std::vector<TypeId> params_tid, TypeId ret_tid, BuiltinFnCallback cb);
 	Function*	 GetMethodOrNilByName(std::string method_name);
 	Function*	 GetMethodByName(std::string method_name);

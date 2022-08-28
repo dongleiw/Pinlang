@@ -38,6 +38,9 @@ std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalC
 	if (literal->IntegerLiteral() != nullptr) {
 		int value = str_to_int(literal->IntegerLiteral()->getText());
 		return (AstNode*)new AstNodeLiteral(value);
+	}else if (literal->FloatLiteral() != nullptr) {
+		float value = str_to_float(literal->FloatLiteral()->getText());
+		return (AstNode*)new AstNodeLiteral(value);
 	} else if (literal->StringLiteral() != nullptr) {
 		std::string value = literal->StringLiteral()->getText();
 		assert(value.size() >= 2 && value.at(0) == '"' && value.at(value.size() - 1) == '"');

@@ -1,7 +1,9 @@
 #include <assert.h>
 
+#include "define.h"
 #include "log.h"
 #include "type.h"
+#include "type_float.h"
 #include "type_fn.h"
 #include "type_int.h"
 #include "type_mgr.h"
@@ -41,7 +43,14 @@ void TypeMgr::InitTypes() {
 		m_typename_2_typeid["int"] = TYPE_ID_INT;
 	}
 	{
-		TypeInfoStr* ti_str= new TypeInfoStr();
+		TypeInfoFloat* ti_float = new TypeInfoFloat();
+		ti_float->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti_float);
+		assert(TYPE_ID_FLOAT == ti_float->GetTypeId());
+		m_typename_2_typeid["float"] = TYPE_ID_FLOAT;
+	}
+	{
+		TypeInfoStr* ti_str = new TypeInfoStr();
 		ti_str->SetTypeId(allocate_typeid());
 		m_typeinfos.push_back(ti_str);
 		assert(TYPE_ID_STR == ti_str->GetTypeId());
@@ -50,6 +59,7 @@ void TypeMgr::InitTypes() {
 
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods();
 	m_typeinfos.at(TYPE_ID_INT)->InitBuiltinMethods();
+	m_typeinfos.at(TYPE_ID_FLOAT)->InitBuiltinMethods();
 	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods();
 }
 

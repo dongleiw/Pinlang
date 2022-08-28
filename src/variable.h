@@ -11,6 +11,7 @@ public:
 	Variable(TypeId tid) : m_tid(tid) {
 	}
 	Variable(int value);
+	Variable(float value);
 	Variable(std::string value);
 	Variable(Function* fn);
 
@@ -18,6 +19,7 @@ public:
 
 	TypeId		GetTypeId() const { return m_tid; }
 	int			GetValueInt() const { return m_value_int; }
+	float		GetValueFloat() const { return m_value_float; }
 	std::string GetValueStr() const { return m_value_str; }
 	Function*	GetValueFunction() const { return m_value_fn; }
 
@@ -35,6 +37,7 @@ protected:
 	bool		m_is_const;
 	TypeId		m_value_tid;
 	int			m_value_int;
+	float		m_value_float;
 	std::string m_value_str;
 	Function*	m_value_fn;
 };

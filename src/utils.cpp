@@ -3,6 +3,9 @@
 int str_to_int(const std::string& s) {
 	return std::atoi(s.c_str());
 }
+float str_to_float(const std::string& s) {
+	return float(std::atof(s.c_str()));
+}
 void replace_str(std::string& str, std::string oldstr, std::string newstr) {
 	size_t cur_pos	= 0;
 	size_t find_pos = std::string::npos;
