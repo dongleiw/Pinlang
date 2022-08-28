@@ -34,32 +34,9 @@ TypeInfoInt::TypeInfoInt() {
 	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
 }
 void TypeInfoInt::InitBuiltinMethods() {
-	std::vector<Parameter> params_int;
-	params_int.push_back({.arg_tid = TYPE_ID_INT});
-
-	{
-		TypeId	  tid = g_typemgr.GetOrAddTypeFn(params_int, TYPE_ID_INT);
-		Function* f	  = new Function(tid, builtin_fn_add_int);
-		AddMethod("add", f);
-	}
-	{
-		TypeId	  tid = g_typemgr.GetOrAddTypeFn(params_int, TYPE_ID_INT);
-		Function* f	  = new Function(tid, builtin_fn_sub_int);
-		AddMethod("sub", f);
-	}
-	{
-		TypeId	  tid = g_typemgr.GetOrAddTypeFn(params_int, TYPE_ID_INT);
-		Function* f	  = new Function(tid, builtin_fn_mul_int);
-		AddMethod("mul", f);
-	}
-	{
-		TypeId	  tid = g_typemgr.GetOrAddTypeFn(params_int, TYPE_ID_INT);
-		Function* f	  = new Function(tid, builtin_fn_div_int);
-		AddMethod("div", f);
-	}
-	{
-		TypeId	  tid = g_typemgr.GetOrAddTypeFn(params_int, TYPE_ID_INT);
-		Function* f	  = new Function(tid, builtin_fn_mod_int);
-		AddMethod("mod", f);
-	}
+	AddBuiltinMethod("add", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT, builtin_fn_add_int);
+	AddBuiltinMethod("sub", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT, builtin_fn_sub_int);
+	AddBuiltinMethod("mul", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT, builtin_fn_mul_int);
+	AddBuiltinMethod("div", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT, builtin_fn_div_int);
+	AddBuiltinMethod("mod", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT, builtin_fn_mod_int);
 }

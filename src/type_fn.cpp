@@ -2,7 +2,6 @@
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
-#include <system_error>
 
 TypeInfoFn::TypeInfoFn(std::vector<Parameter> params, TypeId return_tid) {
 	m_params	 = params;

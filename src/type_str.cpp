@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "define.h"
 #include "execute_context.h"
 #include "function.h"
 #include "type.h"
@@ -18,12 +19,5 @@ TypeInfoStr::TypeInfoStr() {
 	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
 }
 void TypeInfoStr::InitBuiltinMethods() {
-	std::vector<Parameter> params_str;
-	params_str.push_back({.arg_tid = TYPE_ID_STR});
-
-	{
-		TypeId	  tid = g_typemgr.GetOrAddTypeFn(params_str, TYPE_ID_STR);
-		Function* f	  = new Function(tid, builtin_fn_add_str);
-		AddMethod("add", f);
-	}
+	AddBuiltinMethod("add", std::vector<TypeId>{TYPE_ID_STR}, TYPE_ID_STR, builtin_fn_add_str);
 }

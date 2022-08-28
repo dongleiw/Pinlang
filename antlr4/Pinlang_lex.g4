@@ -58,7 +58,7 @@ R_CURLY         : '}';
 L_BRACKET		: '[';
 R_BRACKET		: ']';
 
-// unused character ^ ! ' ~ ^ $ @ # ` : |
+// unused character ^ ' ~ ^ $ @ # ` : | &
 
 ASSIGN : '=';
 

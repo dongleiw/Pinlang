@@ -1,13 +1,19 @@
 // 变量定义
 {
+	printf("###### var definition\n");
 	var i = (3+5-4)*3/2;
+	printf("i = %d\n", i);
+
 	var StudentId = int;
 	const PId = int;
-	var s = "hello";
+
+	var s = "hello" + " " + "world";
+	printf("s = %s\n", s);
 }
 
 // 函数定义&调用
 {
+	printf("###### function definition & call\n");
 	fn f1()int{
 		var i=1;
 		return i;
@@ -30,6 +36,7 @@
 
 // 函数重载
 {
+	printf("###### function overload\n");
 	fn f(){
 	}
 	fn f(a int)int{

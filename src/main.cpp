@@ -17,8 +17,11 @@ using namespace antlr4;
 
 int main(int argc, char* argv[]) {
 	// const char *filename=argv[1];
-	init_log("./run.log");
 	const char* filename = "../example_code/a.pin";
+	if(argc>=2){
+		filename = argv[1];
+	}
+	init_log("./run.log");
 	log_info("filename[%s]", filename);
 
 	g_typemgr.InitTypes();
