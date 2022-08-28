@@ -8,6 +8,10 @@ Variable::Variable(int value) {
 	m_tid		= TYPE_ID_INT;
 	m_value_int = value;
 }
+Variable::Variable(std::string value) {
+	m_tid		= TYPE_ID_STR;
+	m_value_str = value;
+}
 Variable::Variable(Function* fn) {
 	m_tid	   = fn->GetTypeId();
 	m_value_fn = fn;
@@ -35,9 +39,11 @@ std::string Variable::ToString() const {
 		snprintf(buf, sizeof(buf) - 1, "int(%d)", m_value_int);
 		s += buf;
 		break;
+	case TYPE_ID_STR:
+		snprintf(buf, sizeof(buf) - 1, "str(%s)", m_value_str.c_str());
+		s += buf;
+		break;
 	//case TYPE_ID_FLOAT:
-	//	break;
-	//case TYPE_ID_STR:
 	//	break;
 	//case TYPE_ID_BOOL:
 	//	break;

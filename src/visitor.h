@@ -23,5 +23,5 @@ public:
 	virtual std::any visitStmt_block(PinlangParser::Stmt_blockContext* context) override;
 	virtual std::any visitStmt_return(PinlangParser::Stmt_returnContext* context) override;
 	virtual std::any visitExpr_list(PinlangParser::Expr_listContext* ctx) override;
-	virtual std::any visitExpr_primary_fncall(PinlangParser::Expr_primary_fncallContext *ctx)override;
+	virtual std::any visitExpr_primary_fncall(PinlangParser::Expr_primary_fncallContext* ctx) override;
 };

@@ -11,13 +11,15 @@ public:
 	Variable(TypeId tid) : m_tid(tid) {
 	}
 	Variable(int value);
+	Variable(std::string value);
 	Variable(Function* fn);
 
 	static Variable* CreateTypeVariable(TypeId tid);
 
-	TypeId	  GetTypeId() const { return m_tid; }
-	int		  GetValueInt() const { return m_value_int; }
-	Function* GetValueFunction() const { return m_value_fn; }
+	TypeId		GetTypeId() const { return m_tid; }
+	int			GetValueInt() const { return m_value_int; }
+	std::string GetValueStr() const { return m_value_str; }
+	Function*	GetValueFunction() const { return m_value_fn; }
 
 	bool IsConst() const { return m_is_const; }
 
@@ -29,9 +31,10 @@ public:
 	std::string ToString() const;
 
 protected:
-	TypeId	  m_tid;
-	bool	  m_is_const;
-	TypeId	  m_value_tid;
-	int		  m_value_int;
-	Function* m_value_fn;
+	TypeId		m_tid;
+	bool		m_is_const;
+	TypeId		m_value_tid;
+	int			m_value_int;
+	std::string m_value_str;
+	Function*	m_value_fn;
 };

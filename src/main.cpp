@@ -7,6 +7,7 @@
 #include "antlr4-runtime.h"
 #include "astnode_blockstmt.h"
 #include "execute_context.h"
+#include "type_mgr.h"
 #include "verify_context.h"
 #include "visitor.h"
 
@@ -16,8 +17,11 @@ using namespace antlr4;
 
 int main(int argc, char* argv[]) {
 	// const char *filename=argv[1];
+	init_log("./run.log");
 	const char* filename = "../example_code/a.pin";
 	log_info("filename[%s]", filename);
+
+	g_typemgr.InitTypes();
 
 	std::ifstream infile(filename);
 	ANTLRInputStream input;

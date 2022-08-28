@@ -21,8 +21,11 @@ static std::string timenow() {
 	return std::string(buffer);
 }
 
+extern void init_log(std::string filepath);
+extern FILE *g_log_file;
+
 #define SHORT_FILE strrchr(__FILE__, '/') ?  strrchr(__FILE__, '/') + 1 : __FILE__ 
-#define _log(loglevel, fmts, ...) printf("[" loglevel "] [%s"                                     \
+#define _log(loglevel, fmts, ...) fprintf(g_log_file, "[" loglevel "] [%s"                                     \
 										 "] [%s" ":" stringfy(__LINE__) ":%s] " fmts "\n", \
 										 timenow().c_str(), SHORT_FILE, __FUNCTION__, ##__VA_ARGS__)
 
@@ -33,5 +36,6 @@ static std::string timenow() {
 #define panicf(fmts, ...)                   \
 	do {                                    \
 		_log("FATAL", fmts, ##__VA_ARGS__); \
+		fflush(g_log_file); \
 		abort(); \
 	} while (0);

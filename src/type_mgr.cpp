@@ -5,15 +5,15 @@
 #include "type_fn.h"
 #include "type_int.h"
 #include "type_mgr.h"
+#include "type_str.h"
 #include "type_type.h"
 
 TypeMgr g_typemgr;
 
 TypeMgr::TypeMgr() {
-	init_types();
 }
 
-void TypeMgr::init_types() {
+void TypeMgr::InitTypes() {
 	{
 		TypeInfo* ti_none = new TypeInfo();
 		ti_none->SetTypeId(allocate_typeid());
@@ -40,9 +40,17 @@ void TypeMgr::init_types() {
 		assert(TYPE_ID_INT == ti_int->GetTypeId());
 		m_typename_2_typeid["int"] = TYPE_ID_INT;
 	}
+	{
+		TypeInfoStr* ti_str= new TypeInfoStr();
+		ti_str->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti_str);
+		assert(TYPE_ID_STR == ti_str->GetTypeId());
+		m_typename_2_typeid["str"] = TYPE_ID_STR;
+	}
 
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods();
 	m_typeinfos.at(TYPE_ID_INT)->InitBuiltinMethods();
+	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods();
 }
 
 TypeId TypeMgr::allocate_typeid() {

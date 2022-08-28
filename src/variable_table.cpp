@@ -14,8 +14,8 @@ Variable* VariableTable::GetVariable(std::string name) {
 Variable* VariableTable::GetVariableOrNull(std::string name) {
 	auto ret = m_table.find(name);
 	if (ret == m_table.end()) {
-		log_debug("var[%s] not exists", name.c_str());
-		return NULL;
+		//log_debug("var[%s] not exists", name.c_str());
+		return nullptr;
 	} else {
 		return ret->second;
 	}

@@ -28,9 +28,9 @@ enum TypeId {
 	TYPE_ID_INFER = 1, // 推导类型. 在Verify阶段, 所有这种类型的变量都将变更为实际具体类型
 	TYPE_ID_TYPE  = 2, // type类型.
 	TYPE_ID_INT	  = 3,
-	TYPE_ID_FLOAT = 4,
-	TYPE_ID_BOOL  = 5,
-	TYPE_ID_STR	  = 6,
+	TYPE_ID_STR	  = 4,
+	TYPE_ID_FLOAT = 5,
+	TYPE_ID_BOOL  = 6,
 };
 
 /*

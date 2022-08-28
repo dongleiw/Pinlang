@@ -36,6 +36,7 @@ public:
 	 */
 	TypeId GetOrAddTypeFn(std::vector<Parameter> params, TypeId return_tid);
 
+	void InitTypes();
 private:
 	/*
 	 * 增加类型
@@ -44,7 +45,6 @@ private:
 	 */
 	TypeId add_type(TypeInfo* heap_alloc_ti);
 	TypeId allocate_typeid();
-	void init_types();
 
 private:
 	std::vector<TypeInfo*> m_typeinfos;
