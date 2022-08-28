@@ -28,6 +28,7 @@ public:
 	Function* SelectCandidateFnByArgsTypeId(std::string name, std::vector<TypeId> args_tid)const;
 	Function* SelectCandidateFnByTypeId(std::string name, TypeId tid)const;
 
+	void InitAsGlobal();
 private:
 	std::map<std::string, Variable*> m_table;
 	std::map<std::string, std::vector<Function*> > m_candidate_fn_map;

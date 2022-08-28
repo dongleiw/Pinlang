@@ -1,4 +1,5 @@
 #include "variable_table.h"
+#include "builtin_fn.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "log.h"
@@ -43,4 +44,12 @@ void VariableTable::AddCandidateFn(std::string name, Function* fn){
 	}else{
 		iter->second.push_back(fn);
 	}
+}
+void VariableTable::InitAsGlobal(){
+	AddVariable("type", Variable::CreateTypeVariable(TYPE_ID_TYPE));
+	AddVariable("int", Variable::CreateTypeVariable(TYPE_ID_INT));
+	AddVariable("str", Variable::CreateTypeVariable(TYPE_ID_STR));
+
+	//AddVariable("builtin_fn_printf_str_int", Variable::CreateTypeVariable(TYPE_ID_STR));
+	register_all_builtin_fn(*this);
 }

@@ -5,7 +5,8 @@
 #include <assert.h>
 
 ExecuteContext::ExecuteContext() : m_top_stack(NULL) {
-	init_global_vt();
+	//init_global_vt();
+	m_global_vt.InitAsGlobal();
 }
 void ExecuteContext::PushStack() {
 	Stack* new_stack = new Stack(m_top_stack);

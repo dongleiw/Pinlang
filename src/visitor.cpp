@@ -40,6 +40,10 @@ std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalC
 		return (AstNode*)new AstNodeLiteral(value);
 	} else if (literal->StringLiteral() != nullptr) {
 		std::string value = literal->StringLiteral()->getText();
+		assert(value.size() >= 2 && value.at(0) == '"' && value.at(value.size() - 1) == '"');
+		value = value.substr(1, value.size() - 2);
+		replace_str(value, "\\n", "\n");
+		replace_str(value, "\\t", "\t");
 		return (AstNode*)new AstNodeLiteral(value);
 	} else {
 		panicf("unknown literal");

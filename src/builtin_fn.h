@@ -1,5 +1,6 @@
 #pragma once
 
 #include "variable.h"
+#include "variable_table.h"
 
-Variable* builtin_fn_printf_str_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);
+void register_all_builtin_fn(VariableTable& vt);
