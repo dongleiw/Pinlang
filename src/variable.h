@@ -1,5 +1,6 @@
 #pragma once
 
+#include "define.h"
 #include "type.h"
 #include <vector>
 
@@ -17,7 +18,9 @@ public:
 
 	static Variable* CreateTypeVariable(TypeId tid);
 
-	TypeId		GetTypeId() const { return m_tid; }
+	TypeId GetTypeId() const { return m_tid; }
+
+	TypeId		GetValueTid() const { return m_value_tid; }
 	int			GetValueInt() const { return m_value_int; }
 	float		GetValueFloat() const { return m_value_float; }
 	std::string GetValueStr() const { return m_value_str; }

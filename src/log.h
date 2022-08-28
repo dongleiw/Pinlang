@@ -8,19 +8,7 @@
 #define _stringfy(x) #x
 #define stringfy(x) _stringfy(x)
 
-static std::string timenow() {
-	char buffer[64];
-	time_t curtime;
-	struct tm* timeinfo;
-
-	time(&curtime);
-	timeinfo = localtime(&curtime);
-
-	strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
-
-	return std::string(buffer);
-}
-
+extern std::string timenow();
 extern void init_log(std::string filepath);
 extern FILE *g_log_file;
 

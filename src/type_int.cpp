@@ -15,7 +15,7 @@ static Variable* builtin_fn_add_int(ExecuteContext& ctx, Variable* thisobj, std:
 	return new Variable(result);
 }
 static Variable* builtin_fn_add_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	float result = float(thisobj->GetValueInt()) + args.at(0)->GetValueFloat();
+	float result = (float)thisobj->GetValueInt() + args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
 
@@ -24,7 +24,7 @@ static Variable* builtin_fn_sub_int(ExecuteContext& ctx, Variable* thisobj, std:
 	return new Variable(result);
 }
 static Variable* builtin_fn_sub_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	float result = float(thisobj->GetValueInt()) - args.at(0)->GetValueFloat();
+	float result = (float)thisobj->GetValueInt() - args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
 
@@ -33,7 +33,7 @@ static Variable* builtin_fn_mul_int(ExecuteContext& ctx, Variable* thisobj, std:
 	return new Variable(result);
 }
 static Variable* builtin_fn_mul_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	float result = float(thisobj->GetValueInt()) * args.at(0)->GetValueFloat();
+	float result = (float)thisobj->GetValueInt() * args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
 
@@ -42,7 +42,7 @@ static Variable* builtin_fn_div_int(ExecuteContext& ctx, Variable* thisobj, std:
 	return new Variable(result);
 }
 static Variable* builtin_fn_div_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	float result = float(thisobj->GetValueInt()) / args.at(0)->GetValueFloat();
+	float result = (float)thisobj->GetValueInt() / args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
 

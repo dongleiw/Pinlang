@@ -15,7 +15,7 @@ static Variable* builtin_fn_add_float(ExecuteContext& ctx, Variable* thisobj, st
 	return new Variable(result);
 }
 static Variable* builtin_fn_add_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	float result = thisobj->GetValueFloat() + float(args.at(0)->GetValueInt());
+	float result = thisobj->GetValueFloat() + (float)args.at(0)->GetValueInt();
 	return new Variable(result);
 }
 

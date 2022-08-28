@@ -1,14 +1,17 @@
 // 变量定义
 {
 	printf("###### var definition\n");
+	var t_int type = int;
+	printf("t_int = %s\n", t_int);
+
+	var t_float = float;
+	printf("t_float = %s\n", t_float);
+
 	var i = (3+5-4)*3/2;
 	printf("i = %d\n", i);
 
 	var f = (5+1.0) - (3-1.1) + (4/2.0);
-	printf("f = %.2f\n", f);
-
-	var StudentId = int;
-	const PId = int;
+	printf("f = %.5f\n", f);
 
 	var s = "hello" + " " + "world";
 	printf("s = %s\n", s);

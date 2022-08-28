@@ -8,6 +8,14 @@
 
 #include <assert.h>
 
+Variable* builtin_fn_printf_type(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj == nullptr);
+	assert(args.size() == 2 && args.at(0)->GetTypeId() == TYPE_ID_STR && args.at(1)->GetTypeId() == TYPE_ID_TYPE);
+	std::string fmt = args.at(0)->GetValueStr();
+	TypeId		tid = args.at(1)->GetValueTid();
+	printf(fmt.c_str(), GET_TYPENAME_C(tid));
+	return nullptr;
+}
 Variable* builtin_fn_printf_str(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj == nullptr);
 	assert(args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_STR);
@@ -27,7 +35,7 @@ Variable* builtin_fn_printf_str_float(ExecuteContext& ctx, Variable* thisobj, st
 	assert(thisobj == nullptr);
 	assert(args.size() == 2 && args.at(0)->GetTypeId() == TYPE_ID_STR && args.at(1)->GetTypeId() == TYPE_ID_FLOAT);
 	std::string fmt	 = args.at(0)->GetValueStr();
-	float arg1 = args.at(1)->GetValueFloat();
+	float		arg1 = args.at(1)->GetValueFloat();
 	printf(fmt.c_str(), arg1);
 	return nullptr;
 }
@@ -51,6 +59,7 @@ void register_builtin_fn(VariableTable& vt, std::string fnname, std::vector<Type
 	vt.AddCandidateFn(fnname, f);
 }
 void register_all_builtin_fn(VariableTable& vt) {
+	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_TYPE}, TYPE_ID_NONE, builtin_fn_printf_type);
 	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_INT}, TYPE_ID_NONE, builtin_fn_printf_str_int);
 	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_FLOAT}, TYPE_ID_NONE, builtin_fn_printf_str_float);
 	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_STR}, TYPE_ID_NONE, builtin_fn_printf_str_str);

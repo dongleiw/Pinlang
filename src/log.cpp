@@ -8,3 +8,16 @@ void init_log(std::string filepath){
 		abort();
 	}
 }
+
+std::string timenow() {
+	char buffer[64];
+	time_t curtime;
+	struct tm* timeinfo;
+
+	time(&curtime);
+	timeinfo = localtime(&curtime);
+
+	strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
+
+	return std::string(buffer);
+}
