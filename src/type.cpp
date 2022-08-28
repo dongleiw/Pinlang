@@ -32,5 +32,5 @@ void TypeInfo::AddBuiltinMethod(std::string method_name, std::vector<TypeId> par
 	}
 	TypeId	  tid = g_typemgr.GetOrAddTypeFn(params, ret_tid);
 	Function* f	  = new Function(tid, cb);
-	AddMethod(method_name, f);
+	AddMethod(uniq_method_name, f);
 }

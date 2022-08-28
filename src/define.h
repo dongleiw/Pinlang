@@ -33,4 +33,6 @@ enum TypeId {
 
 class ExecuteContext;
 class Variable;
+
+// 指向内置函数的指针
 typedef Variable* (*BuiltinFnCallback)(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);

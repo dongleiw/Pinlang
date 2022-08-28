@@ -51,5 +51,7 @@ int main(int argc, char* argv[]) {
 	log_info("execute begin");
 	block_stmt->Execute(ectx);
 	log_info("execute end");
+
+	printf("succ\n");
 	return 0;
 }

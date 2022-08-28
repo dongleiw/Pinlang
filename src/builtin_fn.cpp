@@ -30,13 +30,13 @@ Variable* builtin_fn_printf_str_str(ExecuteContext& ctx, Variable* thisobj, std:
 	printf(fmt.c_str(), arg1.c_str());
 	return nullptr;
 }
-void register_builtin_fn(VariableTable& vt, std::string fnname, std::vector<TypeId> params_tid, TypeId ret_type, Function::BuiltinCallback cb) {
+void register_builtin_fn(VariableTable& vt, std::string fnname, std::vector<TypeId> params_tid, TypeId ret_tid, BuiltinFnCallback cb) {
 	std::string			   uniq_fnname = fnname + "_" + TypeInfoFn::GetUniqFnNameSuffix(params_tid);
 	std::vector<Parameter> params;
 	for (auto iter : params_tid) {
 		params.push_back({.arg_tid = iter});
 	}
-	TypeId	  tid = g_typemgr.GetOrAddTypeFn(params, ret_type);
+	TypeId	  tid = g_typemgr.GetOrAddTypeFn(params, ret_tid);
 	Function* f	  = new Function(tid, cb);
 	vt.AddVariable(uniq_fnname, new Variable(f));
 	vt.AddCandidateFn(fnname, f);

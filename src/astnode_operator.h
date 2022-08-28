@@ -22,5 +22,6 @@ public:
 private:
 	AstNode*	m_left_expr;
 	std::string m_op;
+	std::string m_uniq_method_name;
 	AstNode*	m_right_expr;
 };
