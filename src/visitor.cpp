@@ -4,16 +4,19 @@
 #include "astnode_blockstmt.h"
 #include "astnode_fncall.h"
 #include "astnode_fndef.h"
+#include "astnode_generic_fndef.h"
 #include "astnode_identifier.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
 #include "astnode_restriction.h"
 #include "astnode_return.h"
+#include "astnode_type.h"
 #include "astnode_vardef.h"
 #include "define.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
+#include "type_generic_type.h"
 #include "type_mgr.h"
 #include "type_restriction.h"
 #include "utils.h"
@@ -26,11 +29,13 @@
  */
 std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
 	if (ctx->TYPE() != nullptr) {
-		return TYPE_ID_TYPE;
+		AstNodeType* r = new AstNodeType();
+		r->InitWithType();
+		return r;
 	} else if (ctx->Identifier() != nullptr) {
-		std::string type_name = ctx->Identifier()->getText();
-		TypeId		tid		  = g_typemgr.GetTypeIdByName_or_unresolve(type_name);
-		return tid;
+		AstNodeType* r = new AstNodeType();
+		r->InitWithIdentifier(ctx->Identifier()->getText());
+		return r;
 	} else {
 		panicf("unknown type");
 	}
@@ -119,6 +124,8 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_return()->accept(this);
 	} else if (ctx->stmt_restriction_def() != nullptr) {
 		return ctx->stmt_restriction_def()->accept(this);
+	} else if (ctx->stmt_generic_fndef() != nullptr) {
+		return ctx->stmt_generic_fndef()->accept(this);
 	} else {
 		panicf("bug");
 	}
@@ -141,10 +148,10 @@ std::any Visitor::visitStart(PinlangParser::StartContext* ctx) {
 	return new AstNodeBlockStmt(stmts);
 }
 std::any Visitor::visitStmt_vardef(PinlangParser::Stmt_vardefContext* ctx) {
-	std::string var_name	 = ctx->Identifier()->getText();
-	TypeId		declared_tid = TYPE_ID_INFER;
+	std::string	 var_name	   = ctx->Identifier()->getText();
+	AstNodeType* declared_type = nullptr;
 	if (ctx->type() != NULL) {
-		declared_tid = std::any_cast<TypeId>(ctx->type()->accept(this));
+		declared_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 	}
 	AstNode* init_expr = NULL;
 	if (ctx->expr() != NULL) {
@@ -153,12 +160,8 @@ std::any Visitor::visitStmt_vardef(PinlangParser::Stmt_vardefContext* ctx) {
 
 	bool is_const = ctx->CONST() != nullptr;
 
-	return (AstNode*)new AstNodeVarDef(var_name, declared_tid, init_expr, is_const);
+	return (AstNode*)new AstNodeVarDef(var_name, declared_type, init_expr, is_const);
 }
-struct ParserParameter {
-	std::string name;
-	TypeId		tid;
-};
 /*
  * 解析参数
  * @return 返回ParserParameter
@@ -168,7 +171,7 @@ std::any Visitor::visitParameter(PinlangParser::ParameterContext* ctx) {
 	if (ctx->Identifier() != nullptr) {
 		param.name = ctx->Identifier()->getText();
 	}
-	param.tid = std::any_cast<TypeId>(ctx->type()->accept(this));
+	param.type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 	return param;
 }
 /*
@@ -187,25 +190,14 @@ std::any Visitor::visitParameter_list(PinlangParser::Parameter_listContext* ctx)
  * @return
  */
 std::any Visitor::visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) {
-	std::string					 fn_name	= ctx->Identifier()->getText();
-	std::vector<ParserParameter> params		= std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
-	AstNodeBlockStmt*			 body		= dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
-	TypeId						 return_tid = TYPE_ID_NONE;
+	std::string					 fn_name	 = ctx->Identifier()->getText();
+	std::vector<ParserParameter> params		 = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
+	AstNodeBlockStmt*			 body		 = dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
+	AstNodeType*				 return_type = nullptr;
 	if (ctx->type() != nullptr) {
-		return_tid = std::any_cast<TypeId>(ctx->type()->accept(this));
+		return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 	}
-
-	std::vector<Parameter> params_type;
-	for (auto iter : params) {
-		params_type.push_back({.arg_tid = iter.tid});
-	}
-	TypeId fn_tid = g_typemgr.GetOrAddTypeFn(params_type, return_tid);
-
-	std::vector<std::string> params_name;
-	for (auto iter : params) {
-		params_name.push_back(iter.name);
-	}
-	return (AstNode*)new AstNodeFnDef(fn_tid, fn_name, params_name, body);
+	return (AstNode*)new AstNodeFnDef(fn_name, params, return_type, body);
 }
 std::any Visitor::visitStmt_block(PinlangParser::Stmt_blockContext* ctx) {
 	std::vector<AstNode*> stmts;
@@ -240,48 +232,89 @@ std::any Visitor::visitExpr_primary_fncall(PinlangParser::Expr_primary_fncallCon
 	return (AstNode*)new AstNodeFnCall(fn_expr, list);
 }
 
-struct ParserFnDeclare {
-	std::string					 fnname;
-	std::vector<ParserParameter> param_list;
-	TypeId						 ret_tid;
-	TypeId						 fn_tid;
-};
 /*
  * 解析函数声明. 返回 ParserFnDeclare
  */
 std::any Visitor::visitStmt_fn_declare(PinlangParser::Stmt_fn_declareContext* ctx) {
 	std::string					 fnname			   = ctx->Identifier()->getText();
 	std::vector<ParserParameter> parser_param_list = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
-	TypeId						 ret_tid		   = TYPE_ID_NONE;
+	AstNodeType*				 return_type	   = nullptr;
 	if (ctx->type() != nullptr) {
-		ret_tid = std::any_cast<TypeId>(ctx->type()->accept(this));
+		return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 	}
-
-	std::vector<Parameter> params_type;
-	for (auto iter : parser_param_list) {
-		params_type.push_back({.arg_tid = iter.tid});
-	}
-	TypeId fn_tid = g_typemgr.GetOrAddTypeFn(params_type, ret_tid);
 
 	return ParserFnDeclare{
-		.fnname		= fnname,
-		.param_list = parser_param_list,
-		.ret_tid	= ret_tid,
-		.fn_tid		= fn_tid,
+		.fnname		 = fnname,
+		.param_list	 = parser_param_list,
+		.return_type = return_type,
 	};
 }
+std::any Visitor::visitRestriction_generic_params(PinlangParser::Restriction_generic_paramsContext* ctx) {
+	return ctx->identifier_list()->accept(this);
+}
 std::any Visitor::visitStmt_restriction_def(PinlangParser::Stmt_restriction_defContext* ctx) {
-	std::string							   name = ctx->Identifier()->getText();
-	std::vector<TypeInfoRestriction::Rule> rules;
+	std::string				 name = ctx->Identifier()->getText();
+	std::vector<std::string> generic_params;
+	if (ctx->restriction_generic_params() != nullptr) {
+		generic_params = std::any_cast<std::vector<std::string>>(ctx->restriction_generic_params()->accept(this));
+	}
+	std::vector<ParserFnDeclare> rules;
 	for (auto iter : ctx->stmt_fn_declare()) {
 		ParserFnDeclare fn_declare = std::any_cast<ParserFnDeclare>(iter->accept(this));
-		rules.push_back(TypeInfoRestriction::Rule{
-			.fn_name = fn_declare.fnname,
-			.fn_tid	 = fn_declare.fn_tid,
-		});
+		rules.push_back(fn_declare);
 	}
 
-	TypeId tid = g_typemgr.GetOrAddTypeRestriction(name, rules);
+	return (AstNode*)new AstNodeRestriction(name, generic_params, rules);
+}
+/*
+ * 解析一个generics参数的约束
+ * @return ParserGenericParam
+ */
+std::any Visitor::visitGeneric_param_restriction(PinlangParser::Generic_param_restrictionContext* ctx) {
+	ParserGenericParam generic_param;
+	generic_param.restriction_name = ctx->Identifier()->getText();
+	for (auto iter : ctx->type()) {
+		AstNodeType* restriction_type = std::any_cast<AstNodeType*>(iter->accept(this));
+		generic_param.restriction_generic_params.push_back(restriction_type);
+	}
+	return generic_param;
+}
+/*
+ * 解析一个generic参数
+ * @return ParserGenericParam
+ */
+std::any Visitor::visitGeneric_param(PinlangParser::Generic_paramContext* ctx) {
+	ParserGenericParam generic_param = std::any_cast<ParserGenericParam>(ctx->generic_param_restriction()->accept(this));
+	generic_param.type_name			 = ctx->Identifier()->getText();
+	return generic_param;
+}
+/*
+ * 解析一个泛型函数
+ */
+std::any Visitor::visitStmt_generic_fndef(PinlangParser::Stmt_generic_fndefContext* ctx) {
+	std::string						fn_name = ctx->Identifier()->getText();
+	std::vector<ParserGenericParam> generic_params;
+	for (auto iter : ctx->generic_param()) {
+		ParserGenericParam generic_param = std::any_cast<ParserGenericParam>(iter->accept(this));
+		generic_params.push_back(generic_param);
+	}
 
-	return (AstNode*)new AstNodeRestriction(tid);
+	std::vector<ParserParameter> params = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
+
+	AstNodeType* return_type = nullptr;
+	if (ctx->type() != nullptr) {
+		return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	}
+
+	AstNodeBlockStmt* body = dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
+
+	return (AstNode*)new AstNodeGenericFnDef(fn_name, generic_params, params, return_type, body);
+}
+// return std::vector<std::string>
+std::any Visitor::visitIdentifier_list(PinlangParser::Identifier_listContext* ctx) {
+	std::vector<std::string> ids;
+	for (auto iter : ctx->Identifier()) {
+		ids.push_back(iter->getText());
+	}
+	return ids;
 }

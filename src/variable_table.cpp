@@ -1,9 +1,16 @@
 #include "variable_table.h"
+#include "astnode_generic_restriction.h"
+#include "astnode_type.h"
 #include "builtin_fn.h"
 #include "define.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
+#include "variable.h"
+#include <type_traits>
+#include <vector>
+
+VariableTable VariableTable::m_global;
 
 Variable* VariableTable::GetVariable(std::string name) {
 	auto ret = m_table.find(name);
@@ -21,6 +28,9 @@ Variable* VariableTable::GetVariableOrNull(std::string name) {
 	} else {
 		return ret->second;
 	}
+}
+TypeId VariableTable::GetVariableType(std::string name) {
+	return GetVariable(name)->GetTypeId();
 }
 bool VariableTable::HasVariable(std::string name) {
 	auto ret = m_table.find(name);
@@ -57,5 +67,22 @@ void VariableTable::InitAsGlobal() {
 
 	// 添加内置restriction的变量
 	{
+		//{
+		//	std::vector<ParserFnDeclare> rules;
+		//	AstNodeType*				 param_type = new AstNodeType();
+		//	param_type->InitWithIdentifier("AnotherT");
+		//	AstNodeType* return_type = new AstNodeType();
+		//	return_type->InitWithIdentifier("ReturnT");
+		//	ParserFnDeclare fndec{
+		//		.fnname		 = "add",
+		//		.param_list	 = std::vector<ParserParameter>{ParserParameter{
+		//			 .name = "another",
+		//			 .type = param_type,
+		//		 }},
+		//		.return_type = return_type,
+		//	};
+		//	AstNodeGenericRestriction* generic_restriction_add = new AstNodeGenericRestriction("Add", std::vector<std::string>{"AnotherT", "ReturnT"}, rules);
+		//	AddVariable("Add", new Variable(generic_restriction_add));
+		//}
 	}
 }

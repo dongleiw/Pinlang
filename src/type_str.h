@@ -8,7 +8,7 @@
 class TypeInfoStr : public TypeInfo {
 public:
 	TypeInfoStr();
-	void InitBuiltinMethods() override;
 
+	void InitBuiltinMethods(VerifyContext& ctx) override;
 private:
 };

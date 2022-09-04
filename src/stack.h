@@ -22,6 +22,8 @@ public:
 	bool		   IsVariableExist(std::string name);
 	// 如果找不到, 返回NULL
 	Variable* GetVariableOrNull(std::string name);
+	// 根据name查找变量的类型id. 返回类型id. 找不到panic
+	TypeId GetVariableType(std::string name);
 	// 如果找不到, panic
 	Variable* GetVariable(std::string name);
 
@@ -29,6 +31,7 @@ public:
 	void	  SetReturnedValue(Variable* v) { m_returned_value = v; }
 
 	VariableTable* GetVariableTableByFnName(std::string fnname);
+	VariableTable* GetVariableTableByVarName(std::string varname);
 private:
 	Stack*					  m_next;	 // 下一层栈
 	std::list<VariableTable*> m_vt_list; // 变量表列表. 后面vt是前面vt的孩子

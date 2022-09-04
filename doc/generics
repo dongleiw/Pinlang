@@ -138,3 +138,48 @@ fn max<T int | float>(a T, b T) T{}
 var s1 = Student{score:90};
 var s2 = Student{score:70};
 max(s1, s2)
+
+
+########## 如何检查泛型函数? 
+比如如下sum函数
+restriction Add[T]{
+	fn add(another T) T;
+}
+fn sum[T Display](a T) str{
+	return a.ToString();
+}
+一个方法是: 
+	增加一个临时的仅用于检查该函数的类型T
+	然后将Display的方法都拷贝到T中, 让T满足Display约束
+	然后就可以使用类型T来verify函数了
+
+那假如是如下函数那?
+fn sum[T Add[T]](a T, b T) T{
+	return a+b;
+}
+T的类型约束是Add[T], Add[T]本身又是泛型, 无法直接校验. 
+一个方法是: 
+	增加一个临时的仅用于检查该函数的类型T
+	然后把restriction实例化出来得到Add[T]
+	然后将Add[T]的方法都拷贝到T中, 让T满足Add[T]
+	然后就可以使用类型T来verify函数了
+
+fn sum[T Add[T]](a []T) T{
+	//...
+}
+
+总结一下校验方法: 假如函数泛型参数为T1,T2,...,Tn. 对应约束为R1,R2,...,Rn
+	增加临时的仅用于检查该函数的类型T1,T2,...
+	如果类型的约束是泛型, 先把restriction实例化出来
+	然后将约束的方法信息拷贝到对应类型中, 让T1满足R1, T2满足R2, ..., Tn满足Rn
+	然后就可以像普通函数那样校验了
+	
+######### 泛型类型的实例化
+[]T是一个泛型
+T类型是12, []T类型是13
+假如T实际类型为int(3), '[]T'中的所有T都需要替换为类型'int(3)':
+	创建一个新类型TN, 将TN中的所有12替换为3. 然后加入到type_mgr中
+
+假如有泛型记作F(T,F), 其中T和F是泛型参数, T类型id为19, F类型id为20
+假如实际类型是(T=121, F=193). 那么实例化的过程就是将F(T,F)中的所有19替换为121, 20替换为193
+	

@@ -3,6 +3,7 @@
 #include <string>
 
 #include "astnode.h"
+#include "astnode_type.h"
 #include "execute_context.h"
 #include "type.h"
 #include "variable.h"
@@ -13,7 +14,7 @@
  */
 class AstNodeVarDef : public AstNode {
 public:
-	AstNodeVarDef(std::string var_name, TypeId declared_tid, AstNode* init_expr, bool is_const);
+	AstNodeVarDef(std::string var_name, AstNodeType* declared_type, AstNode* init_expr, bool is_const);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
 	virtual Variable*			Execute(ExecuteContext& ctx);
@@ -23,9 +24,9 @@ private:
 	/*
 	 * 声明的类型
 	 *		var name declared_type = 3;
-	 * 如果缺省, 则为TYPE_ID_INFER
+	 * 如果缺省, 则为nullptr
 	 */
-	TypeId	 m_declared_tid;
-	AstNode* m_init_expr;
-	bool	 m_is_const;
+	AstNodeType* m_declared_type;
+	AstNode*	 m_init_expr;
+	bool		 m_is_const;
 };

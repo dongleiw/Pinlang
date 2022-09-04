@@ -1,16 +1,21 @@
 #include "variable.h"
+#include "astnode_generic_fndef.h"
 #include "define.h"
 #include "function.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
+#include <cassert>
 
+Variable::Variable(TypeId tid) {
+	m_tid = tid;
+}
 Variable::Variable(int value) {
 	m_tid		= TYPE_ID_INT;
 	m_value_int = value;
 }
 Variable::Variable(float value) {
-	m_tid		= TYPE_ID_FLOAT;
+	m_tid		  = TYPE_ID_FLOAT;
 	m_value_float = value;
 }
 Variable::Variable(std::string value) {
@@ -20,6 +25,14 @@ Variable::Variable(std::string value) {
 Variable::Variable(Function* fn) {
 	m_tid	   = fn->GetTypeId();
 	m_value_fn = fn;
+}
+Variable::Variable(AstNodeRestriction* astnode) {
+	m_tid				= TYPE_ID_GENERIC_RESTRICTION;
+	m_value_restriction = astnode;
+}
+Variable::Variable(AstNodeGenericFnDef* astnode) {
+	m_tid			   = TYPE_ID_GENERIC_FN;
+	m_value_generic_fn = astnode;
 }
 Variable* Variable::CreateTypeVariable(TypeId tid) {
 	Variable* v	   = new Variable(TYPE_ID_TYPE);
@@ -34,7 +47,7 @@ Variable* Variable::CallMethod(ExecuteContext& ctx, int method_idx, std::vector<
 }
 std::string Variable::ToString() const {
 	std::string s;
-	char		buf[128];
+	char buf[128];
 	switch (m_tid) {
 	case TYPE_ID_TYPE:
 		snprintf(buf, sizeof(buf) - 1, "type(%d:%s)", m_value_tid, GET_TYPENAME_C(m_value_tid));
@@ -60,4 +73,12 @@ std::string Variable::ToString() const {
 		break;
 	}
 	return s;
+}
+AstNodeRestriction* Variable::GetValueRestriction() const {
+	assert(m_tid == TYPE_ID_GENERIC_RESTRICTION);
+	return m_value_restriction;
+}
+AstNodeGenericFnDef* Variable::GetValueGenericFnDef() const {
+	assert(m_tid == TYPE_ID_GENERIC_FN);
+	return m_value_generic_fn;
 }

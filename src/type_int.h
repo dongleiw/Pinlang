@@ -9,7 +9,7 @@
 class TypeInfoInt : public TypeInfo {
 public:
 	TypeInfoInt();
-	void InitBuiltinMethods() override;
+	void InitBuiltinMethods(VerifyContext& ctx) override;
 
 private:
 };

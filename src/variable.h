@@ -6,25 +6,30 @@
 
 class ExecuteContext;
 class Function;
+class AstNodeRestriction;
+class AstNodeGenericFnDef;
 
 class Variable {
 public:
-	Variable(TypeId tid) : m_tid(tid) {
-	}
+	Variable(TypeId tid);
 	Variable(int value);
 	Variable(float value);
 	Variable(std::string value);
 	Variable(Function* fn);
+	Variable(AstNodeRestriction* astnode);
+	Variable(AstNodeGenericFnDef* astnode);
 
 	static Variable* CreateTypeVariable(TypeId tid);
 
 	TypeId GetTypeId() const { return m_tid; }
 
-	TypeId		GetValueTid() const { return m_value_tid; }
-	int			GetValueInt() const { return m_value_int; }
-	float		GetValueFloat() const { return m_value_float; }
-	std::string GetValueStr() const { return m_value_str; }
-	Function*	GetValueFunction() const { return m_value_fn; }
+	TypeId				GetValueTid() const { return m_value_tid; }
+	int					GetValueInt() const { return m_value_int; }
+	float				GetValueFloat() const { return m_value_float; }
+	std::string			GetValueStr() const { return m_value_str; }
+	Function*			GetValueFunction() const { return m_value_fn; }
+	AstNodeRestriction* GetValueRestriction() const;
+	AstNodeGenericFnDef* GetValueGenericFnDef() const;
 
 	bool IsConst() const { return m_is_const; }
 
@@ -36,11 +41,13 @@ public:
 	std::string ToString() const;
 
 protected:
-	TypeId		m_tid;
-	bool		m_is_const;
-	TypeId		m_value_tid;
-	int			m_value_int;
-	float		m_value_float;
-	std::string m_value_str;
-	Function*	m_value_fn;
+	TypeId				m_tid;
+	bool				m_is_const;
+	TypeId				m_value_tid;
+	int					m_value_int;
+	float				m_value_float;
+	std::string			m_value_str;
+	Function*			m_value_fn;
+	AstNodeRestriction* m_value_restriction;
+	AstNodeGenericFnDef* m_value_generic_fn;
 };

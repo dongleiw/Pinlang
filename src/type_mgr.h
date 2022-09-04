@@ -3,48 +3,39 @@
 #include "define.h"
 #include "type.h"
 #include "type_fn.h"
-#include "type_generic_restriction.h"
 #include "type_restriction.h"
+#include "verify_context.h"
 
-#include <vector>
 #include <map>
+#include <vector>
 
 class TypeInfo;
 
-class TypeMgr{
+class TypeMgr {
 public:
 	TypeMgr();
 
 	/*
 	 * 如果不存在, panic
 	 */
-	TypeInfo* GetTypeInfo(TypeId tid)const;
+	TypeInfo* GetTypeInfo(TypeId tid) const;
 
-	std::string GetTypeName(std::vector<TypeId> vec_tid)const;
-	std::string GetTypeName(TypeId tid)const;
-
-	/*
-	 * 根据类型名获取类型id. 没有找到则panic
-	 */
-	TypeId GetTypeIdByName(std::string type_name);
-
-	bool HasTypeIdByName(std::string type_name);
-
-	/*
-	 * 根据类型名获取类型id. 没有找到则增加一个未解决类型
-	 */
-	TypeId GetTypeIdByName_or_unresolve(std::string type_name);
+	std::string GetTypeName(std::vector<TypeId> vec_tid) const;
+	std::string GetTypeName(TypeId tid) const;
 
 	/*
 	 * 根据参数类型和返回类型获取函数类型
 	 * 如果不存在, 增加一个
 	 */
-	TypeId GetOrAddTypeFn(std::vector<Parameter> params, TypeId return_tid);
+	TypeId GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid);
 
-	TypeId GetOrAddTypeRestriction(std::string name, std::vector<TypeInfoRestriction::Rule> rules);
-	TypeId AddGenericRestriction(TypeInfoGenericRestriction *ti);
+	TypeId AddTypeInfo(TypeInfo* ti);
+	TypeId GetOrAddTypeRestriction(TypeInfoRestriction* ti);
+	TypeId AddGenericType(TypeInfo* ti);
 
 	void InitTypes();
+	void InitBuiltinMethods(VerifyContext& ctx);
+
 private:
 	/*
 	 * 增加类型
@@ -56,15 +47,6 @@ private:
 
 private:
 	std::vector<TypeInfo*> m_typeinfos;
-	/*
-	 * 类型的名字到类型id的映射
-	 * 某些类型名字可能指向的typeid对应的typeinfo是nullptr
-	 * 类型名字: 
-	 *		- 基础类型: int float str bool
-	 *		- 函数: fn(int,int)int
-	 *		- class类型: Person Student Book ...
-	 */
-	std::map<std::string, TypeId> m_typename_2_typeid;
 };
 
 extern TypeMgr g_typemgr;

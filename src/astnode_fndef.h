@@ -4,6 +4,8 @@
 
 #include "astnode.h"
 #include "astnode_blockstmt.h"
+#include "astnode_type.h"
+#include "define.h"
 #include "execute_context.h"
 #include "type.h"
 #include "variable.h"
@@ -14,15 +16,16 @@
  */
 class AstNodeFnDef : public AstNode {
 public:
-	AstNodeFnDef(TypeId tid, std::string fn_name, std::vector<std::string> params_name, AstNodeBlockStmt* body);
+	AstNodeFnDef(std::string fn_name, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 private:
-	TypeId					 m_tid;
-	std::string				 m_fnname;
-	std::string				 m_uniq_fnname;
-	std::vector<std::string> m_params_name;
-	AstNodeBlockStmt*		 m_body;
+	std::string					 m_fnname;
+	std::vector<ParserParameter> m_params;
+	AstNodeType*				 m_return_type;
+	AstNodeBlockStmt*			 m_body;
+
+	std::string m_uniq_fnname;
 };

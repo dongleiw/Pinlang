@@ -1,4 +1,5 @@
 #include "stack.h"
+#include "define.h"
 #include "log.h"
 #include "variable.h"
 #include "variable_table.h"
@@ -38,6 +39,9 @@ Variable* Stack::GetVariableOrNull(std::string name) {
 	}
 	return nullptr;
 }
+TypeId Stack::GetVariableType(std::string name) {
+	return GetVariable(name)->GetTypeId();
+}
 Variable* Stack::GetVariable(std::string name) {
 	Variable* v = GetVariableOrNull(name);
 	if (v == nullptr) {
@@ -49,6 +53,14 @@ VariableTable* Stack::GetVariableTableByFnName(std::string fnname) {
 	for (auto iter = m_vt_list.rbegin(); iter != m_vt_list.rend(); iter++) {
 		VariableTable* vt = *iter;
 		if (vt->HasCandidateFn(fnname))
+			return vt;
+	}
+	return nullptr;
+}
+VariableTable* Stack::GetVariableTableByVarName(std::string varname) {
+	for (auto iter = m_vt_list.rbegin(); iter != m_vt_list.rend(); iter++) {
+		VariableTable* vt = *iter;
+		if (vt->HasVariable(varname))
 			return vt;
 	}
 	return nullptr;

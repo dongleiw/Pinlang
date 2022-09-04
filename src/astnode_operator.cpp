@@ -32,7 +32,6 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 	TypeId tid_right = vr_right.GetResultTypeId();
 
 	// 检查左表达式的operator对应方法
-	// 调用哪个restriction的那???
 	{
 		std::vector<TypeId> args_tid;
 		args_tid.push_back(tid_right);
@@ -40,12 +39,11 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 		TypeInfo* ti = g_typemgr.GetTypeInfo(tid_left);
 
 		int method_idx = -1;
-		TypeId restriction_tid = TYPE_ID_NONE;
 		if (m_restriction_name.empty()) {
 			method_idx = ti->GetMethodIdx(m_op, args_tid);
-		}else{
-			restriction_tid = g_typemgr.GetTypeIdByName(m_restriction_name);
-			method_idx = ti->GetMethodIdx(restriction_tid, m_op, args_tid);
+		} else {
+			TypeId restriction_tid = ctx.GetCurStack()->GetVariableType(m_restriction_name);
+			method_idx			   = ti->GetMethodIdx(restriction_tid, m_op, args_tid);
 		}
 		if (method_idx < 0) {
 			panicf("type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left, ti->GetName().c_str(), m_restriction_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());

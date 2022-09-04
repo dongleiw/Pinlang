@@ -18,33 +18,54 @@ using namespace antlr4;
 int main(int argc, char* argv[]) {
 	// const char *filename=argv[1];
 	const char* filename = "../example_code/a.pin";
-	if(argc>=2){
+	if (argc >= 2) {
 		filename = argv[1];
 	}
 	init_log("./run.log");
 	log_info("filename[%s]", filename);
 
 	g_typemgr.InitTypes();
+	VariableTable::GetGlobal().InitAsGlobal();
 
-	std::ifstream infile(filename);
+	// predefine
+	AstNodeBlockStmt* predefine_block_stmts;
+	{
+		const std::string predefine_filename = "../example_code/predefine.pin";
+		std::ifstream	  infile(predefine_filename);
+		ANTLRInputStream  input;
+		input.load(infile);
+		PinlangLexer	  lexer(&input);
+		CommonTokenStream tokens(&lexer);
+
+		PinlangParser	 parser(&tokens);
+		tree::ParseTree* tree = parser.start();
+		//std::cout << tree->toStringTree(&parser, true) << std::endl << std::endl;
+
+		Visitor visitor;
+		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
+	}
+
+	std::ifstream	 infile(filename);
 	ANTLRInputStream input;
 	input.load(infile);
-	PinlangLexer lexer(&input);
+	PinlangLexer	  lexer(&input);
 	CommonTokenStream tokens(&lexer);
 
-	PinlangParser parser(&tokens);
+	PinlangParser	 parser(&tokens);
 	tree::ParseTree* tree = parser.start();
 	//std::cout << tree->toStringTree(&parser, true) << std::endl << std::endl;
 
-	Visitor visitor;
+	Visitor			  visitor;
 	AstNodeBlockStmt* block_stmt = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
+	block_stmt->AddPreDefine(*predefine_block_stmts);
 
-
-	VerifyContext vctx;
-	vctx.PushStack();
-	log_info("verify begin");
-	block_stmt->Verify(vctx);
-	log_info("verify end");
+	{
+		VerifyContext vctx;
+		vctx.PushStack();
+		log_info("verify begin");
+		block_stmt->Verify(vctx);
+		log_info("verify end");
+	}
 
 	ExecuteContext ectx;
 	ectx.PushStack();

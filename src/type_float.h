@@ -7,7 +7,7 @@
 class TypeInfoFloat : public TypeInfo {
 public:
 	TypeInfoFloat();
-	void InitBuiltinMethods() override;
+	void InitBuiltinMethods(VerifyContext& ctx) override;
 
 private:
 };

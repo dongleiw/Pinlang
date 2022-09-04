@@ -14,7 +14,7 @@ find_package(Threads REQUIRED)
 set (CMAKE_CXX_FLAGS "-pthread")
 
 target_link_libraries ( pinlang  ${lib})
-target_compile_options(pinlang PUBLIC -std=c++17 -Wall -Wfloat-conversion -g)
+target_compile_options(pinlang PUBLIC -std=c++17 -Wall -Wfloat-conversion -Wfloat-equal -g)
 
 target_include_directories(pinlang PUBLIC "antlr4/cpp_runtime")
 target_include_directories(pinlang PUBLIC "src_parser")

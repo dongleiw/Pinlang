@@ -20,6 +20,8 @@ public:
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
 	virtual Variable*			Execute(ExecuteContext& ctx);
 
+	void AddPreDefine(AstNodeBlockStmt& another);
 private:
+	std::vector<AstNode*> m_predefine_stmts;
 	std::vector<AstNode*> m_stmts;
 };

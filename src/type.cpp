@@ -20,7 +20,7 @@ int TypeInfo::GetMethodIdx(std::string method_name, std::vector<TypeId> args_tid
 		return -1;
 	} else if (match_idx_list.size() > 1) {
 		panicf("multiple candidate of method[%s] with args[%s]", method_name.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
-	}else{
+	} else {
 		return match_idx_list.at(0);
 	}
 }
@@ -75,17 +75,14 @@ bool TypeInfo::has_duplicate_method(TypeId restriction_tid, std::string method_n
 	return false;
 }
 void TypeInfo::AddBuiltinMethod(TypeId restriction_tid, std::string method_name, std::vector<TypeId> params_tid, TypeId ret_tid, BuiltinFnCallback cb) {
-	std::vector<Parameter> params;
-	for (auto iter : params_tid) {
-		params.push_back({.arg_tid = iter});
-	}
-	TypeId	  tid = g_typemgr.GetOrAddTypeFn(params, ret_tid);
+	TypeId	  tid = g_typemgr.GetOrAddTypeFn(params_tid, ret_tid);
 	Function* f	  = new Function(tid, cb);
 	AddMethod(restriction_tid, method_name, f);
 }
 bool TypeInfo::MatchRestriction(TypeId tid) const {
-	for (auto iter : m_restrictions) {
-		if (iter.tid == tid) {
+	// TODO 这个判断方式有点投机取巧
+	for (auto iter : m_methods) {
+		if (iter.restriction_tid == tid) {
 			return true;
 		}
 	}

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <locale>
 #include <string>
 #include <vector>
 
@@ -12,25 +11,26 @@
 #include "verify_context.h"
 
 /*
- * 类型约束. 对类型的限定条件的集合
- *
- * 示例:
+ * 泛型约束: 约束的条件中包括一些泛型.
+ * 例如以下泛型约束
  *		restriciton Foo[T,K]{
  * 		 	fn foo(another []T) K;
  * 		}
  *
+ * 而Add[int,int]则得到
  *		restriciton Add{
  * 		 	fn add(another []int) int;
  * 		}
+ *
  */
-class AstNodeRestriction : public AstNode {
+class AstNodeGenericRestriction : public AstNode {
 public:
 	/*
 	 * name 泛型约束名字
 	 * generic_params 泛型约束的参数
 	 * rules 规则
 	 */
-	AstNodeRestriction(std::string name, std::vector<std::string> generic_params, std::vector<ParserFnDeclare> rules) {
+	AstNodeGenericRestriction(std::string name, std::vector<std::string> generic_params, std::vector<ParserFnDeclare> rules) {
 		m_name			 = name;
 		m_generic_params = generic_params;
 		m_rules			 = rules;
@@ -38,9 +38,6 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
 	virtual Variable*			Execute(ExecuteContext& ctx);
-
-	bool   HasGenericParam() const { return !m_generic_params.empty(); }
-	TypeId Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params) const;
 
 private:
 	std::string					 m_name;

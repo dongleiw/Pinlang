@@ -1,5 +1,7 @@
 #include "astnode_fndef.h"
 #include "astnode_blockstmt.h"
+#include "astnode_type.h"
+#include "define.h"
 #include "function.h"
 #include "log.h"
 #include "type.h"
@@ -8,20 +10,34 @@
 #include "variable.h"
 #include "variable_table.h"
 
-AstNodeFnDef::AstNodeFnDef(TypeId tid, std::string fn_name, std::vector<std::string> params_name, AstNodeBlockStmt* body) {
-	m_tid		  = tid;
+AstNodeFnDef::AstNodeFnDef(std::string fn_name, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body) {
 	m_fnname	  = fn_name;
-	m_params_name = params_name;
+	m_params	  = params;
+	m_return_type = return_type;
 	m_body		  = body;
 }
 VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 	log_debug("begin to verify fndef: fnname[%s]", m_fnname.c_str());
 
+	// 生成函数的typeid
+	std::vector<TypeId> params;
+	{
+		for (auto iter : m_params) {
+			TypeId param_tid = iter.type->Verify(ctx).GetResultTypeId();
+			params.push_back(param_tid);
+		}
+		TypeId return_tid = TYPE_ID_NONE;
+		if (m_return_type != nullptr) {
+			return_tid = m_return_type->Verify(ctx).GetResultTypeId();
+		}
+		m_result_typeid = g_typemgr.GetOrAddTypeFn(params, return_tid);
+	}
+
 	// 检查函数名是否冲突
 	if (ctx.GetCurStack()->IsVariableExist(m_fnname)) {
 		panicf("fnname[%s] conflict", m_fnname.c_str());
 	}
-	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_tid));
+	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_result_typeid));
 
 	ctx.PushStack();
 	{
@@ -29,7 +45,7 @@ VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 		VariableTable* vt_args = new VariableTable();
 		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
 			Variable* v = new Variable(tifn->GetParamType(i));
-			vt_args->AddVariable(m_params_name.at(i), v);
+			vt_args->AddVariable(m_params.at(i).name, v);
 		}
 		ctx.GetCurStack()->EnterBlock(vt_args);
 
@@ -40,8 +56,12 @@ VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 	ctx.PopSTack();
 
 	// 将函数放到vt
-	Function* fn = new Function(m_tid, m_params_name, m_body);
-	m_uniq_fnname = m_fnname + "_" + tifn->GetUniqFnNameSuffix();
+	std::vector<std::string> params_name;
+	for (auto iter : m_params) {
+		params_name.push_back(iter.name);
+	}
+	Function* fn  = new Function(m_result_typeid, params_name, m_body);
+	m_uniq_fnname = TypeInfoFn::GetUniqFnName(m_fnname, params);
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fn));
 	ctx.GetCurStack()->GetCurVariableTable()->AddCandidateFn(m_fnname, fn);
 
@@ -51,7 +71,11 @@ VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 	return vr;
 }
 Variable* AstNodeFnDef::Execute(ExecuteContext& ctx) {
-	Function* fn = new Function(m_tid, m_params_name, m_body);
+	std::vector<std::string> params_name;
+	for (auto iter : m_params) {
+		params_name.push_back(iter.name);
+	}
+	Function* fn = new Function(m_result_typeid, params_name, m_body);
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fn));
 	return nullptr;
 }

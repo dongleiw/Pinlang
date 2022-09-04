@@ -1,0 +1,3 @@
+restriction Add[AnotherT,ReturnT]{
+	fn add(another AnotherT) ReturnT;
+}

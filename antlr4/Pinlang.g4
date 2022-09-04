@@ -43,6 +43,15 @@ stmt_fndef
 	: FN Identifier L_PAREN parameter_list R_PAREN type? stmt_block
 	;
 
+generic_param_restriction
+	: Identifier
+	| Identifier L_BRACKET type (',' type)* R_BRACKET
+	;
+generic_param: Identifier generic_param_restriction;
+stmt_generic_fndef
+	: FN Identifier L_BRACKET generic_param (',' generic_param)* R_BRACKET L_PAREN parameter_list R_PAREN type? stmt_block
+	;
+
 stmt_return
 	: RETURN expr? ';'
 	;
@@ -51,14 +60,19 @@ stmt_fn_declare
 	: FN Identifier L_PAREN parameter_list R_PAREN type? ';'
 	;
 
+identifier_list: Identifier (',' Identifier)* ;
+
+///// restriction
+restriction_generic_params: L_BRACKET identifier_list R_BRACKET ;
 stmt_restriction_def
-	: RESTRICTION Identifier L_CURLY stmt_fn_declare* R_CURLY
+	: RESTRICTION Identifier restriction_generic_params? L_CURLY stmt_fn_declare* R_CURLY
 	;
 
 statement
 	: expr ';'
 	| stmt_vardef
 	| stmt_fndef
+	| stmt_generic_fndef
 	| stmt_block
 	| stmt_return
 	| stmt_restriction_def
