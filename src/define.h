@@ -10,11 +10,16 @@ enum TypeGroupId {
 	 * 未完成定义的类别. 由于解析的顺序问题, 可能类型的使用先于类型的定义. 这种会先临时标记为unresolved
 	 * 在后续解析到类型定义时, 在修正为实际类型
 	 */
-	TYPE_GROUP_ID_UNRESOLVE = 0,
-	TYPE_GROUP_ID_PRIMARY	= 1,
-	TYPE_GROUP_ID_ARRAY		= 2,
-	TYPE_GROUP_ID_FUNCTION	= 3,
-	TYPE_GROUP_ID_CLASS		= 4,
+	TYPE_GROUP_ID_UNRESOLVE			  = 0,
+	TYPE_GROUP_ID_PRIMARY			  = 1,
+	TYPE_GROUP_ID_ARRAY				  = 2,
+	TYPE_GROUP_ID_FUNCTION			  = 3,
+	TYPE_GROUP_ID_CLASS				  = 4,
+	/*
+	 * 泛型restriction
+	 */
+	TYPE_GROUP_ID_GENERIC_RESTRICTION = 5,
+	TYPE_GROUP_ID_RESTRICTION		  = 6,
 };
 
 /*

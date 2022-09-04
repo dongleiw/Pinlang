@@ -5,8 +5,10 @@
 #include "type.h"
 #include "type_float.h"
 #include "type_fn.h"
+#include "type_generic_restriction.h"
 #include "type_int.h"
 #include "type_mgr.h"
+#include "type_restriction.h"
 #include "type_str.h"
 #include "type_type.h"
 
@@ -57,6 +59,15 @@ void TypeMgr::InitTypes() {
 		m_typename_2_typeid["str"] = TYPE_ID_STR;
 	}
 
+	// 定义内置restriction
+	{
+		AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_add());
+		AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_sub());
+		AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_mul());
+		AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_div());
+		AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_mod());
+	}
+
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods();
 	m_typeinfos.at(TYPE_ID_INT)->InitBuiltinMethods();
 	m_typeinfos.at(TYPE_ID_FLOAT)->InitBuiltinMethods();
@@ -74,12 +85,23 @@ TypeInfo* TypeMgr::GetTypeInfo(TypeId tid) const {
 std::string TypeMgr::GetTypeName(TypeId tid) const {
 	return this->GetTypeInfo(tid)->GetName();
 }
+std::string TypeMgr::GetTypeName(std::vector<TypeId> vec_tid) const {
+	std::string s;
+	for (size_t i = 0; i < vec_tid.size(); i++) {
+		s += GetTypeName(vec_tid.at(i));
+		if (i < vec_tid.size() - 1) {
+			s += ",";
+		}
+	}
+	return s;
+}
 TypeId TypeMgr::GetTypeIdByName(std::string type_name) {
 	auto iter = m_typename_2_typeid.find(type_name);
 	if (iter != m_typename_2_typeid.end()) {
 		return iter->second;
 	}
 	panicf("typename[%s] not exists", type_name.c_str());
+	return TYPE_ID_NONE;
 }
 bool TypeMgr::HasTypeIdByName(std::string type_name) {
 	return m_typename_2_typeid.end() != m_typename_2_typeid.find(type_name);
@@ -111,4 +133,16 @@ TypeId TypeMgr::GetOrAddTypeFn(std::vector<Parameter> params, TypeId return_tid)
 		return GetTypeIdByName(ti.GetName());
 	}
 	return add_type(new TypeInfoFn(params, return_tid));
+}
+TypeId TypeMgr::GetOrAddTypeRestriction(std::string name, std::vector<TypeInfoRestriction::Rule> rules) {
+	if (HasTypeIdByName(name)) {
+		return GetTypeIdByName(name);
+	}
+	return add_type(new TypeInfoRestriction(name, rules));
+}
+TypeId TypeMgr::AddGenericRestriction(TypeInfoGenericRestriction* ti) {
+	if (HasTypeIdByName(ti->GetName())) {
+		panicf("generic restriction name[%s] conflict", ti->GetName().c_str());
+	}
+	return add_type(ti);
 }

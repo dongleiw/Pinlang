@@ -29,6 +29,10 @@ public:
 
 	size_t GetParamNum()const { return m_params.size(); }
 	TypeId GetParamType(size_t idx)const { return m_params.at(idx).arg_tid; }
+
+	bool IsArgsTypeEqual(const TypeInfoFn& another)const;
+	bool IsArgsTypeEqual(std::vector<TypeId> args_tid)const;
+
 	std::string GetUniqFnNameSuffix()const { return m_uniq_fn_name_suffix; }
 private:
 	void set_name();

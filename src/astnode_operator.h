@@ -10,18 +10,19 @@
 
 /*
  * 操作符: + - * / %
- * 操作符可以转换为方法调用, 但是目前还没不支持方法
+ * 将操作符转换为(某个restriction的)方法的调用
  */
 class AstNodeOperator : public AstNode {
 public:
-	AstNodeOperator(AstNode* left_expr, std::string op, AstNode* right_expr);
+	AstNodeOperator(AstNode* left_expr, std::string restriction_name, std::string op, AstNode* right_expr);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
 	virtual Variable*			Execute(ExecuteContext& ctx);
 
 private:
 	AstNode*	m_left_expr;
+	std::string m_restriction_name;
 	std::string m_op;
-	std::string m_uniq_method_name;
+	int			m_method_idx;
 	AstNode*	m_right_expr;
 };

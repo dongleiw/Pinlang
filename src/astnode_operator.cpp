@@ -1,5 +1,6 @@
 #include "astnode_operator.h"
 #include "astnode_literal.h"
+#include "define.h"
 #include "function.h"
 #include "log.h"
 #include "type.h"
@@ -10,14 +11,15 @@
 #include <memory>
 #include <vector>
 
-AstNodeOperator::AstNodeOperator(AstNode* left_expr, std::string op, AstNode* right_expr) {
-	m_left_expr	 = left_expr;
-	m_right_expr = right_expr;
-	m_op		 = op;
+AstNodeOperator::AstNodeOperator(AstNode* left_expr, std::string restriction_name, std::string op, AstNode* right_expr) {
+	m_left_expr		   = left_expr;
+	m_restriction_name = restriction_name;
+	m_op			   = op;
+	m_right_expr	   = right_expr;
 }
 
 /*
- * TODO 将操作符的检查转换为方法调用的检查
+ * 调用函数
  */
 VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 	log_debug("verify operator[%s]", m_op.c_str());
@@ -29,33 +31,38 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 	TypeId tid_left	 = vr_left.GetResultTypeId();
 	TypeId tid_right = vr_right.GetResultTypeId();
 
-	// 检查左表达式的add方法
+	// 检查左表达式的operator对应方法
+	// 调用哪个restriction的那???
 	{
-		// 生成uniq_method_name
 		std::vector<TypeId> args_tid;
 		args_tid.push_back(tid_right);
-		std::string uniq_method_name = m_op +"_"+ TypeInfoFn::GetUniqFnNameSuffix(args_tid);
 
 		TypeInfo* ti = g_typemgr.GetTypeInfo(tid_left);
-		// 有对应方法
-		Function* f = ti->GetMethodOrNilByName(uniq_method_name);
-		if (f == nullptr) {
-			panicf("type[%d:%s] doesn't have method[%s:%s]", tid_left, ti->GetName().c_str(), m_op.c_str(), uniq_method_name.c_str());
+
+		int method_idx = -1;
+		TypeId restriction_tid = TYPE_ID_NONE;
+		if (m_restriction_name.empty()) {
+			method_idx = ti->GetMethodIdx(m_op, args_tid);
+		}else{
+			restriction_tid = g_typemgr.GetTypeIdByName(m_restriction_name);
+			method_idx = ti->GetMethodIdx(restriction_tid, m_op, args_tid);
 		}
-		if (!f->VerifyArgsType(args_tid)) {
-			panicf("type[%d:%s] method[%s:%s] args not match", tid_left, ti->GetName().c_str(), m_op.c_str(), uniq_method_name.c_str());
+		if (method_idx < 0) {
+			panicf("type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left, ti->GetName().c_str(), m_restriction_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
 		}
+		Function* f = ti->GetMethodByIdx(method_idx);
 
 		// 方法有返回值
 		TypeId return_tid = f->GetReturnTypeId();
 		if (return_tid == TYPE_ID_NONE) {
-			panicf("type[%d:%s] method[%s:%s] return none", tid_left, ti->GetName().c_str(), m_op.c_str(), uniq_method_name.c_str());
+			panicf("type[%d:%s] method[%s:%s] return none", tid_left, ti->GetName().c_str(), m_restriction_name.c_str(), m_op.c_str());
 		}
 		m_result_typeid = return_tid;
 		vr.SetResultTypeId(m_result_typeid);
-		m_uniq_method_name = uniq_method_name;
 
-		log_debug("verify pass: type[%s] op[%s:%s] type[%s]", GET_TYPENAME_C(tid_left),m_op.c_str(), m_uniq_method_name.c_str(), GET_TYPENAME_C(tid_right));
+		m_method_idx = method_idx;
+
+		log_debug("verify pass: type[%s] op[%s:%s] type[%s]", GET_TYPENAME_C(tid_left), m_restriction_name.c_str(), m_op.c_str(), GET_TYPENAME_C(tid_right));
 	}
 	return vr;
 }
@@ -64,7 +71,7 @@ Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
 	Variable*			   right_v = m_right_expr->Execute(ctx);
 	std::vector<Variable*> args;
 	args.push_back(right_v);
-	Variable* result = left_v->CallMethod(ctx, m_uniq_method_name, args);
+	Variable* result = left_v->CallMethod(ctx, m_method_idx, args);
 	log_debug("%d.%s(%d)=>%s", left_v->GetValueInt(), m_op.c_str(), right_v->GetValueInt(), result->ToString().c_str());
 	return result;
 }

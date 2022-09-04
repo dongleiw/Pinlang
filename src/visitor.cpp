@@ -7,12 +7,15 @@
 #include "astnode_identifier.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
+#include "astnode_restriction.h"
 #include "astnode_return.h"
 #include "astnode_vardef.h"
+#include "define.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "type_restriction.h"
 #include "utils.h"
 #include <any>
 #include <ios>
@@ -38,7 +41,7 @@ std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalC
 	if (literal->IntegerLiteral() != nullptr) {
 		int value = str_to_int(literal->IntegerLiteral()->getText());
 		return (AstNode*)new AstNodeLiteral(value);
-	}else if (literal->FloatLiteral() != nullptr) {
+	} else if (literal->FloatLiteral() != nullptr) {
 		float value = str_to_float(literal->FloatLiteral()->getText());
 		return (AstNode*)new AstNodeLiteral(value);
 	} else if (literal->StringLiteral() != nullptr) {
@@ -66,6 +69,7 @@ std::any Visitor::visitExpr_relational(PinlangParser::Expr_relationalContext* co
 std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeContext* ctx) {
 	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
 	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
+	std::string restriction_name;
 	std::string op;
 	if (ctx->MUL() != NULL) {
 		op = "mul";
@@ -76,7 +80,7 @@ std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeConte
 	} else {
 		panicf("unknown op");
 	}
-	return (AstNode*)new AstNodeOperator(left, op, right);
+	return (AstNode*)new AstNodeOperator(left, restriction_name, op, right);
 }
 std::any Visitor::visitExpr_logical(PinlangParser::Expr_logicalContext* ctx) {
 	panicf("not implemented yet\n");
@@ -85,6 +89,7 @@ std::any Visitor::visitExpr_logical(PinlangParser::Expr_logicalContext* ctx) {
 std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
 	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
+	std::string restriction_name;
 	std::string op;
 	if (ctx->ADD() != nullptr) {
 		op = "add";
@@ -93,7 +98,7 @@ std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	} else {
 		panicf("unknown op");
 	}
-	return (AstNode*)new AstNodeOperator(left, op, right);
+	return (AstNode*)new AstNodeOperator(left, restriction_name, op, right);
 }
 std::any Visitor::visitExpr_primary_expr(PinlangParser::Expr_primary_exprContext* ctx) {
 	return ctx->expr_primary()->accept(this);
@@ -112,6 +117,8 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_block()->accept(this);
 	} else if (ctx->stmt_return() != nullptr) {
 		return ctx->stmt_return()->accept(this);
+	} else if (ctx->stmt_restriction_def() != nullptr) {
+		return ctx->stmt_restriction_def()->accept(this);
 	} else {
 		panicf("bug");
 	}
@@ -231,4 +238,50 @@ std::any Visitor::visitExpr_primary_fncall(PinlangParser::Expr_primary_fncallCon
 	std::vector<AstNode*> list = std::any_cast<std::vector<AstNode*>>(ctx->expr_list()->accept(this));
 
 	return (AstNode*)new AstNodeFnCall(fn_expr, list);
+}
+
+struct ParserFnDeclare {
+	std::string					 fnname;
+	std::vector<ParserParameter> param_list;
+	TypeId						 ret_tid;
+	TypeId						 fn_tid;
+};
+/*
+ * 解析函数声明. 返回 ParserFnDeclare
+ */
+std::any Visitor::visitStmt_fn_declare(PinlangParser::Stmt_fn_declareContext* ctx) {
+	std::string					 fnname			   = ctx->Identifier()->getText();
+	std::vector<ParserParameter> parser_param_list = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
+	TypeId						 ret_tid		   = TYPE_ID_NONE;
+	if (ctx->type() != nullptr) {
+		ret_tid = std::any_cast<TypeId>(ctx->type()->accept(this));
+	}
+
+	std::vector<Parameter> params_type;
+	for (auto iter : parser_param_list) {
+		params_type.push_back({.arg_tid = iter.tid});
+	}
+	TypeId fn_tid = g_typemgr.GetOrAddTypeFn(params_type, ret_tid);
+
+	return ParserFnDeclare{
+		.fnname		= fnname,
+		.param_list = parser_param_list,
+		.ret_tid	= ret_tid,
+		.fn_tid		= fn_tid,
+	};
+}
+std::any Visitor::visitStmt_restriction_def(PinlangParser::Stmt_restriction_defContext* ctx) {
+	std::string							   name = ctx->Identifier()->getText();
+	std::vector<TypeInfoRestriction::Rule> rules;
+	for (auto iter : ctx->stmt_fn_declare()) {
+		ParserFnDeclare fn_declare = std::any_cast<ParserFnDeclare>(iter->accept(this));
+		rules.push_back(TypeInfoRestriction::Rule{
+			.fn_name = fn_declare.fnname,
+			.fn_tid	 = fn_declare.fn_tid,
+		});
+	}
+
+	TypeId tid = g_typemgr.GetOrAddTypeRestriction(name, rules);
+
+	return (AstNode*)new AstNodeRestriction(tid);
 }

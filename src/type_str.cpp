@@ -19,5 +19,5 @@ TypeInfoStr::TypeInfoStr() {
 	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
 }
 void TypeInfoStr::InitBuiltinMethods() {
-	AddBuiltinMethod("add", std::vector<TypeId>{TYPE_ID_STR}, TYPE_ID_STR, builtin_fn_add_str);
+	AddBuiltinMethod(TYPE_ID_NONE, "add", std::vector<TypeId>{TYPE_ID_STR}, TYPE_ID_STR, builtin_fn_add_str);
 }

@@ -1,7 +1,10 @@
 #pragma once
 
+#include "define.h"
 #include "type.h"
 #include "type_fn.h"
+#include "type_generic_restriction.h"
+#include "type_restriction.h"
 
 #include <vector>
 #include <map>
@@ -16,6 +19,8 @@ public:
 	 * 如果不存在, panic
 	 */
 	TypeInfo* GetTypeInfo(TypeId tid)const;
+
+	std::string GetTypeName(std::vector<TypeId> vec_tid)const;
 	std::string GetTypeName(TypeId tid)const;
 
 	/*
@@ -35,6 +40,9 @@ public:
 	 * 如果不存在, 增加一个
 	 */
 	TypeId GetOrAddTypeFn(std::vector<Parameter> params, TypeId return_tid);
+
+	TypeId GetOrAddTypeRestriction(std::string name, std::vector<TypeInfoRestriction::Rule> rules);
+	TypeId AddGenericRestriction(TypeInfoGenericRestriction *ti);
 
 	void InitTypes();
 private:

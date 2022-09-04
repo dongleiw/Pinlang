@@ -31,7 +31,7 @@ public:
 	/*
 	 * 找不到method, panic
 	 */
-	Variable* CallMethod(ExecuteContext& ctx, std::string method_name, std::vector<Variable*> args);
+	Variable* CallMethod(ExecuteContext& ctx, int method_idx, std::vector<Variable*> args);
 
 	std::string ToString() const;
 

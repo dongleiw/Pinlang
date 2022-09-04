@@ -11,13 +11,13 @@ TypeInfoFn::TypeInfoFn(std::vector<Parameter> params, TypeId return_tid) {
 	m_typegroup_id = TYPE_GROUP_ID_FUNCTION;
 }
 
-std::string TypeInfoFn::GetUniqFnNameSuffix(std::vector<TypeId> args_tid){
+std::string TypeInfoFn::GetUniqFnNameSuffix(std::vector<TypeId> args_tid) {
 	std::string s = "";
 	for (size_t i = 0; i < args_tid.size(); i++) {
 		std::string arg_name = GET_TYPENAME(args_tid[i]);
-		s+= arg_name;
+		s += arg_name;
 		if (i + 1 != args_tid.size()) {
-			s+= "_";
+			s += "_";
 		}
 	}
 	return s;
@@ -50,6 +50,28 @@ bool TypeInfoFn::VerifyArgsType(std::vector<TypeId> args_type) {
 		TypeId give_tid	  = args_type.at(i);
 		if (expect_tid != give_tid) {
 			log_error("type of arg %lu not match: expect[%s] give[%s]", i, GET_TYPENAME_C(expect_tid), GET_TYPENAME_C(give_tid));
+			return false;
+		}
+	}
+	return true;
+}
+bool TypeInfoFn::IsArgsTypeEqual(const TypeInfoFn& another) const {
+	if (m_params.size() != another.m_params.size()) {
+		return false;
+	}
+	for (size_t i = 0; i < m_params.size(); i++) {
+		if (m_params.at(i).arg_tid != another.m_params.at(i).arg_tid) {
+			return false;
+		}
+	}
+	return true;
+}
+bool TypeInfoFn::IsArgsTypeEqual(std::vector<TypeId> args_tid)const{
+	if (m_params.size() != args_tid.size()) {
+		return false;
+	}
+	for (size_t i = 0; i < m_params.size(); i++) {
+		if (m_params.at(i).arg_tid != args_tid.at(i)) {
 			return false;
 		}
 	}

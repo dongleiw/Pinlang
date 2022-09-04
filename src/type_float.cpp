@@ -47,15 +47,15 @@ TypeInfoFloat::TypeInfoFloat() {
 	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
 }
 void TypeInfoFloat::InitBuiltinMethods() {
-	AddBuiltinMethod("add", std::vector<TypeId>{TYPE_ID_FLOAT}, TYPE_ID_FLOAT, builtin_fn_add_float);
-	AddBuiltinMethod("add", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_FLOAT, builtin_fn_add_int);
+	AddBuiltinMethod(TYPE_ID_NONE, "add", std::vector<TypeId>{TYPE_ID_FLOAT}, TYPE_ID_FLOAT, builtin_fn_add_float);
+	AddBuiltinMethod(TYPE_ID_NONE, "add", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_FLOAT, builtin_fn_add_int);
 
-	AddBuiltinMethod("sub", std::vector<TypeId>{TYPE_ID_FLOAT}, TYPE_ID_FLOAT, builtin_fn_sub_float);
-	AddBuiltinMethod("sub", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_FLOAT, builtin_fn_sub_int);
+	AddBuiltinMethod(TYPE_ID_NONE, "sub", std::vector<TypeId>{TYPE_ID_FLOAT}, TYPE_ID_FLOAT, builtin_fn_sub_float);
+	AddBuiltinMethod(TYPE_ID_NONE, "sub", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_FLOAT, builtin_fn_sub_int);
 
-	AddBuiltinMethod("mul", std::vector<TypeId>{TYPE_ID_FLOAT}, TYPE_ID_FLOAT, builtin_fn_mul_float);
+	AddBuiltinMethod(TYPE_ID_NONE, "mul", std::vector<TypeId>{TYPE_ID_FLOAT}, TYPE_ID_FLOAT, builtin_fn_mul_float);
 
-	AddBuiltinMethod("div", std::vector<TypeId>{TYPE_ID_FLOAT}, TYPE_ID_FLOAT, builtin_fn_div_float);
+	AddBuiltinMethod(TYPE_ID_NONE, "div", std::vector<TypeId>{TYPE_ID_FLOAT}, TYPE_ID_FLOAT, builtin_fn_div_float);
 
-	AddBuiltinMethod("mod", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT, builtin_fn_mod_int);
+	AddBuiltinMethod(TYPE_ID_NONE, "mod", std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT, builtin_fn_mod_int);
 }

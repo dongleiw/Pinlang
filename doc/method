@@ -1,0 +1,26 @@
+方法重名:
+	名字相同参数相同的函数, 如果属于相同的restriction则冲突, 如果不属于相同restriction则不冲突
+
+	// 不冲突. 但调用时必须显式指定
+	// f.print 
+	// f::Printable.print
+	class Foo{
+		fn print(){
+		}
+		impl restriction Printable{
+			fn print(){
+			}
+		}
+		impl restriction Display{
+			fn print(){
+			}
+		}
+	}
+
+	// 冲突
+	class Foo{
+		fn print(){
+		}
+		fn print(){
+		}
+	}

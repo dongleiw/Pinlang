@@ -1,0 +1,61 @@
+restriction是对类型的一组约束条件
+
+类型的方法:
+	在引入restriction之前, 类型的方法是平面的, 所有方法都处于相同层级. 名称相同参数不同的方法构成重载. 不允许出现名字相同参数相同的方法
+	但是在引入restriction之后, 上述逻辑出现了很大变化
+
+	1. 方法有了分类
+		一种是不属于任何restriction的方法
+		一种是为了实现restriction而引入的方法.
+	2. 名字相同参数相同的方法可以存在, 只要他们属于不同的restriction
+	3. 名字相同参数不同的方法不一定构成重载. 如果属于不同restriction, 则不构成重载. 如果属于相同restriction则构成重载
+	4. 由于不同restriction的方法可以重名, 这会加剧"方法名歧义"问题. 这可能会导致一些隐晦的bug
+		改名?
+
+	class Foo{
+		fn Bar(id int);
+		fn Bar();
+	}
+	f.Bar(1);
+	f.Bar();
+
+	class Foo{
+		restriction Cat{
+			fn Bar(id int);
+			fn Bar();
+		}
+	}
+	f.Cat::Bar(1);
+	f.Cat#Bar();
+
+	class Foo{
+		restriction Cat{
+			fn Bar(id int);
+			fn Bar();
+		}
+		restriction Dog{
+			fn Bar(id int);
+			fn Bar();
+		}
+	}
+	f.Bar(1); // ambiguous
+	f.Cat#Bar(1);
+	f.Dog#Bar();
+
+	class Foo{
+		fn Bar(id int);
+		fn Bar();
+		restriction Cat{
+			fn Bar(id int);
+			fn Bar();
+		}
+		restriction Dog{
+			fn Bar(id int);
+			fn Bar();
+		}
+	}
+	f.Bar(1);
+	f.Bar();
+
+	f.Cat#Bar(1);
+	f.Dog#Bar();

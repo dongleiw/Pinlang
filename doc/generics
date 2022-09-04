@@ -1,0 +1,140 @@
+######
+1. 定义restriction
+2. restriction需要支持类似继承的概念
+3. 多个restriction的相同方法的冲突处理
+4. 要不要支持给第三方库添加restriction?
+5. restriction是否支持属性? 是否支持默认函数实现?
+6. restriction和类型之间如何进行转换?
+	type也是restriction
+7. 如何利用restriction实现泛型?
+8. 如何实现restriction
+
+
+### 1. define restriction
+restriction restriction_name [ <T,...> ] [ : restriction_name, ... ] {
+	fn GetName() str;
+	fn GreatherThan(another T) bool;
+}
+
+restriction Empty{}
+
+restriction Printable{
+	fn ToString() str;
+}
+
+restriction Identify{
+	fn Id() int;
+}
+
+restriction Foo : Printable, Identify{}
+
+restriction GreatherThan<T>{
+	fn GreatherThan(another T) bool;
+}
+
+### 2. 如果把类型也视作restriction
+
+// 没啥用, 相当于Foo这个restriction唯一能接受的类型就是int
+restriction Foo : int{}
+
+// 没意义. Student类型如果是int, 那没啥用. 如果Student类型不是int, 那
+impl int for Student{}
+
+// 通过或得到一个新的restriction. 约束为"类型只能为int或者float"
+int | float
+
+// 定义一个restriction
+restriction Number : int | float{}
+
+var a Number = 1.1;
+
+// 有啥意义?
+impl Number for Student{}
+
+### 3. restriction作为类型
+
+restriction Foo{
+	fn ToString() str;	
+	fn GetId() int;
+}
+// Foo是一个restriction, 因此print函数其实是一个泛型, 可以接受满足Foo限定的类型作为参数
+fn print[T foo](f T){
+	printf("%d %s", f.GetId(), f.ToString());
+}
+// 那么有一个问题: 该函数调用时, f是什么类型?
+// 如果f的类型是Foo:
+//		也就是说restriction可以作为类型, 而不仅仅是约束. 这样的设计有些类似与一些编程语言中的interface, 不过是静态分发的
+// 如果f的类型是Student:
+//		虽然类型是Student, 但是只能使用restriction限定的方法
+// 两种选择的区别在于, 是否允许语法:
+//		var f Foo = Student{};
+print( Student{} );
+
+restriction name : GreatherThan, Equal{
+	fn GetName() str;
+}
+restriction{ {int,float} }
+GreatherThan & Equal
+
+######
+restriction GreatherThan<T>{
+	fn GreaterThan(another const T) bool;
+}
+restriction Equal<T>{
+	fn Equal(another const T) bool;
+}
+restriction Comparable <T> : GreaterThan,Equal{
+}
+
+// 内置类型自动实现一些预定义的restriction
+type Equal Stringify
+int GreatherThan Equal Comparable Stringify
+float GreatherThan Equal Comparable Stringify
+str GreatherThan Equal Comparable Stringify
+bool Equal Stringify
+
+// Student实现Comparable. 自动实现了Comparable包含的GreatherThan, Equal
+class Student{
+	fn Equal(another const Student) bool{
+		return this.score == another.score;
+	}
+	restriction Equal1[Student]{
+		fn Equal = Equal;
+	}
+	restriction Equal2[Student]{
+		fn Equal = Equal;
+	}
+	restriction Equal3[Student]{
+		fn Equal(another const Student) bool{
+			return this.id > another.id;
+		}
+	}
+}
+impl restriction Comparable[Student] for Student{
+	fn GreaterThan(another const Student) bool{
+		return this.score > another.score;
+	}
+	fn Equal(another const Student) bool{
+		return this.score == another.score;
+	}
+}
+fn max<T GreatherThan<T>>(a T, b T) T{
+	if(a>b)
+		return a;
+	else
+		return b;
+}
+
+fn max<T int>(a T, b T) T{}
+=> fn max(a int, b int) int{}
+
+int == restriction{{int}}
+
+fn max<T int | float>(a T, b T) T{}
+=> 
+	fn max(a int, b int) int{}
+	fn max(a float, b float) float{}
+
+var s1 = Student{score:90};
+var s2 = Student{score:70};
+max(s1, s2)

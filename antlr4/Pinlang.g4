@@ -47,12 +47,21 @@ stmt_return
 	: RETURN expr? ';'
 	;
 
+stmt_fn_declare
+	: FN Identifier L_PAREN parameter_list R_PAREN type? ';'
+	;
+
+stmt_restriction_def
+	: RESTRICTION Identifier L_CURLY stmt_fn_declare* R_CURLY
+	;
+
 statement
 	: expr ';'
 	| stmt_vardef
 	| stmt_fndef
 	| stmt_block
 	| stmt_return
+	| stmt_restriction_def
     ;
 
 literal
