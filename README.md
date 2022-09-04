@@ -35,6 +35,23 @@ fn sum(a int) int{
 // 调用函数
 var r1=sum(1,2); // call sum(int,int)int
 var r2=sum(3);   // call sum(int)int
+
+// 预定义的约束(没错,类似于Rust的trait)
+// int/float/str实现了该约束
+restriction Add[AnotherT,ReturnT]{
+    fn add(another AnotherT) ReturnT;
+}
+
+// 定义泛型函数. 没有使用<>, 而是用的[]. 避免语法歧义
+// 泛型参数T需要满足约束: Add[T,T]
+fn gsum[T Add[T,T]](a T, b T) T{
+    return a+b;
+}
+// 调用泛型函数
+var gri = gsum(1, 2);
+var grf = gsum(1.0, 2.9);
+var grs = gsum("hello", "world");
+
 ```
 
 ## 想法
@@ -47,3 +64,4 @@ var r2=sum(3);   // call sum(int)int
 * 2022-08-20 支持了函数执行
 * 2022-08-21 支持了函数重载 😄
 * 2022-08-28 支持str和float类型. 增加一个内置的printf函数输出
+* 2022-09-04 增加了约束和泛型函数, 泛型实现有点复杂, 目前的还非常非常简陋 😅
