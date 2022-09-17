@@ -20,27 +20,52 @@
  */
 class AstNodeGenericFnDef : public AstNode {
 public:
+	struct Instance {
+		std::vector<TypeId> gparams_tid;
+		std::string			instance_name;
+		Function*			fn;
+	};
+	// 推导结果
+	struct InstantiateParam {
+		std::map<std::string, TypeId> map_gparams_tid;
+		std::vector<TypeId>			  vec_gparams_tid;
+		std::vector<TypeId>			  params_tid;
+		TypeId						  return_tid;
+	};
+
+public:
 	AstNodeGenericFnDef(std::string fn_name, std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	/*
-	 * 根据参数和返回值来推导出泛型参数, 然后实例化, 然后添加到该泛型函数定义的相同block内
+	 * 根据参数和返回值来推导出泛型参数, 然后实例化出来
 	 */
-	std::string Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid);
+	Instance Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid);
+	/*
+	 * 根据函数类型来推导出泛型参数, 然后实例化出来
+	 */
+	Instance Instantiate(VerifyContext& ctx, TypeId tid);
 
 private:
 	/*
 	 * 根据实际的泛型类型实例化
 	 */
-	std::string instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_generic_params);
+	Instance instantiate(VerifyContext& ctx, InstantiateParam instantiate_param);
 
 	// 将实例添加到vt的合适位置
 	void add_instance_to_vt(VerifyContext& ctx, std::string name, Function* fn) const;
 	// 校验泛型的实际类型是否满足约束
-	void verify_constraint(VerifyContext& ctx, std::vector<TypeId> concrete_generic_params)const;
+	void verify_constraint(VerifyContext& ctx, std::vector<TypeId> concrete_generic_params) const;
 	void verify_body(VerifyContext& ctx);
+
+	bool get_instance(std::vector<TypeId> concrete_gparams, Instance* instance) const;
+
+	// 根据参数类型和返回类型推导
+	InstantiateParam infer_by_param_type_and_return_type(VerifyContext& ctx, std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid) const;
+	InstantiateParam infer_by_gparams(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
+	InstantiateParam infer_by_typeid(VerifyContext& ctx, TypeId tid) const;
 
 private:
 	std::string						m_fnname;
@@ -49,5 +74,6 @@ private:
 	AstNodeType*					m_return_type;
 	AstNodeBlockStmt*				m_body;
 
-	std::map<std::string, Function*> m_instances;
+	std::vector<Instance> m_instances;
+	//std::map<std::string, Function*> m_instances;
 };

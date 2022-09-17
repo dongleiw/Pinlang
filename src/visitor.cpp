@@ -2,44 +2,55 @@
 
 #include "astnode.h"
 #include "astnode_blockstmt.h"
+#include "astnode_constraint.h"
 #include "astnode_fncall.h"
 #include "astnode_fndef.h"
 #include "astnode_generic_fndef.h"
 #include "astnode_identifier.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
-#include "astnode_constraint.h"
 #include "astnode_return.h"
 #include "astnode_type.h"
 #include "astnode_vardef.h"
 #include "define.h"
 #include "log.h"
 #include "type.h"
-#include "type_fn.h"
-#include "type_virtual_gtype.h"
-#include "type_mgr.h"
 #include "type_constraint.h"
+#include "type_fn.h"
+#include "type_mgr.h"
+#include "type_virtual_gtype.h"
 #include "utils.h"
 #include <any>
 #include <ios>
 #include <memory>
 
-/*
- * 解析类型. 返回TypeId
- */
 std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
+	AstNodeType* r = new AstNodeType();
 	if (ctx->TYPE() != nullptr) {
-		AstNodeType* r = new AstNodeType();
 		r->InitWithType();
 		return r;
 	} else if (ctx->Identifier() != nullptr) {
-		AstNodeType* r = new AstNodeType();
 		r->InitWithIdentifier(ctx->Identifier()->getText());
+		return r;
+	} else if (ctx->FN() != nullptr) {
+		std::vector<ParserParameter> params		 = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
+		AstNodeType*				 return_type = nullptr;
+		if (ctx->type() != nullptr) {
+			return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+		}
+		r->InitWithFn(params, return_type);
 		return r;
 	} else {
 		panicf("unknown type");
 	}
 	return nullptr;
+}
+std::any Visitor::visitType_list(PinlangParser::Type_listContext* ctx) {
+	std::vector<AstNodeType*> type_list;
+	for (auto iter : ctx->type()) {
+		type_list.push_back(std::any_cast<AstNodeType*>(iter->accept(this)));
+	}
+	return type_list;
 }
 std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalContext* ctx) {
 	auto literal = ctx->literal();

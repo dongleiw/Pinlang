@@ -1,6 +1,7 @@
 #include "astnode_identifier.h"
 #include "astnode_generic_fndef.h"
 #include "define.h"
+#include "function.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -27,17 +28,18 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx) {
 				// 父节点传递过来了函数调用的参数类型
 				// 这说明该变量是函数
 				// 根据参数类型和结果类型来实例化
-				std::string uniq_fnname = astnode_generic_fndef->Instantiate(ctx, vc_param.GetFnCallArgs(), vc_param.GetResultTid());
-				Variable*	v			= ctx.GetCurStack()->GetVariableOrNull(uniq_fnname);
-				if (v == nullptr) {
-					panicf("var[%s] uniq_fnname[%s] not exist", m_id.c_str(), uniq_fnname.c_str());
-				}
-				log_info("change varname[%s] => [%s]", m_id.c_str(), uniq_fnname.c_str());
-				m_id			= uniq_fnname;
-				m_result_typeid = v->GetTypeId();
+				AstNodeGenericFnDef::Instance instance = astnode_generic_fndef->Instantiate(ctx, vc_param.GetFnCallArgs(), vc_param.GetResultTid());
+				log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
+				m_id			= instance.instance_name;
+				m_result_typeid = instance.fn->GetTypeId();
 			} else if (vc_param.GetResultTid() != TYPE_ID_INFER) {
 				// 父节点传递过来了期望的结果类型
 				// 使用该类型来选择合适的函数重载
+				AstNodeGenericFnDef::Instance instance = astnode_generic_fndef->Instantiate(ctx, vc_param.GetResultTid());
+				log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
+				m_id			= instance.instance_name;
+				m_result_typeid = instance.fn->GetTypeId();
+
 			} else {
 				panicf("bug");
 			}

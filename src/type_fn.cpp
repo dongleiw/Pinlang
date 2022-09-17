@@ -5,8 +5,8 @@
 #include <functional>
 
 TypeInfoFn::TypeInfoFn(std::vector<TypeId> params, TypeId return_tid) {
-	m_params		   = params;
-	m_return_tid	   = return_tid;
+	m_params	 = params;
+	m_return_tid = return_tid;
 	set_name();
 	//set_uniq_fn_name_suffix();
 	m_typegroup_id = TYPE_GROUP_ID_FUNCTION;
@@ -19,7 +19,7 @@ std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> co
 	char		buf[8];
 	for (size_t i = 0; i < concrete_generic_params.size(); i++) {
 		snprintf(buf, sizeof(buf), "%d", concrete_generic_params.at(i));
-		s += buf;
+		s = s + buf + ":" + GET_TYPENAME(concrete_generic_params.at(i));
 		if (i + 1 != concrete_generic_params.size()) {
 			s += ",";
 		}
@@ -27,7 +27,7 @@ std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> co
 	s += "](";
 	for (size_t i = 0; i < params_tid.size(); i++) {
 		snprintf(buf, sizeof(buf), "%d", params_tid.at(i));
-		s += buf;
+		s = s + buf + ":" + GET_TYPENAME(params_tid.at(i));
 		if (i + 1 != params_tid.size()) {
 			s += ",";
 		}

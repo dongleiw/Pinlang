@@ -4,13 +4,18 @@ import Pinlang_lex;
 type
     : TYPE
 	| Identifier
+	| FN L_PAREN parameter_list R_PAREN type?
+	;
+
+type_list
+	: type (',' type)*
 	;
 
 expr_primary
-    : literal											# expr_primary_literal
-    | Identifier										# expr_primary_identifier
-    | L_PAREN expr R_PAREN								# expr_primary_parens
-	| expr_primary L_PAREN expr_list R_PAREN			# expr_primary_fncall
+    : literal                                           # expr_primary_literal
+    | Identifier                                        # expr_primary_identifier
+    | L_PAREN expr R_PAREN                              # expr_primary_parens
+	| expr_primary L_PAREN expr_list R_PAREN            # expr_primary_fncall
 	;
 
 expr_list
@@ -65,7 +70,7 @@ identifier_list: Identifier (',' Identifier)* ;
 ///// constraint
 constraint_generic_params: L_BRACKET identifier_list R_BRACKET ;
 stmt_constraint_def
-	: RESTRICTION Identifier constraint_generic_params? L_CURLY stmt_fn_declare* R_CURLY
+	: CONSTRAINT Identifier constraint_generic_params? L_CURLY stmt_fn_declare* R_CURLY
 	;
 
 statement

@@ -1,4 +1,3 @@
-######
 1. 什么是泛型? 为什么需要泛型?
 	泛型字面意思就是泛化的类型. 一般的逻辑(函数/方法)是和具体类型绑定的, 这种函数(方法)只能接受明确的类型. 但是一些逻辑可以作用于多种类型, 只要类型满足某些约束条件. 
 	比如以下两个函数. 逻辑都是求两个参数的和. 
@@ -31,6 +30,14 @@
 		* 类型名
 		* 提供的字段属性
 	
+	多个constraint的相同方法的冲突问题
+		在引入constraint之前, 类型的方法是平面的, 所有方法都处于相同层级. 名称相同参数不同的方法构成重载. 名字相同参数相同的方法构成冲突
+		但是在引入constraint之后, 方法有了层级:
+			一种是不属于任何constraint的方法
+			一种是为了实现constraint而引入的方法.
+		这种情况下, 函数重载和冲突逻辑如何判定? 不同constraint的相同函数如何处理? 判定为冲突, 还是允许存在?
+
+		
 	约束和类型的关系:
 		类型是对值的限定. 
 			比如值'1'是int类型, 那么'1'大小为4byte, 有方法add/sub/mul/div/mod等方法
@@ -47,19 +54,19 @@
 			fn add(another AnotherT) ReturnT;
 		}
 		
-	内置类型自动实现一些预定义的restriction
+	内置类型自动实现一些预定义的constraint
 		int: Add Sub Mul Div Mod Strinfiy
 		float: Add Sub Mul Div Strinfiy
 		str: Add Strinfiy
 		bool: Strinfiy
 
 	问题:
-		是否支持字段属性? 
+		是否支持字段属性限定?
+		是否支持编译期常量表达式限定?
 		是否支持默认函数实现?
-		如何处理多个restriction的相同方法的冲突问题?
 		约束如何复用(继承?)
-		要不要支持给第三方库添加restriction?
-		如何实现restriction?
+		要不要支持给第三方库添加constraint?
+		如何实现constraint?
 
 
 3. 泛型函数

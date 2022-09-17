@@ -17,6 +17,11 @@ void AstNodeType::InitWithIdentifier(std::string id) {
 	m_type_kind = TYPE_KIND_IDENTIFIER;
 	m_id		= id;
 }
+void AstNodeType::InitWithFn(std::vector<ParserParameter> params, AstNodeType* return_type) {
+	m_type_kind		 = TYPE_KIND_FN;
+	m_fn_params		 = params;
+	m_fn_return_type = return_type;
+}
 
 /*
  * 调用函数
@@ -33,6 +38,21 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx) {
 		//vr.SetResultTypeId(ctx.GetCurStack()->GetVariableType(m_id));
 		Variable* v = ctx.GetCurStack()->GetVariable(m_id);
 		vr.SetResultTypeId(v->GetValueTid());
+		break;
+	}
+	case TYPE_KIND_FN:
+	{
+		std::vector<TypeId> fn_params_tid;
+		for (auto iter : m_fn_params) {
+			fn_params_tid.push_back(iter.type->Verify(ctx).GetResultTypeId());
+		}
+		TypeId fn_return_tid = TYPE_ID_NONE;
+		if (m_fn_return_type != nullptr) {
+			fn_return_tid = m_fn_return_type->Verify(ctx).GetResultTypeId();
+		}
+
+		TypeId fn_tid = g_typemgr.GetOrAddTypeFn(fn_params_tid, fn_return_tid);
+		vr.SetResultTypeId(fn_tid);
 		break;
 	}
 	default:

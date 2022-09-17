@@ -32,7 +32,7 @@ PRIVATE		: 'private';
 PROTECTED	: 'protected';
 STATIC		: 'static';
 CONST       : 'const';
-RESTRICTION : 'restriction';
+CONSTRAINT  : 'constraint';
 
 // Relation operators
 EQUALS                 : '==';

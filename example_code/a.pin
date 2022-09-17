@@ -1,15 +1,24 @@
 var a int =1+1;
 
-restriction MyRestriction{
+constraint MyConstraint{
 	fn print(s str);
 }
 
-fn sum[T Add[T,T]](a T, b T) T{
+fn gsum[T Add[T,T]](a T, b T) T{
 	return a+b;
 }
 
-var si = sum(1, 2);
-var sf = sum(1.1, 2.3);
-var ss = sum("hello", "world");
+fn sum(a int, b int) int{
+	return a+b;
+}
 
-//var f sum(int,int)int = sum;
+var si = gsum(1, 2);
+var si2 = gsum(1, 2);
+var sf = gsum(1.1, 2.3);
+var ss = gsum("hello", "world");
+
+var gf fn(int,int)int = gsum;
+var gfr = gf(1,9);
+
+var f fn(int,int)int = sum;
+var fr = f(1,2);

@@ -3,11 +3,11 @@
 #include "define.h"
 #include "log.h"
 #include "type.h"
+#include "type_constraint.h"
 #include "type_float.h"
 #include "type_fn.h"
 #include "type_int.h"
 #include "type_mgr.h"
-#include "type_constraint.h"
 #include "type_str.h"
 #include "type_type.h"
 #include "verify_context.h"
@@ -110,5 +110,13 @@ TypeId TypeMgr::AddTypeInfo(TypeInfo* ti) {
 	return add_type(ti);
 }
 TypeId TypeMgr::GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid) {
+	for (const auto ti : m_typeinfos) {
+		if (ti->IsFn()) {
+			const TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(ti);
+			if (tifn->IsArgsTypeEqual(params) && tifn->GetReturnTypeId() == return_tid) {
+				return tifn->GetTypeId();
+			}
+		}
+	}
 	return add_type(new TypeInfoFn(params, return_tid));
 }
