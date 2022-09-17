@@ -49,3 +49,10 @@ Variable* AstNodeLiteral::Execute(ExecuteContext& ctx) {
 		break;
 	}
 }
+AstNodeLiteral*	 AstNodeLiteral::DeepCloneT(){
+	AstNodeLiteral* newone = new AstNodeLiteral();
+
+	*newone = *this;
+
+	return newone;
+}

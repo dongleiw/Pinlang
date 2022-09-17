@@ -67,3 +67,7 @@ Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
 		return v->GetMethodValue(m_method_idx);
 	}
 }
+AstNodeAccessAttr* AstNodeAccessAttr::DeepCloneT(){
+	AstNodeAccessAttr* newone = new AstNodeAccessAttr(m_obj_expr->DeepClone(), m_attr_name);
+	return newone;
+}

@@ -2,14 +2,31 @@
 #include "define.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "variable.h"
 #include "variable_table.h"
 #include "verify_context.h"
 
 #include "log.h"
 VerifyContextResult Function::Verify(VerifyContext& ctx) {
 	VerifyContextResult vr;
-	if (m_body == nullptr)
+	if (m_body != nullptr) {
+		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_typeid));
+
+		VariableTable* params_vt = new VariableTable();
+		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
+			params_vt->AddVariable(m_params_name.at(i), new Variable(tifn->GetParamType(i)));
+		}
+
+		ctx.PushStack();
+		ctx.GetCurStack()->EnterBlock(params_vt);
+
+		ctx.GetParam().Clear();
+		ctx.GetParam().SetReturnTid(tifn->GetReturnTypeId());
+		m_body->Verify(ctx);
+
+		ctx.PopSTack();
 		return vr;
+	}
 	panicf("not implemented yet");
 }
 bool Function::VerifyArgsType(std::vector<TypeId> args_type) const {

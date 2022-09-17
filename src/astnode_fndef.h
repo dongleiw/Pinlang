@@ -21,6 +21,12 @@ public:
 	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
+	virtual AstNode* DeepClone() override { return DeepCloneT(); }
+	AstNodeFnDef*	 DeepCloneT();
+
+private:
+	AstNodeFnDef() {}
+
 private:
 	std::string					 m_fnname;
 	std::vector<ParserParameter> m_params;

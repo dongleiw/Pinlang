@@ -17,8 +17,11 @@ class AstNodeOperator : public AstNode {
 public:
 	AstNodeOperator(AstNode* left_expr, std::string constraint_name, std::string op, AstNode* right_expr);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx);
-	virtual Variable*			Execute(ExecuteContext& ctx);
+	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual Variable*			Execute(ExecuteContext& ctx) override;
+
+	AstNodeOperator* DeepCloneT();
+	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 
 private:
 	AstNode*	m_left_expr;

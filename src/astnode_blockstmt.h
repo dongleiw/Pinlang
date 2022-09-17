@@ -17,10 +17,14 @@ class AstNodeBlockStmt : public AstNode {
 public:
 	AstNodeBlockStmt(const std::vector<AstNode*>& stmts);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx);
-	virtual Variable*			Execute(ExecuteContext& ctx);
+	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	void AddPreDefine(AstNodeBlockStmt& another);
+
+	virtual AstNode*  DeepClone() override { return DeepCloneT(); }
+	AstNodeBlockStmt* DeepCloneT();
+
 private:
 	std::vector<AstNode*> m_predefine_stmts;
 	std::vector<AstNode*> m_stmts;

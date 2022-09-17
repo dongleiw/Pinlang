@@ -12,10 +12,10 @@
 #include <vector>
 
 AstNodeOperator::AstNodeOperator(AstNode* left_expr, std::string constraint_name, std::string op, AstNode* right_expr) {
-	m_left_expr		   = left_expr;
+	m_left_expr		  = left_expr;
 	m_constraint_name = constraint_name;
-	m_op			   = op;
-	m_right_expr	   = right_expr;
+	m_op			  = op;
+	m_right_expr	  = right_expr;
 
 	m_left_expr->SetParent(this);
 	m_right_expr->SetParent(this);
@@ -46,7 +46,7 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 			method_idx = ti->GetMethodIdx(m_op, args_tid);
 		} else {
 			TypeId constraint_tid = ctx.GetCurStack()->GetVariableType(m_constraint_name);
-			method_idx			   = ti->GetMethodIdx(constraint_tid, m_op, args_tid);
+			method_idx			  = ti->GetMethodIdx(constraint_tid, m_op, args_tid);
 		}
 		if (!method_idx.IsValid()) {
 			panicf("type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left, ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
@@ -75,4 +75,8 @@ Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
 	Variable* result = left_v->CallMethod(ctx, m_method_idx, args);
 	log_debug("%s.%s(%s)=>%s", left_v->ToString().c_str(), m_op.c_str(), right_v->ToString().c_str(), result->ToString().c_str());
 	return result;
+}
+AstNodeOperator* AstNodeOperator::DeepCloneT() {
+	AstNodeOperator* newone = new AstNodeOperator(m_left_expr->DeepClone(), m_constraint_name, m_op, m_right_expr->DeepClone());
+	return newone;
 }

@@ -19,6 +19,12 @@ public:
 	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
+	virtual AstNode* DeepClone() override { return DeepCloneT(); }
+	AstNodeFnCall*	 DeepCloneT();
+
+private:
+	AstNodeFnCall() {}
+
 private:
 	AstNode*			  m_fn_expr;
 	std::vector<AstNode*> m_args;

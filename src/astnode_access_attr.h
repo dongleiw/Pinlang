@@ -18,8 +18,11 @@ class AstNodeAccessAttr : public AstNode {
 public:
 	AstNodeAccessAttr(AstNode* obj_expr, std::string attr_name);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx);
-	virtual Variable*			Execute(ExecuteContext& ctx);
+	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual Variable*			Execute(ExecuteContext& ctx) override;
+
+	AstNodeAccessAttr* DeepCloneT();
+	virtual AstNode*  DeepClone() override { return DeepCloneT(); }
 
 private:
 	AstNode*	m_obj_expr;

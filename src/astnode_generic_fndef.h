@@ -7,11 +7,11 @@
 #include "astnode_type.h"
 #include "define.h"
 #include "execute_context.h"
+#include "function_obj.h"
 #include "type.h"
 #include "type_fn.h"
 #include "variable.h"
 #include "verify_context.h"
-#include "function_obj.h"
 
 /*
  * 泛型函数定义
@@ -40,6 +40,9 @@ public:
 	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
+	virtual AstNode*	 DeepClone() override { return DeepCloneT(); }
+	AstNodeGenericFnDef* DeepCloneT();
+
 	/*
 	 * 根据参数和返回值来推导出泛型参数, 然后实例化出来
 	 */
@@ -54,6 +57,7 @@ public:
 	Instance Instantiate(VerifyContext& ctx, std::vector<TypeId> gparams_tid);
 
 private:
+	AstNodeGenericFnDef() {}
 	/*
 	 * 根据实际的泛型类型实例化
 	 */
@@ -71,6 +75,8 @@ private:
 	InstantiateParam infer_by_param_type_and_return_type(VerifyContext& ctx, std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid) const;
 	InstantiateParam infer_by_gparams(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
 	InstantiateParam infer_by_typeid(VerifyContext& ctx, TypeId tid) const;
+
+	bool is_generic_param(std::string name)const;
 
 private:
 	std::string						m_fnname;

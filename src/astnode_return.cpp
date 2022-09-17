@@ -7,7 +7,7 @@
 AstNodeReturn::AstNodeReturn(AstNode* returned_expr) {
 	m_returned_expr = returned_expr;
 
-	if(m_returned_expr!=nullptr){
+	if (m_returned_expr != nullptr) {
 		m_returned_expr->SetParent(this);
 	}
 }
@@ -33,4 +33,12 @@ VerifyContextResult AstNodeReturn::Verify(VerifyContext& ctx) {
 Variable* AstNodeReturn::Execute(ExecuteContext& ctx) {
 	ctx.GetCurStack()->SetReturnedValue(m_returned_expr->Execute(ctx));
 	return nullptr;
+}
+AstNodeReturn* AstNodeReturn::DeepCloneT() {
+	AstNodeReturn* newone = new AstNodeReturn();
+
+	if (m_returned_expr != nullptr)
+		newone->m_returned_expr = m_returned_expr->DeepClone();
+
+	return newone;
 }

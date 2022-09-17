@@ -17,7 +17,10 @@ public:
 	void SetParent(AstNode* parent) { m_parent = parent; }
 	const AstNode* GetParent() const { return m_parent; }
 
+	virtual AstNode* DeepClone() = 0;
 protected:
 	TypeId	 m_result_typeid;
 	AstNode* m_parent;
 };
+
+#define M_DEEP_CLONE(node, type) (node==nullptr? nullptr: dynamic_cast<type>(node->DeepClone()))

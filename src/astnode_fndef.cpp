@@ -1,4 +1,5 @@
 #include "astnode_fndef.h"
+#include "astnode.h"
 #include "astnode_blockstmt.h"
 #include "astnode_type.h"
 #include "define.h"
@@ -83,4 +84,15 @@ Variable* AstNodeFnDef::Execute(ExecuteContext& ctx) {
 	FunctionObj fnobj = FunctionObj(nullptr, fn);
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fnobj));
 	return nullptr;
+}
+AstNodeFnDef* AstNodeFnDef::DeepCloneT() {
+	AstNodeFnDef* newone = new AstNodeFnDef();
+	newone->m_fnname	 = m_fnname;
+	for (auto iter : m_params) {
+		newone->m_params.push_back(iter.DeepClone());
+	}
+	if (m_return_type != nullptr)
+		newone->m_return_type = m_return_type->DeepCloneT();
+	newone->m_body = m_body->DeepCloneT();
+	return newone;
 }

@@ -51,6 +51,8 @@ AstNodeGenericFnDef::InstantiateParam AstNodeGenericFnDef::infer_by_param_type_a
 	for (size_t i = 0; i < concrete_params_tid.size(); i++) {
 		TypeId param_tid = concrete_params_tid.at(i);
 		for (auto infer : m_params.at(i).type->InferType(param_tid)) {
+			if (!is_generic_param(infer.first))
+				continue;
 			auto found = infer_result.map_gparams_tid.find(infer.first);
 			if (found == infer_result.map_gparams_tid.end()) {
 				infer_result.map_gparams_tid[infer.first] = infer.second;
@@ -65,6 +67,8 @@ AstNodeGenericFnDef::InstantiateParam AstNodeGenericFnDef::infer_by_param_type_a
 	// 根据返回值类型推断
 	if (m_return_type != nullptr && concrete_return_tid != TYPE_ID_INFER) {
 		for (auto infer : m_return_type->InferType(concrete_return_tid)) {
+			if (!is_generic_param(infer.first))
+				continue;
 			auto found = infer_result.map_gparams_tid.find(infer.first);
 			if (found == infer_result.map_gparams_tid.end()) {
 				infer_result.map_gparams_tid[infer.first] = infer.second;
@@ -244,8 +248,10 @@ AstNodeGenericFnDef::Instance AstNodeGenericFnDef::instantiate(VerifyContext& ct
 	instance.gparams_tid   = instantiate_param.vec_gparams_tid;
 	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instantiate_param.vec_gparams_tid, instantiate_param.params_tid);
 	TypeId	  fn_tid	   = g_typemgr.GetOrAddTypeFn(instantiate_param.params_tid, instantiate_param.return_tid);
-	Function* fn		   = new Function(fn_tid, params_name, m_body);
+	Function* fn		   = new Function(fn_tid, params_name, m_body->DeepCloneT());
 	instance.fnobj		   = FunctionObj(nullptr, fn);
+
+	fn->Verify(ctx);
 
 	m_instances.push_back(instance);
 	add_instance_to_vt(ctx, instance.instance_name, instance.fnobj);
@@ -318,4 +324,27 @@ void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
 AstNodeGenericFnDef::Instance AstNodeGenericFnDef::Instantiate(VerifyContext& ctx, std::vector<TypeId> gparams_tid) {
 	InstantiateParam instantiate_param = infer_by_gparams(ctx, gparams_tid);
 	return instantiate(ctx, instantiate_param);
+}
+AstNodeGenericFnDef* AstNodeGenericFnDef::DeepCloneT() {
+	AstNodeGenericFnDef* newone = new AstNodeGenericFnDef();
+
+	newone->m_fnname = m_fnname;
+	for (auto iter : m_generic_params) {
+		newone->m_generic_params.push_back(iter.DeepClone());
+	}
+	for (auto iter : m_params) {
+		newone->m_params.push_back(iter.DeepClone());
+	}
+	if (m_return_type != nullptr)
+		newone->m_return_type = m_return_type->DeepCloneT();
+	newone->m_body = m_body->DeepCloneT();
+
+	return newone;
+}
+bool AstNodeGenericFnDef::is_generic_param(std::string name) const {
+	for (auto iter : m_generic_params) {
+		if (iter.type_name == name)
+			return true;
+	}
+	return false;
 }

@@ -32,12 +32,17 @@ public:
 	 */
 	AstNodeConstraint(std::string name, std::vector<std::string> generic_params, std::vector<ParserFnDeclare> rules);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx);
-	virtual Variable*			Execute(ExecuteContext& ctx);
+	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual Variable*			Execute(ExecuteContext& ctx) override;
+
+	virtual AstNode*   DeepClone() override { return DeepCloneT(); }
+	AstNodeConstraint* DeepCloneT();
 
 	bool   HasGenericParam() const { return !m_generic_params.empty(); }
 	TypeId Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params) const;
 
+private:
+	AstNodeConstraint(){}
 private:
 	std::string					 m_name;
 	std::vector<std::string>	 m_generic_params;

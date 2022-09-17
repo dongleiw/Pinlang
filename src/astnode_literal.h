@@ -12,10 +12,14 @@ public:
 	AstNodeLiteral(float value);
 	AstNodeLiteral(std::string value);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx);
-	virtual Variable*			Execute(ExecuteContext& ctx);
-	//virtual Variable*			GetConstantValue();
+	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
+	virtual AstNode* DeepClone() override { return DeepCloneT(); }
+	AstNodeLiteral*	 DeepCloneT();
+
+private:
+	AstNodeLiteral(){}
 private:
 	int			m_value_int;
 	float		m_value_float;

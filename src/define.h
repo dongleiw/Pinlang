@@ -52,6 +52,8 @@ class AstNodeType;
 struct ParserParameter {
 	std::string	 name; // 参数名. 为空代表未指定
 	AstNodeType* type; // 参数类型
+
+	ParserParameter DeepClone();
 };
 /*
  * parse得到的函数声明
@@ -60,14 +62,18 @@ struct ParserFnDeclare {
 	std::string					 fnname;
 	std::vector<ParserParameter> param_list;
 	AstNodeType*				 return_type;
+
+	ParserFnDeclare DeepClone();
 };
 /*
  * parse得到的泛型参数信息. 包括类型名字, 约束
  */
 struct ParserGenericParam {
 	std::string				  type_name;				 // 泛型的名字. 不可为空
-	std::string				  constraint_name;			 // 约束的名字
+	std::string				  constraint_name;			 // 约束的名字. 可能为空
 	std::vector<AstNodeType*> constraint_generic_params; // 约束的参数. 可能为空
+
+	ParserGenericParam DeepClone();
 };
 
 /*

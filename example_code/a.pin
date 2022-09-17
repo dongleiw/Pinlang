@@ -1,11 +1,10 @@
-// 
-// fn print[T ToString](a T){
-// 	printf("%s\n", a.tostring());
-// }
-// 
-// print(1);
-// print(1.3);
-// print("hello");
+ fn print[T ToString](fmt str, a T){
+ 	printf(fmt, a.tostring());
+ }
+ 
+ print("int %s\n", 1);
+ print("float %s\n", 1.3);
+ print("str %s\n", "hello");
 
 // 泛型函数
 {

@@ -66,3 +66,15 @@ Variable* AstNodeVarDef::Execute(ExecuteContext& ctx) {
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_varname, v);
 	return nullptr;
 }
+AstNodeVarDef* AstNodeVarDef::DeepCloneT() {
+	AstNodeVarDef* newone = new AstNodeVarDef();
+
+	newone->m_varname = m_varname;
+	if(m_declared_type!=nullptr)
+		newone->m_declared_type = m_declared_type->DeepCloneT();
+	if(m_init_expr!=nullptr)
+		newone->m_init_expr = m_init_expr->DeepClone();
+	newone->m_is_const = m_is_const;
+
+	return newone;
+}

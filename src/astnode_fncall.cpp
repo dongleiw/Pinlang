@@ -51,3 +51,13 @@ Variable* AstNodeFnCall::Execute(ExecuteContext& ctx) {
 	}
 	return fnobj.Call(ctx, args);
 }
+AstNodeFnCall* AstNodeFnCall::DeepCloneT() {
+	AstNodeFnCall* newone = new AstNodeFnCall();
+
+	newone->m_fn_expr = m_fn_expr->DeepClone();
+	for (auto iter : m_args) {
+		newone->m_args.push_back(iter->DeepClone());
+	}
+
+	return newone;
+}

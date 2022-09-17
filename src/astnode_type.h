@@ -33,6 +33,8 @@ public:
 
 	std::map<std::string, TypeId> InferType(TypeId target_tid) const;
 
+	virtual AstNode*  DeepClone() override { return DeepCloneT(); }
+	AstNodeType* DeepCloneT();
 private:
 	TypeKind					 m_type_kind;
 	std::string					 m_id;

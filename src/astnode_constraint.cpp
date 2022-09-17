@@ -80,3 +80,14 @@ TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> co
 	log_debug("instantiate constraint[%s]: name=%s typeid=%d", m_name.c_str(), uniq_constraint_name.c_str(), constraint_tid);
 	return constraint_tid;
 }
+AstNodeConstraint* AstNodeConstraint::DeepCloneT(){
+	AstNodeConstraint* newone = new AstNodeConstraint();
+
+	newone->m_name = m_name;
+	newone->m_generic_params = m_generic_params;
+	for(auto iter:m_rules){
+		newone->m_rules.push_back(iter.DeepClone());
+	}
+
+	return newone;
+}

@@ -38,3 +38,13 @@ VerifyContextResult AstNodeGenericInstantiate::Verify(VerifyContext& ctx) {
 Variable* AstNodeGenericInstantiate::Execute(ExecuteContext& ctx) {
 	return ctx.GetCurStack()->GetVariable(m_instance_name);
 }
+AstNodeGenericInstantiate* AstNodeGenericInstantiate::DeepCloneT(){
+	AstNodeGenericInstantiate * newone = new AstNodeGenericInstantiate();
+
+	newone->m_generic_name = m_generic_name;
+	for(auto iter:m_type_list){
+		newone->m_type_list.push_back(iter->DeepCloneT());
+	}
+
+	return newone;
+}

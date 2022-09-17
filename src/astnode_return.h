@@ -16,8 +16,14 @@ class AstNodeReturn : public AstNode {
 public:
 	AstNodeReturn(AstNode* returned_expr);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx)override;
-	virtual Variable*			Execute(ExecuteContext& ctx)override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual Variable*			Execute(ExecuteContext& ctx) override;
+
+	virtual AstNode* DeepClone() override { return DeepCloneT(); }
+	AstNodeReturn*	 DeepCloneT();
+
+private:
+	AstNodeReturn() {}
 
 private:
 	AstNode* m_returned_expr;

@@ -86,3 +86,6 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx) {
 Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 	return ctx.GetCurStack()->GetVariable(m_id);
 }
+AstNodeIdentifier* AstNodeIdentifier::DeepCloneT(){
+	return new AstNodeIdentifier(m_id);
+}

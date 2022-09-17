@@ -79,3 +79,18 @@ std::map<std::string, TypeId> AstNodeType::InferType(TypeId target_tid) const {
 		break;
 	}
 }
+AstNodeType* AstNodeType::DeepCloneT(){
+	AstNodeType* newone = new AstNodeType();
+
+	newone->m_type_kind = m_type_kind;
+	newone->m_id = m_id;
+
+	for(auto iter:m_fn_params){
+		newone->m_fn_params.push_back(iter.DeepClone());
+	}
+	if(m_fn_return_type){
+		newone->m_fn_return_type = m_fn_return_type->DeepCloneT();
+	}
+
+	return newone;
+}
