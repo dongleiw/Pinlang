@@ -16,7 +16,7 @@ class AstNodeVarDef : public AstNode {
 public:
 	AstNodeVarDef(std::string var_name, AstNodeType* declared_type, AstNode* init_expr, bool is_const);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }

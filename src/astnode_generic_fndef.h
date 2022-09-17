@@ -37,7 +37,7 @@ public:
 public:
 	AstNodeGenericFnDef(std::string fn_name, std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	virtual AstNode*	 DeepClone() override { return DeepCloneT(); }
@@ -76,7 +76,7 @@ private:
 	InstantiateParam infer_by_gparams(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
 	InstantiateParam infer_by_typeid(VerifyContext& ctx, TypeId tid) const;
 
-	bool is_generic_param(std::string name)const;
+	bool is_generic_param(std::string name) const;
 
 private:
 	std::string						m_fnname;

@@ -14,10 +14,10 @@ AstNodeAccessAttr::AstNodeAccessAttr(AstNode* obj_expr, std::string attr_name) {
 	m_attr_name = attr_name;
 	m_obj_expr->SetParent(this);
 }
-VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify access attr[%s]", m_attr_name.c_str());
 
-	VerifyContextResult vr_expr = m_obj_expr->Verify(ctx);
+	VerifyContextResult vr_expr = m_obj_expr->Verify(ctx, VerifyContextParam());
 	TypeId				obj_tid = vr_expr.GetResultTypeId();
 	TypeInfo*			ti		= g_typemgr.GetTypeInfo(obj_tid);
 	if (ti->HasField(m_attr_name)) {
@@ -27,23 +27,22 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx) {
 	} else {
 		m_is_field = false;
 		// 是方法
-		const VerifyContextParam vc_param = ctx.GetParam();
-		if (vc_param.HasFnCallArgs()) {
+		if (vparam.HasFnCallArgs()) {
 			// 父节点传递过来了函数调用的参数类型
 			// 这说明该变量是函数
 			// 根据参数类型和结果类型来选择
-			MethodIndex method_idx = ti->GetMethodIdx(m_attr_name, vc_param.GetFnCallArgs());
+			MethodIndex method_idx = ti->GetMethodIdx(m_attr_name, vparam.GetFnCallArgs());
 			if (!method_idx.IsValid()) {
-				panicf("type[%d:%s] doesn't have method[%s] with args[%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), g_typemgr.GetTypeName(vc_param.GetFnCallArgs()).c_str());
+				panicf("type[%d:%s] doesn't have method[%s] with args[%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), g_typemgr.GetTypeName(vparam.GetFnCallArgs()).c_str());
 			}
 			m_method_idx	= method_idx;
 			m_result_typeid = ti->GetMethodByIdx(method_idx)->GetTypeId();
-		} else if (vc_param.GetResultTid() != TYPE_ID_INFER) {
+		} else if (vparam.GetResultTid() != TYPE_ID_INFER) {
 			// 父节点传递过来了期望的结果类型
 			// 使用该类型来选择合适的函数重载
-			MethodIndex method_idx = ti->GetMethodIdx(m_attr_name, vc_param.GetResultTid());
+			MethodIndex method_idx = ti->GetMethodIdx(m_attr_name, vparam.GetResultTid());
 			if (!method_idx.IsValid()) {
-				panicf("type[%d:%s] doesn't have method[%s] of type[%d:%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), vc_param.GetResultTid(), GET_TYPENAME_C(vc_param.GetResultTid()));
+				panicf("type[%d:%s] doesn't have method[%s] of type[%d:%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), vparam.GetResultTid(), GET_TYPENAME_C(vparam.GetResultTid()));
 			}
 			m_method_idx	= method_idx;
 			m_result_typeid = ti->GetMethodByIdx(method_idx)->GetTypeId();
@@ -67,7 +66,7 @@ Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
 		return v->GetMethodValue(m_method_idx);
 	}
 }
-AstNodeAccessAttr* AstNodeAccessAttr::DeepCloneT(){
+AstNodeAccessAttr* AstNodeAccessAttr::DeepCloneT() {
 	AstNodeAccessAttr* newone = new AstNodeAccessAttr(m_obj_expr->DeepClone(), m_attr_name);
 	return newone;
 }

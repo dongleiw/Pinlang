@@ -23,19 +23,17 @@ AstNodeVarDef::AstNodeVarDef(std::string var_name, AstNodeType* declared_type, A
 		m_init_expr->SetParent(this);
 	}
 }
-VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify vardef: varname[%s]", m_varname.c_str());
-
-	// VerifyContextParam param = ctx.GetParam();
 
 	TypeId declared_tid = TYPE_ID_INFER;
 	if (m_declared_type != nullptr) {
-		VerifyContextResult vr = m_declared_type->Verify(ctx);
+		VerifyContextResult vr = m_declared_type->Verify(ctx, VerifyContextParam());
 		declared_tid		   = vr.GetResultTypeId();
 	}
 
 	if (m_init_expr != nullptr) {
-		const VerifyContextResult vr_init_expr = m_init_expr->Verify(ctx.SetParam(VerifyContextParam(declared_tid)));
+		const VerifyContextResult vr_init_expr = m_init_expr->Verify(ctx, VerifyContextParam().SetResultTid(declared_tid));
 		if (vr_init_expr.GetResultTypeId() == TYPE_ID_NONE) {
 			panicf("init expr should be expression");
 		}
@@ -70,9 +68,9 @@ AstNodeVarDef* AstNodeVarDef::DeepCloneT() {
 	AstNodeVarDef* newone = new AstNodeVarDef();
 
 	newone->m_varname = m_varname;
-	if(m_declared_type!=nullptr)
+	if (m_declared_type != nullptr)
 		newone->m_declared_type = m_declared_type->DeepCloneT();
-	if(m_init_expr!=nullptr)
+	if (m_init_expr != nullptr)
 		newone->m_init_expr = m_init_expr->DeepClone();
 	newone->m_is_const = m_is_const;
 

@@ -23,7 +23,7 @@ AstNodeGenericFnDef::AstNodeGenericFnDef(std::string fn_name, std::vector<Parser
 
 	m_body->SetParent(this);
 }
-VerifyContextResult AstNodeGenericFnDef::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeGenericFnDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("begin to verify generic fndef: fnname[%s]", m_fnname.c_str());
 
 	verify_body(ctx);
@@ -109,7 +109,7 @@ AstNodeGenericFnDef::InstantiateParam AstNodeGenericFnDef::infer_by_param_type_a
 		if (m_return_type == nullptr) {
 			infer_result.return_tid = TYPE_ID_NONE;
 		} else {
-			infer_result.return_tid = m_return_type->Verify(ctx).GetResultTypeId();
+			infer_result.return_tid = m_return_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 		}
 		ctx.GetCurStack()->LeaveBlock();
 	}
@@ -131,7 +131,7 @@ AstNodeGenericFnDef::InstantiateParam AstNodeGenericFnDef::infer_by_gparams(Veri
 	{
 		// 根据泛型类型, 推导出方法的参数类型
 		for (auto iter : m_params) {
-			TypeId param_tid = iter.type->Verify(ctx).GetResultTypeId();
+			TypeId param_tid = iter.type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 			infer_result.params_tid.push_back(param_tid);
 		}
 
@@ -139,7 +139,7 @@ AstNodeGenericFnDef::InstantiateParam AstNodeGenericFnDef::infer_by_gparams(Veri
 		if (m_return_type == nullptr) {
 			infer_result.return_tid = TYPE_ID_NONE;
 		} else {
-			infer_result.return_tid = m_return_type->Verify(ctx).GetResultTypeId();
+			infer_result.return_tid = m_return_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 		}
 	}
 	ctx.GetCurStack()->LeaveBlock();
@@ -195,7 +195,7 @@ void AstNodeGenericFnDef::verify_constraint(VerifyContext& ctx, std::vector<Type
 			std::vector<TypeId> constraint_concrete_gparams;
 			ctx.GetCurStack()->EnterBlock(vt);
 			for (auto iter : generic_param.constraint_generic_params) {
-				constraint_concrete_gparams.push_back(iter->Verify(ctx).GetResultTypeId());
+				constraint_concrete_gparams.push_back(iter->Verify(ctx, VerifyContextParam()).GetResultTypeId());
 			}
 			ctx.GetCurStack()->LeaveBlock();
 
@@ -287,7 +287,7 @@ void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
 		std::vector<TypeId> constraint_concrete_gparams;
 		ctx.GetCurStack()->EnterBlock(vt);
 		for (auto iter : generic_param.constraint_generic_params) {
-			constraint_concrete_gparams.push_back(iter->Verify(ctx).GetResultTypeId());
+			constraint_concrete_gparams.push_back(iter->Verify(ctx, VerifyContextParam()).GetResultTypeId());
 		}
 		ctx.GetCurStack()->LeaveBlock();
 
@@ -316,9 +316,7 @@ void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
 	// 校验body
 	ctx.PushStack();
 	ctx.GetCurStack()->EnterBlock(params_vt);
-	ctx.GetParam().Clear();
-	ctx.GetParam().SetReturnTid(instantiate_param.return_tid);
-	m_body->Verify(ctx);
+	m_body->Verify(ctx, VerifyContextParam().SetReturnTid(instantiate_param.return_tid));
 	ctx.PopSTack();
 }
 AstNodeGenericFnDef::Instance AstNodeGenericFnDef::Instantiate(VerifyContext& ctx, std::vector<TypeId> gparams_tid) {

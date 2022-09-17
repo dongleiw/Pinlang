@@ -15,20 +15,22 @@ AstNodeFnCall::AstNodeFnCall(AstNode* fn_expr, std::vector<AstNode*> args) {
 	}
 }
 
-VerifyContextResult AstNodeFnCall::Verify(VerifyContext& ctx) {
+/*
+ * 函数调用检查
+ * 可能需要根据调用的参数从函数重载列表中选择一个, 也可能根据函数的参数类型来推导出参数的类型
+ */
+VerifyContextResult AstNodeFnCall::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_info("verify fncall");
 
 	// 先检查参数, 然后根据参数类型选择合适的函数(重载)
 	std::vector<TypeId> args_tid;
 	for (auto iter : m_args) {
-		VerifyContextResult vr_arg = iter->Verify(ctx);
+		VerifyContextResult vr_arg = iter->Verify(ctx, VerifyContextParam());
 		args_tid.push_back(vr_arg.GetResultTypeId());
 	}
 
 	// 检查函数表达式
-	ctx.GetParam().Clear();
-	ctx.GetParam().SetFnCallArgs(args_tid);
-	VerifyContextResult vr_fn_expr = m_fn_expr->Verify(ctx);
+	VerifyContextResult vr_fn_expr = m_fn_expr->Verify(ctx, VerifyContextParam().SetFnCallArgs(args_tid));
 	TypeId				fn_tid	   = vr_fn_expr.GetResultTypeId();
 	TypeInfoFn*			tifn	   = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
 

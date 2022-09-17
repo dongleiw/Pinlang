@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 		VerifyContext vctx;
 		vctx.PushStack();
 		log_info("verify begin");
-		block_stmt->Verify(vctx);
+		block_stmt->Verify(vctx, VerifyContextParam());
 		log_info("verify end");
 	}
 

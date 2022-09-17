@@ -17,7 +17,7 @@ class AstNodeBlockStmt : public AstNode {
 public:
 	AstNodeBlockStmt(const std::vector<AstNode*>& stmts);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	void AddPreDefine(AstNodeBlockStmt& another);

@@ -18,7 +18,7 @@ class AstNodeGenericInstantiate : public AstNode {
 public:
 	AstNodeGenericInstantiate(std::string generic_name, std::vector<AstNodeType*> type_list);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	virtual AstNode*		   DeepClone() override { return DeepCloneT(); }

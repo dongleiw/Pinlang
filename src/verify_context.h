@@ -3,7 +3,8 @@
 #include "stack.h"
 #include "type.h"
 #include "variable.h"
-#include <optional>
+
+#include <cassert>
 
 class VerifyContextParam {
 public:
@@ -20,15 +21,22 @@ public:
 		m_expect_return_tid = expect_return_tid;
 	}
 
-	void   SetResultTid(TypeId tid) { m_expect_result_tid = tid; }
+	VerifyContextParam& SetResultTid(TypeId tid) {
+		m_expect_result_tid = tid;
+		return *this;
+	}
 	TypeId GetResultTid() const { return m_expect_result_tid; }
 
-	void   SetReturnTid(TypeId tid) { m_expect_return_tid = tid; }
+	VerifyContextParam& SetReturnTid(TypeId tid) {
+		m_expect_return_tid = tid;
+		return *this;
+	}
 	TypeId GetReturnTid() const { return m_expect_return_tid; }
 
-	void SetFnCallArgs(std::vector<TypeId> args_tid) {
+	VerifyContextParam& SetFnCallArgs(std::vector<TypeId> args_tid) {
 		m_args_tid_is_set = true;
 		m_args_tid		  = args_tid;
+		return *this;
 	}
 	bool				HasFnCallArgs() const { return m_args_tid_is_set; }
 	std::vector<TypeId> GetFnCallArgs() const { return m_args_tid; }
@@ -76,11 +84,6 @@ private:
 class VerifyContext {
 public:
 	VerifyContext();
-	VerifyContextParam& GetParam() { return m_param; }
-	VerifyContext&		SetParam(VerifyContextParam param) {
-		 m_param = param;
-		 return *this;
-	}
 	void   PushStack();
 	void   PopSTack();
 	Stack* GetCurStack() { return m_top_stack; }
@@ -89,7 +92,6 @@ private:
 	void init_global_vt();
 
 private:
-	VerifyContextParam m_param;
-	Stack*			   m_top_stack;
-	VariableTable	   m_global_vt;
+	Stack*		  m_top_stack;
+	VariableTable m_global_vt;
 };

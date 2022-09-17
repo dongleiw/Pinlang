@@ -26,7 +26,7 @@ void AstNodeType::InitWithFn(std::vector<ParserParameter> params, AstNodeType* r
 /*
  * 调用函数
  */
-VerifyContextResult AstNodeType::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify type: type_kind[%d] id[%s]", m_type_kind, m_id.c_str());
 	VerifyContextResult vr;
 	switch (m_type_kind) {
@@ -44,11 +44,11 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx) {
 	{
 		std::vector<TypeId> fn_params_tid;
 		for (auto iter : m_fn_params) {
-			fn_params_tid.push_back(iter.type->Verify(ctx).GetResultTypeId());
+			fn_params_tid.push_back(iter.type->Verify(ctx, VerifyContextParam()).GetResultTypeId());
 		}
 		TypeId fn_return_tid = TYPE_ID_NONE;
 		if (m_fn_return_type != nullptr) {
-			fn_return_tid = m_fn_return_type->Verify(ctx).GetResultTypeId();
+			fn_return_tid = m_fn_return_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 		}
 
 		TypeId fn_tid = g_typemgr.GetOrAddTypeFn(fn_params_tid, fn_return_tid);
@@ -79,16 +79,16 @@ std::map<std::string, TypeId> AstNodeType::InferType(TypeId target_tid) const {
 		break;
 	}
 }
-AstNodeType* AstNodeType::DeepCloneT(){
+AstNodeType* AstNodeType::DeepCloneT() {
 	AstNodeType* newone = new AstNodeType();
 
 	newone->m_type_kind = m_type_kind;
-	newone->m_id = m_id;
+	newone->m_id		= m_id;
 
-	for(auto iter:m_fn_params){
+	for (auto iter : m_fn_params) {
 		newone->m_fn_params.push_back(iter.DeepClone());
 	}
-	if(m_fn_return_type){
+	if (m_fn_return_type) {
 		newone->m_fn_return_type = m_fn_return_type->DeepCloneT();
 	}
 

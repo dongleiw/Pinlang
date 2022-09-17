@@ -17,7 +17,7 @@ AstNodeConstraint::AstNodeConstraint(std::string name, std::vector<std::string> 
 	m_generic_params = generic_params;
 	m_rules			 = rules;
 }
-VerifyContextResult AstNodeConstraint::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeConstraint::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify constraint");
 
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_name, new Variable(this));
@@ -44,12 +44,12 @@ TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> co
 	for (auto rule : m_rules) {
 		std::vector<TypeId> fn_params;
 		for (auto param : rule.param_list) {
-			TypeId param_tid = param.type->Verify(ctx).GetResultTypeId();
+			TypeId param_tid = param.type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 			fn_params.push_back(param_tid);
 		}
 		TypeId fn_return_tid = TYPE_ID_NONE;
 		if (rule.return_type != nullptr) {
-			fn_return_tid = rule.return_type->Verify(ctx).GetResultTypeId();
+			fn_return_tid = rule.return_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 		}
 		TypeId fn_tid = g_typemgr.GetOrAddTypeFn(fn_params, fn_return_tid);
 

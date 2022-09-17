@@ -20,9 +20,7 @@ VerifyContextResult Function::Verify(VerifyContext& ctx) {
 		ctx.PushStack();
 		ctx.GetCurStack()->EnterBlock(params_vt);
 
-		ctx.GetParam().Clear();
-		ctx.GetParam().SetReturnTid(tifn->GetReturnTypeId());
-		m_body->Verify(ctx);
+		m_body->Verify(ctx, VerifyContextParam().SetReturnTid(tifn->GetReturnTypeId()));
 
 		ctx.PopSTack();
 		return vr;

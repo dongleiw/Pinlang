@@ -6,19 +6,20 @@
 #include "variable.h"
 #include "astnode_generic_fndef.h"
 #include "function.h"
+#include "verify_context.h"
 #include <cassert>
 
 AstNodeGenericInstantiate::AstNodeGenericInstantiate(std::string generic_name, std::vector<AstNodeType*> type_list) {
 	m_generic_name = generic_name;
 	m_type_list	   = type_list;
 }
-VerifyContextResult AstNodeGenericInstantiate::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeGenericInstantiate::Verify(VerifyContext& ctx, VerifyContextParam vr_param) {
 	log_debug("begin to verify generic instantiate");
 
 	// 得到泛参的实际类型
 	std::vector<TypeId> gparams_tid;
 	for(auto iter:m_type_list){
-		gparams_tid.push_back( iter->Verify(ctx).GetResultTypeId());
+		gparams_tid.push_back( iter->Verify(ctx,VerifyContextParam()).GetResultTypeId());
 	}
 
 	Variable* v	 = ctx.GetCurStack()->GetVariable(m_generic_name);

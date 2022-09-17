@@ -28,7 +28,7 @@ public:
 	void InitWithFn(std::vector<ParserParameter> params, AstNodeType* return_type);
 
 	// 生成类型id
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override { return nullptr; };
 
 	std::map<std::string, TypeId> InferType(TypeId target_tid) const;

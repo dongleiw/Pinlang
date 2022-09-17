@@ -16,7 +16,7 @@ class AstNodeFnCall : public AstNode {
 public:
 	AstNodeFnCall(AstNode* fn_expr, std::vector<AstNode*> args);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }

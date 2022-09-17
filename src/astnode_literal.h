@@ -13,7 +13,7 @@ public:
 	AstNodeLiteral(bool value);
 	AstNodeLiteral(std::string value);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }

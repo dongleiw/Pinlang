@@ -39,7 +39,7 @@
 			Add::<int,int>
 			sum::<int>
 
-		[]
+		[] (目前是选择的这个)
 			fn sum[T Add[T,T]](a T, b T) T{
 				return a+b;
 			}
@@ -104,3 +104,43 @@
 		fn sum[T Add[T,T]] (a T, b T) T { return a+b; }
 
 		
+4. 将泛型函数和函数重载结合起来的一个方案
+	当同时有函数重载, 泛型函数, 缺省参数的时候, candidate的选择规则比较复杂. 如果简单的选择"不支持函数重载", 可以解决问题, 但是也失去了"函数重载"带来的一些便利性
+	方案要求: 
+		* 避免复杂的选择candidate的规则, 更加直观, 实现简单
+		* 尽可能整合泛型函数和函数重载的优秀的地方
+
+	// 普通函数的简单定义
+	fn foo(){}
+	
+	// 泛型函数的简单定义
+	fn foo[T Add[T,T]](a T, b T){}
+	
+	// 如果有多个参数个数相同的实现, 必须都是非泛型实现, 且参数类型不同
+	fn foo{
+		(a int){}
+		(a str){}
+	}
+	fn foo{
+		(a int){}
+		(a str){}
+		[T Stringify](a T){} // 有歧义. int/str可能满足Stringify的限制
+	}
+	fn foo{
+		[T Stringify](a T){} 
+		[T Printable](a T){} // 有歧义. 类型可能同时满足Stringify和Printable的限制
+	}
+	fn foo{
+		[T Stringify](a T, b int){} 
+		[T Printable](a T, b str){} // 有歧义. 类型可能同时满足Stringify和Printable的限制
+	}
+	fn foo{
+		[T Stringify](a T){} 
+		[T Printable](a T, b T){} // 没有歧义, 参数个数不同, 可以区分. (如果支持缺省参数, 那就有歧义了)
+	}
+	
+	// 泛参的限制条件可以是具体类型, 也可以是约束
+	fn foo{
+		[T int || str || Stringify](a T){}
+		[T int || (Printable && Stringify)](a T){}
+	}

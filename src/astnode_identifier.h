@@ -17,7 +17,7 @@ public:
 	AstNodeIdentifier(std::string id) : m_id(id) {
 	}
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	virtual AstNode*   DeepClone() override { return DeepCloneT(); }

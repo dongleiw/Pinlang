@@ -18,7 +18,7 @@ class AstNodeFnDef : public AstNode {
 public:
 	AstNodeFnDef(std::string fn_name, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body);
 
-	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
+	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }

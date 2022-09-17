@@ -1,4 +1,5 @@
 #include "astnode_blockstmt.h"
+#include "astnode_return.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "variable_table.h"
@@ -10,21 +11,26 @@ AstNodeBlockStmt::AstNodeBlockStmt(const std::vector<AstNode*>& stmts) {
 		iter->SetParent(this);
 	}
 }
-VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	VerifyContextResult vr(m_result_typeid);
 
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
 	if (!m_predefine_stmts.empty()) {
 		// 加载预定义内容
 		for (auto n : m_predefine_stmts) {
-			n->Verify(ctx);
+			n->Verify(ctx, VerifyContextParam());
 		}
 		// 给基础类型添加constraint实现
 		g_typemgr.InitBuiltinMethods(ctx);
 	}
 
 	for (auto n : m_stmts) {
-		n->Verify(ctx);
+		AstNodeReturn* astnode_return = dynamic_cast<AstNodeReturn*>(n);
+		if (astnode_return != nullptr) {
+			n->Verify(ctx, VerifyContextParam().SetReturnTid(vparam.GetReturnTid()));
+		} else {
+			n->Verify(ctx, VerifyContextParam());
+		}
 	}
 	ctx.GetCurStack()->LeaveBlock();
 	return vr;

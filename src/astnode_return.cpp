@@ -12,16 +12,16 @@ AstNodeReturn::AstNodeReturn(AstNode* returned_expr) {
 	}
 }
 
-VerifyContextResult AstNodeReturn::Verify(VerifyContext& ctx) {
-	VerifyContextParam vr_param = ctx.GetParam();
+VerifyContextResult AstNodeReturn::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	if (m_returned_expr != nullptr) {
 		// 期望表达式的结果的类型 == return的类型
-		ctx.GetParam().SetResultTid(vr_param.GetReturnTid());
-		VerifyContextResult vr_result = m_returned_expr->Verify(ctx);
-		if (vr_param.GetReturnTid() != TYPE_ID_INFER) {
-			if (vr_result.GetResultTypeId() != vr_param.GetReturnTid()) {
+		VerifyContextParam vparam_return;
+		vparam_return.SetReturnTid(vparam.GetReturnTid());
+		VerifyContextResult vr_result = m_returned_expr->Verify(ctx, vparam_return);
+		if (vparam.GetReturnTid() != TYPE_ID_INFER) {
+			if (vr_result.GetResultTypeId() != vparam.GetReturnTid()) {
 				panicf("type of return value is wrong. expect[%d:%s]. give[%d:%s]",
-					   vr_param.GetReturnTid(), GET_TYPENAME_C(vr_param.GetReturnTid()),
+					   vparam.GetReturnTid(), GET_TYPENAME_C(vparam.GetReturnTid()),
 					   vr_result.GetResultTypeId(), GET_TYPENAME_C(vr_result.GetResultTypeId()));
 			}
 		}

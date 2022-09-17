@@ -11,6 +11,7 @@
 #include "type_mgr.h"
 #include "variable.h"
 #include "variable_table.h"
+#include "verify_context.h"
 
 AstNodeFnDef::AstNodeFnDef(std::string fn_name, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body) {
 	m_fnname	  = fn_name;
@@ -20,19 +21,19 @@ AstNodeFnDef::AstNodeFnDef(std::string fn_name, std::vector<ParserParameter> par
 
 	m_body->SetParent(this);
 }
-VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("begin to verify fndef: fnname[%s]", m_fnname.c_str());
 
 	// 生成函数的typeid
 	std::vector<TypeId> params;
 	{
 		for (auto iter : m_params) {
-			TypeId param_tid = iter.type->Verify(ctx).GetResultTypeId();
+			TypeId param_tid = iter.type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 			params.push_back(param_tid);
 		}
 		TypeId return_tid = TYPE_ID_NONE;
 		if (m_return_type != nullptr) {
-			return_tid = m_return_type->Verify(ctx).GetResultTypeId();
+			return_tid = m_return_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 		}
 		m_result_typeid = g_typemgr.GetOrAddTypeFn(params, return_tid);
 	}
@@ -54,8 +55,7 @@ VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 		ctx.GetCurStack()->EnterBlock(vt_args);
 
 		// 指定期望return的类型
-		ctx.SetParam(VerifyContextParam(TYPE_ID_NONE, tifn->GetReturnTypeId()));
-		m_body->Verify(ctx);
+		m_body->Verify(ctx, VerifyContextParam().SetReturnTid(tifn->GetReturnTypeId()));
 	}
 	ctx.PopSTack();
 

@@ -24,12 +24,12 @@ AstNodeOperator::AstNodeOperator(AstNode* left_expr, std::string constraint_name
 /*
  * 调用函数
  */
-VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify operator[%s]", m_op.c_str());
 	VerifyContextResult vr;
 
-	VerifyContextResult vr_left	 = m_left_expr->Verify(ctx);
-	VerifyContextResult vr_right = m_right_expr->Verify(ctx);
+	VerifyContextResult vr_left	 = m_left_expr->Verify(ctx,VerifyContextParam());
+	VerifyContextResult vr_right = m_right_expr->Verify(ctx,VerifyContextParam());
 
 	TypeId tid_left	 = vr_left.GetResultTypeId();
 	TypeId tid_right = vr_right.GetResultTypeId();

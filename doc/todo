@@ -1,0 +1,38 @@
+支持控制流for switch
+支持变长参数
+支持在泛型函数中对泛参的访问, 可以在编译期做允许优化
+	fn foo[T tostring](a T) str{
+		if(T==float){ // 编译期表达式
+		}
+	}
+数组
+编译期表达式
+约束
+	约束继承
+	约束的接口名重复的处理规则
+	类型实现泛型
+泛型
+	泛型结构体/类
+结构体/类
+	属性
+	构造函数(一些语言中构造函数名和类名相同, 这在有多种初始化方式的需求情况下, 会含义不够清晰. 而且只能通过函数重载不够灵活. 考虑构造函数名称可自定义)
+		class Foo{
+			Foo();
+			# [construct]
+			InitWithId(id int);
+			# [construct]
+			InitWithAge(age int);
+		}
+
+		var f = Foo.InitWithId(1);
+		var f = new Foo.InitWithAge(1);
+元组
+闭包
+异步
+管道
+namespace
+module
+调用c库
+标准库
+debug
+lsp

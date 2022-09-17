@@ -21,7 +21,7 @@ AstNodeLiteral::AstNodeLiteral(std::string value) {
 	m_value_str		= value;
 	m_result_typeid = TYPE_ID_STR;
 }
-VerifyContextResult AstNodeLiteral::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeLiteral::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	switch (m_result_typeid) {
 	case TYPE_ID_INT:
 		return VerifyContextResult(m_result_typeid, new Variable(m_value_int));

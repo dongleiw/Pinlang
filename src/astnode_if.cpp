@@ -5,25 +5,24 @@
 
 #include <cassert>
 
-VerifyContextResult AstNodeIf::Verify(VerifyContext& ctx) {
+VerifyContextResult AstNodeIf::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify if");
 	assert(m_cond_expr_list.size() == m_cond_block_list.size());
 
 	for (auto iter : m_cond_expr_list) {
-		ctx.GetParam().Clear();
-		ctx.GetParam().SetResultTid(TYPE_ID_BOOL);
-		VerifyContextResult vr = iter->Verify(ctx);
+		VerifyContextParam vparam_cond;
+		vparam_cond.SetResultTid(TYPE_ID_BOOL);
+		VerifyContextResult vr = iter->Verify(ctx, vparam_cond);
 		if (vr.GetResultTypeId() != TYPE_ID_BOOL) {
 			panicf("result of conditional expr is not bool");
 		}
 	}
 	for (auto iter : m_cond_block_list) {
-		ctx.GetParam().Clear();
-		iter->Verify(ctx);
+		iter->Verify(ctx,VerifyContextParam());
 	}
 
 	if (m_else_cond_block != nullptr) {
-		m_else_cond_block->Verify(ctx);
+		m_else_cond_block->Verify(ctx,VerifyContextParam());
 	}
 
 	m_result_typeid = TYPE_ID_NONE;
