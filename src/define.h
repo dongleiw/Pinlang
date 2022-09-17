@@ -17,10 +17,10 @@ enum TypeGroupId {
 	TYPE_GROUP_ID_FUNCTION	= 3,
 	TYPE_GROUP_ID_CLASS		= 4,
 	/*
-	 * 泛型constraint
+	 * constraint
 	 */
-	TYPE_GROUP_ID_RESTRICTION  = 5,
-	TYPE_GROUP_ID_GENERIC_TYPE = 6,
+	TYPE_GROUP_ID_CONSTRAINT   = 5,
+	TYPE_GROUP_ID_VIRTUAL_GTYPE = 6,
 };
 
 /*
@@ -28,15 +28,15 @@ enum TypeGroupId {
  * 每个类型都有一个唯一id
  */
 enum TypeId {
-	TYPE_ID_NONE				= 0,
-	TYPE_ID_INFER				= 1, // 推导类型. 在Verify阶段, 所有这种类型的变量都将变更为实际具体类型
-	TYPE_ID_TYPE				= 2, // type类型.
-	TYPE_ID_INT					= 3,
-	TYPE_ID_FLOAT				= 4,
-	TYPE_ID_STR					= 5,
-	TYPE_ID_BOOL				= 6,
-	TYPE_ID_GENERIC_RESTRICTION = 7, // 泛型约束
-	TYPE_ID_GENERIC_FN			= 8, // 泛型函数
+	TYPE_ID_NONE			   = 0,
+	TYPE_ID_INFER			   = 1, // 推导类型. 在Verify阶段, 所有这种类型的变量都将变更为实际具体类型
+	TYPE_ID_TYPE			   = 2, // type类型.
+	TYPE_ID_INT				   = 3,
+	TYPE_ID_FLOAT			   = 4,
+	TYPE_ID_STR				   = 5,
+	TYPE_ID_BOOL			   = 6,
+	TYPE_ID_GENERIC_CONSTRAINT = 7, // 泛型约束
+	TYPE_ID_GENERIC_FN		   = 8, // 泛型函数
 };
 
 class ExecuteContext;
@@ -91,5 +91,5 @@ struct MethodIndex {
 	bool IsValid() const { return method_idx >= 0; }
 
 	TypeId constraint_tid; // 方法所在的constraint_tid
-	int method_idx;	   // 方法在constraint中的下标
+	int	   method_idx;	   // 方法在constraint中的下标
 };

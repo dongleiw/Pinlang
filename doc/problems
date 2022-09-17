@@ -1,4 +1,4 @@
-1. 在对泛型函数体进行verify时, 一些verify阶段保留的信息在execute阶段会失效
+1. 泛型函数verify和execute类型不一致问题
 	问题:
 		为了verify泛型函数的定义, 一开始的方法是构造一些虚拟的类型, 将约束内容添加到这些类型中, 使之满足约束限定.
 		然后用这些虚拟类型来verify泛型函数的body, 将verify的结果暂存用于execute 

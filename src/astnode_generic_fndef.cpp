@@ -182,7 +182,7 @@ void AstNodeGenericFnDef::verify_constraint(VerifyContext& ctx, std::vector<Type
 		const ParserGenericParam& generic_param		  = m_generic_params.at(i);
 
 		Variable* v = ctx.GetCurStack()->GetVariable(generic_param.constraint_name);
-		if (v->GetTypeId() == TYPE_ID_GENERIC_RESTRICTION) {
+		if (v->GetTypeId() == TYPE_ID_GENERIC_CONSTRAINT) {
 			// constraint本身也是泛型. 需要先实例化constraint
 
 			// 创建vt, 将(泛型名=>实际类型id)定义到vt中

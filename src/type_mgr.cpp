@@ -103,7 +103,7 @@ TypeId TypeMgr::GetOrAddTypeConstraint(TypeInfoConstraint* ti) {
 	return add_type(ti);
 }
 TypeId TypeMgr::AddGenericType(TypeInfo* ti) {
-	ti->SetTypeGroupId(TYPE_GROUP_ID_GENERIC_TYPE);
+	ti->SetTypeGroupId(TYPE_GROUP_ID_VIRTUAL_GTYPE);
 	return add_type(ti);
 }
 TypeId TypeMgr::AddTypeInfo(TypeInfo* ti) {

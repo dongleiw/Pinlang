@@ -12,5 +12,5 @@
 
 TypeInfoVirtualGType::TypeInfoVirtualGType(std::string name) {
 	m_name		   = name;
-	m_typegroup_id = TYPE_GROUP_ID_GENERIC_TYPE;
+	m_typegroup_id = TYPE_GROUP_ID_VIRTUAL_GTYPE;
 }

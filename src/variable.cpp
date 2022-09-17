@@ -27,7 +27,7 @@ Variable::Variable(FunctionObj fnobj) {
 	m_value_fnobj = fnobj;
 }
 Variable::Variable(AstNodeConstraint* astnode) {
-	m_tid			   = TYPE_ID_GENERIC_RESTRICTION;
+	m_tid			   = TYPE_ID_GENERIC_CONSTRAINT;
 	m_value_constraint = astnode;
 }
 Variable::Variable(AstNodeGenericFnDef* astnode) {
@@ -94,7 +94,7 @@ FunctionObj Variable::GetValueFunctionObj() const {
 	return m_value_fnobj;
 }
 AstNodeConstraint* Variable::GetValueConstraint() const {
-	assert(m_tid == TYPE_ID_GENERIC_RESTRICTION);
+	assert(m_tid == TYPE_ID_GENERIC_CONSTRAINT);
 	return m_value_constraint;
 }
 AstNodeGenericFnDef* Variable::GetValueGenericFnDef() const {

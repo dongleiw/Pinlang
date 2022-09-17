@@ -22,7 +22,7 @@ public:
 	TypeInfoConstraint(std::string name, std::vector<Rule> rules) {
 		m_name		   = name;
 		m_rules		   = rules;
-		m_typegroup_id = TYPE_GROUP_ID_RESTRICTION;
+		m_typegroup_id = TYPE_GROUP_ID_CONSTRAINT;
 	}
 
 	// 生成一个虚拟的泛型类型, 满足该约束
