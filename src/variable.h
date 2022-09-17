@@ -15,6 +15,7 @@ public:
 	Variable(TypeId tid);
 	Variable(int value);
 	Variable(float value);
+	Variable(bool value);
 	Variable(std::string value);
 	Variable(FunctionObj fnobj);
 	Variable(AstNodeConstraint* astnode);
@@ -27,6 +28,7 @@ public:
 	TypeId				 GetValueTid() const;
 	int					 GetValueInt() const;
 	float				 GetValueFloat() const;
+	bool				 GetValueBool() const;
 	std::string			 GetValueStr() const;
 	FunctionObj			 GetValueFunctionObj() const;
 	AstNodeConstraint*	 GetValueConstraint() const;
@@ -49,6 +51,7 @@ protected:
 	TypeId				 m_value_tid;
 	int					 m_value_int;
 	float				 m_value_float;
+	bool				 m_value_bool;
 	std::string			 m_value_str;
 	FunctionObj			 m_value_fnobj;
 	AstNodeConstraint*	 m_value_constraint;

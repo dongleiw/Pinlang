@@ -10,6 +10,7 @@ class AstNodeLiteral : public AstNode {
 public:
 	AstNodeLiteral(int value);
 	AstNodeLiteral(float value);
+	AstNodeLiteral(bool value);
 	AstNodeLiteral(std::string value);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx) override;
@@ -19,9 +20,11 @@ public:
 	AstNodeLiteral*	 DeepCloneT();
 
 private:
-	AstNodeLiteral(){}
+	AstNodeLiteral() {}
+
 private:
 	int			m_value_int;
 	float		m_value_float;
+	bool		m_value_bool;
 	std::string m_value_str;
 };

@@ -1,0 +1,24 @@
+if true{
+	printf("if\n");
+}
+
+if false{
+	printf("if\n");
+}else{
+	printf("else\n");
+}
+
+if false{
+	printf("if\n");
+}else if true{
+	printf("elseif\n");
+}else{
+	printf("else\n");
+}
+
+if true{
+	if false{
+	}else{
+		printf("inner else\n");
+	}
+}

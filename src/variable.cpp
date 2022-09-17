@@ -18,6 +18,10 @@ Variable::Variable(float value) {
 	m_tid		  = TYPE_ID_FLOAT;
 	m_value_float = value;
 }
+Variable::Variable(bool value) {
+	m_tid		 = TYPE_ID_BOOL;
+	m_value_bool = value;
+}
 Variable::Variable(std::string value) {
 	m_tid		= TYPE_ID_STR;
 	m_value_str = value;
@@ -84,6 +88,10 @@ int Variable::GetValueInt() const {
 float Variable::GetValueFloat() const {
 	assert(m_tid == TYPE_ID_FLOAT);
 	return m_value_float;
+}
+bool Variable::GetValueBool() const {
+	assert(m_tid == TYPE_ID_BOOL);
+	return m_value_bool;
 }
 std::string Variable::GetValueStr() const {
 	assert(m_tid == TYPE_ID_STR);

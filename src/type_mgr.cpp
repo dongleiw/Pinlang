@@ -3,6 +3,7 @@
 #include "define.h"
 #include "log.h"
 #include "type.h"
+#include "type_bool.h"
 #include "type_constraint.h"
 #include "type_float.h"
 #include "type_fn.h"
@@ -49,6 +50,12 @@ void TypeMgr::InitTypes() {
 		assert(TYPE_ID_FLOAT == ti_float->GetTypeId());
 	}
 	{
+		TypeInfoBool* ti_bool = new TypeInfoBool();
+		ti_bool->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti_bool);
+		assert(TYPE_ID_BOOL == ti_bool->GetTypeId());
+	}
+	{
 		TypeInfoStr* ti_str = new TypeInfoStr();
 		ti_str->SetTypeId(allocate_typeid());
 		m_typeinfos.push_back(ti_str);
@@ -68,6 +75,7 @@ void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_INT)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_FLOAT)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_BOOL)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods(ctx);
 }
 

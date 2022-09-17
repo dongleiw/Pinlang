@@ -38,6 +38,7 @@ public:
 	virtual std::any visitStmt_return(PinlangParser::Stmt_returnContext* context) override;
 	virtual std::any visitExpr_list(PinlangParser::Expr_listContext* ctx) override;
 	virtual std::any visitStmt_fn_declare(PinlangParser::Stmt_fn_declareContext* ctx) override;
+	virtual std::any visitStmt_if(PinlangParser::Stmt_ifContext* ctx) override;
 
 	virtual std::any visitConstraint_generic_params(PinlangParser::Constraint_generic_paramsContext* ctx) override;
 	virtual std::any visitStmt_constraint_def(PinlangParser::Stmt_constraint_defContext* ctx) override;

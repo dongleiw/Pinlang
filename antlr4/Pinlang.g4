@@ -75,6 +75,10 @@ stmt_constraint_def
 	: CONSTRAINT Identifier constraint_generic_params? L_CURLY stmt_fn_declare* R_CURLY
 	;
 
+stmt_if 
+	: IF expr stmt_block (ELSE IF expr stmt_block)* (ELSE stmt_block)?
+	;
+
 statement
 	: expr ';'
 	| stmt_vardef
@@ -83,6 +87,7 @@ statement
 	| stmt_block
 	| stmt_return
 	| stmt_constraint_def
+	| stmt_if
     ;
 
 literal

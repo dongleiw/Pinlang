@@ -33,6 +33,8 @@ PROTECTED	: 'protected';
 STATIC		: 'static';
 CONST       : 'const';
 CONSTRAINT  : 'constraint';
+IF          : 'if';
+ELSE        : 'else';
 
 // Relation operators
 EQUALS                 : '==';

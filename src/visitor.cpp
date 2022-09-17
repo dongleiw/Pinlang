@@ -9,6 +9,7 @@
 #include "astnode_generic_fndef.h"
 #include "astnode_generic_instantiate.h"
 #include "astnode_identifier.h"
+#include "astnode_if.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
 #include "astnode_return.h"
@@ -61,6 +62,9 @@ std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalC
 		return (AstNode*)new AstNodeLiteral(value);
 	} else if (literal->FloatLiteral() != nullptr) {
 		float value = str_to_float(literal->FloatLiteral()->getText());
+		return (AstNode*)new AstNodeLiteral(value);
+	} else if (literal->BoolLiteral() != nullptr) {
+		bool value = str_to_bool(literal->BoolLiteral()->getText());
 		return (AstNode*)new AstNodeLiteral(value);
 	} else if (literal->StringLiteral() != nullptr) {
 		std::string value = literal->StringLiteral()->getText();
@@ -139,6 +143,8 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_constraint_def()->accept(this);
 	} else if (ctx->stmt_generic_fndef() != nullptr) {
 		return ctx->stmt_generic_fndef()->accept(this);
+	} else if (ctx->stmt_if() != nullptr) {
+		return ctx->stmt_if()->accept(this);
 	} else {
 		panicf("bug");
 	}
@@ -340,4 +346,20 @@ std::any Visitor::visitExpr_primary_access_attr(PinlangParser::Expr_primary_acce
 	AstNode*	expr	  = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
 	std::string attr_name = ctx->Identifier()->getText();
 	return (AstNode*)new AstNodeAccessAttr(expr, attr_name);
+}
+std::any Visitor::visitStmt_if(PinlangParser::Stmt_ifContext* ctx) {
+	std::vector<AstNode*> cond_exprs;
+	std::vector<AstNode*> cond_blocks;
+	AstNode*			  else_cond_block = nullptr;
+	for (size_t i = 0; i < ctx->expr().size(); i++) {
+		cond_exprs.push_back(std::any_cast<AstNode*>(ctx->expr().at(i)->accept(this)));
+		cond_blocks.push_back(std::any_cast<AstNode*>(ctx->stmt_block().at(i)->accept(this)));
+	}
+	if (ctx->stmt_block().size() == ctx->expr().size()) {
+	} else if (ctx->stmt_block().size() == ctx->expr().size() + 1) {
+		else_cond_block = std::any_cast<AstNode*>(ctx->stmt_block().at(ctx->expr().size())->accept(this));
+	} else {
+		panicf("bug");
+	}
+	return (AstNode*)new AstNodeIf(cond_exprs, cond_blocks, else_cond_block);
 }

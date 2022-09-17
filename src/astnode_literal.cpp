@@ -10,8 +10,12 @@ AstNodeLiteral::AstNodeLiteral(int value) {
 	m_result_typeid = TYPE_ID_INT;
 }
 AstNodeLiteral::AstNodeLiteral(float value) {
-	m_value_float		= value;
+	m_value_float	= value;
 	m_result_typeid = TYPE_ID_FLOAT;
+}
+AstNodeLiteral::AstNodeLiteral(bool value) {
+	m_value_bool	= value;
+	m_result_typeid = TYPE_ID_BOOL;
 }
 AstNodeLiteral::AstNodeLiteral(std::string value) {
 	m_value_str		= value;
@@ -24,6 +28,9 @@ VerifyContextResult AstNodeLiteral::Verify(VerifyContext& ctx) {
 		break;
 	case TYPE_ID_FLOAT:
 		return VerifyContextResult(m_result_typeid, new Variable(m_value_float));
+		break;
+	case TYPE_ID_BOOL:
+		return VerifyContextResult(m_result_typeid, new Variable(m_value_bool));
 		break;
 	case TYPE_ID_STR:
 		return VerifyContextResult(m_result_typeid, new Variable(m_value_str));
@@ -41,6 +48,9 @@ Variable* AstNodeLiteral::Execute(ExecuteContext& ctx) {
 	case TYPE_ID_FLOAT:
 		return new Variable(this->m_value_float);
 		break;
+	case TYPE_ID_BOOL:
+		return new Variable(this->m_value_bool);
+		break;
 	case TYPE_ID_STR:
 		return new Variable(this->m_value_str);
 		break;
@@ -49,7 +59,7 @@ Variable* AstNodeLiteral::Execute(ExecuteContext& ctx) {
 		break;
 	}
 }
-AstNodeLiteral*	 AstNodeLiteral::DeepCloneT(){
+AstNodeLiteral* AstNodeLiteral::DeepCloneT() {
 	AstNodeLiteral* newone = new AstNodeLiteral();
 
 	*newone = *this;

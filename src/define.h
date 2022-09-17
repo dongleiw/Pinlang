@@ -33,8 +33,8 @@ enum TypeId {
 	TYPE_ID_TYPE			   = 2, // type类型.
 	TYPE_ID_INT				   = 3,
 	TYPE_ID_FLOAT			   = 4,
-	TYPE_ID_STR				   = 5,
-	TYPE_ID_BOOL			   = 6,
+	TYPE_ID_BOOL			   = 5,
+	TYPE_ID_STR				   = 6,
 	TYPE_ID_GENERIC_CONSTRAINT = 7, // 泛型约束
 	TYPE_ID_GENERIC_FN		   = 8, // 泛型函数
 };
