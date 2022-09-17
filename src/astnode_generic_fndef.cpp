@@ -6,7 +6,7 @@
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
-#include "type_generic_type.h"
+#include "type_virtual_gtype.h"
 #include "type_mgr.h"
 #include "type_restriction.h"
 #include "variable.h"
@@ -167,9 +167,9 @@ void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
 	log_debug("begin to verify body of generic function name[%s]", m_fnname.c_str());
 
 	// 创建虚拟类型
-	std::map<std::string, TypeInfoGenericType*> virtual_gparams;
+	std::map<std::string, TypeInfoVirtualGType*> virtual_gparams;
 	for (auto iter : m_generic_params) {
-		TypeInfoGenericType* ti			= new TypeInfoGenericType(iter.type_name);
+		TypeInfoVirtualGType* ti			= new TypeInfoVirtualGType(iter.type_name);
 		virtual_gparams[iter.type_name] = ti;
 		g_typemgr.AddTypeInfo(ti);
 	}

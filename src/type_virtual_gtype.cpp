@@ -1,4 +1,4 @@
-#include "type_generic_type.h"
+#include "type_virtual_gtype.h"
 
 #include <assert.h>
 #include <map>
@@ -10,7 +10,7 @@
 #include "type_fn.h"
 #include "type_mgr.h"
 
-TypeInfoGenericType::TypeInfoGenericType(std::string name) {
+TypeInfoVirtualGType::TypeInfoVirtualGType(std::string name) {
 	m_name		   = name;
 	m_typegroup_id = TYPE_GROUP_ID_GENERIC_TYPE;
 }

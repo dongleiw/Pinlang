@@ -16,7 +16,7 @@
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
-#include "type_generic_type.h"
+#include "type_virtual_gtype.h"
 #include "type_mgr.h"
 #include "type_restriction.h"
 #include "utils.h"

@@ -76,7 +76,7 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx) {
 			panicf("bug");
 		}
 	} else {
-		panicf("bug");
+		panicf("unknown id[%s]", m_id.c_str());
 	}
 
 	return VerifyContextResult(m_result_typeid);

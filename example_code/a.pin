@@ -1,11 +1,15 @@
 var a int =1+1;
 
+restriction MyRestriction{
+	fn print(s str);
+}
+
 fn sum[T Add[T,T]](a T, b T) T{
 	return a+b;
 }
 
-var si = sum(1,2);
-var sf = sum(1.1,2.3);
-var ss = sum("hello","world");
+var si = sum(1, 2);
+var sf = sum(1.1, 2.3);
+var ss = sum("hello", "world");
 
 //var f sum(int,int)int = sum;

@@ -22,7 +22,7 @@ Variable* AstNodeRestriction::Execute(ExecuteContext& ctx) {
 	return nullptr;
 }
 TypeId AstNodeRestriction::Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params) const {
-	assert(HasGenericParam());
+	//assert(HasGenericParam());
 	assert(concrete_params.size() == m_generic_params.size());
 
 	// 泛型名映射到实际类型id
@@ -42,8 +42,11 @@ TypeId AstNodeRestriction::Instantiate(VerifyContext& ctx, std::vector<TypeId> c
 			TypeId param_tid = param.type->Verify(ctx).GetResultTypeId();
 			fn_params.push_back(param_tid);
 		}
-		TypeId fn_return_tid = rule.return_type->Verify(ctx).GetResultTypeId();
-		TypeId fn_tid		 = g_typemgr.GetOrAddTypeFn(fn_params, fn_return_tid);
+		TypeId fn_return_tid = TYPE_ID_NONE;
+		if (rule.return_type != nullptr) {
+			fn_return_tid = rule.return_type->Verify(ctx).GetResultTypeId();
+		}
+		TypeId fn_tid = g_typemgr.GetOrAddTypeFn(fn_params, fn_return_tid);
 
 		concrete_rules.push_back(TypeInfoRestriction::Rule{.fn_name = rule.fnname, .fn_tid = fn_tid});
 	}
