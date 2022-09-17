@@ -1,6 +1,7 @@
 #include "visitor.h"
 
 #include "astnode.h"
+#include "astnode_access_attr.h"
 #include "astnode_blockstmt.h"
 #include "astnode_constraint.h"
 #include "astnode_fncall.h"
@@ -331,7 +332,12 @@ std::any Visitor::visitIdentifier_list(PinlangParser::Identifier_listContext* ct
 	return ids;
 }
 std::any Visitor::visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) {
-	std::string id = ctx->Identifier()->getText();
+	std::string				  id		= ctx->Identifier()->getText();
 	std::vector<AstNodeType*> type_list = std::any_cast<std::vector<AstNodeType*>>(ctx->type_list()->accept(this));
 	return (AstNode*)new AstNodeGenericInstantiate(id, type_list);
+}
+std::any Visitor::visitExpr_primary_access_attr(PinlangParser::Expr_primary_access_attrContext* ctx) {
+	AstNode*	expr	  = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
+	std::string attr_name = ctx->Identifier()->getText();
+	return (AstNode*)new AstNodeAccessAttr(expr, attr_name);
 }

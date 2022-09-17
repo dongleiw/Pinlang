@@ -1,3 +1,6 @@
 constraint Add[AnotherT,ReturnT]{
 	fn add(another AnotherT) ReturnT;
 }
+constraint ToString{
+	fn tostring() str;
+}

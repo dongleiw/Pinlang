@@ -2,8 +2,8 @@ lexer grammar Pinlang;
 
 FloatLiteral
     :   Digit+ '.' Digit+
-    |   '.' Digit+
-    |   Digit+ '.'
+    //|   '.' Digit+
+    //|   Digit+ '.'
     ;
 IntegerLiteral
     : NonZeroDigit Digit*

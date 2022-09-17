@@ -40,6 +40,8 @@ public:
 
 	std::string ToString() const;
 
+	Variable* GetAttrValue(int attr_idx);
+
 protected:
 	TypeId				 m_tid;
 	bool				 m_is_const;

@@ -27,7 +27,7 @@ Variable::Variable(Function* fn) {
 	m_value_fn = fn;
 }
 Variable::Variable(AstNodeConstraint* astnode) {
-	m_tid				= TYPE_ID_GENERIC_RESTRICTION;
+	m_tid			   = TYPE_ID_GENERIC_RESTRICTION;
 	m_value_constraint = astnode;
 }
 Variable::Variable(AstNodeGenericFnDef* astnode) {
@@ -101,4 +101,15 @@ AstNodeConstraint* Variable::GetValueConstraint() const {
 AstNodeGenericFnDef* Variable::GetValueGenericFnDef() const {
 	assert(m_tid == TYPE_ID_GENERIC_FN);
 	return m_value_generic_fn;
+}
+Variable* Variable::GetAttrValue(int attr_idx) {
+	TypeInfo* ti   = g_typemgr.GetTypeInfo(m_tid);
+	Attr	  attr = ti->GetAttr(attr_idx);
+	if (attr.is_field) {
+		panicf("not implemented yet");
+		return nullptr;
+	} else {
+		attr.method.fn->SetThisObj(this);
+		return new Variable(attr.method.fn);
+	}
 }

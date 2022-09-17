@@ -2,21 +2,13 @@ fn gsum[T Add[T,T]](a T, b T) T{
 	return a+b;
 }
 
-//fn sum(a int, b int) int{
-//	return a+b;
-//}
-//
 {
 	var si = gsum(1, 2);
 	var sf = gsum(1.1, 2.3);
 	var ss = gsum("hello", "world");
+
+	var q = 2.tostring();
 }
-//
-//var gf fn(int,int)int = gsum;
-//var gfr = gf(1,9);
-//
-//var f fn(int,int)int = sum;
-//var fr = f(1,2);
 
 {
 	printf("call generic function with gparams: result=%d\n", gsum[int](10,25));
