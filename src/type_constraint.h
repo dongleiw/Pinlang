@@ -7,7 +7,7 @@
 /*
  * 类型约束. 对类型的限定条件的集合
  */
-class TypeInfoRestriction : public TypeInfo {
+class TypeInfoConstraint : public TypeInfo {
 public:
 	/* 
 	 * 一条约束
@@ -19,7 +19,7 @@ public:
 	};
 
 public:
-	TypeInfoRestriction(std::string name, std::vector<Rule> rules) {
+	TypeInfoConstraint(std::string name, std::vector<Rule> rules) {
 		m_name		   = name;
 		m_rules		   = rules;
 		m_typegroup_id = TYPE_GROUP_ID_RESTRICTION;

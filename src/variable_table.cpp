@@ -1,5 +1,4 @@
 #include "variable_table.h"
-#include "astnode_generic_restriction.h"
 #include "astnode_type.h"
 #include "builtin_fn.h"
 #include "define.h"
@@ -65,7 +64,7 @@ void VariableTable::InitAsGlobal() {
 	//AddVariable("builtin_fn_printf_str_int", Variable::CreateTypeVariable(TYPE_ID_STR));
 	register_all_builtin_fn(*this);
 
-	// 添加内置restriction的变量
+	// 添加内置constraint的变量
 	{
 		//{
 		//	std::vector<ParserFnDeclare> rules;
@@ -81,8 +80,8 @@ void VariableTable::InitAsGlobal() {
 		//		 }},
 		//		.return_type = return_type,
 		//	};
-		//	AstNodeGenericRestriction* generic_restriction_add = new AstNodeGenericRestriction("Add", std::vector<std::string>{"AnotherT", "ReturnT"}, rules);
-		//	AddVariable("Add", new Variable(generic_restriction_add));
+		//	AstNodeGenericConstraint* generic_constraint_add = new AstNodeGenericConstraint("Add", std::vector<std::string>{"AnotherT", "ReturnT"}, rules);
+		//	AddVariable("Add", new Variable(generic_constraint_add));
 		//}
 	}
 }

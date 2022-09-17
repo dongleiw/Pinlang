@@ -1,6 +1,6 @@
 #include "astnode_generic_fndef.h"
 #include "astnode_blockstmt.h"
-#include "astnode_restriction.h"
+#include "astnode_constraint.h"
 #include "define.h"
 #include "function.h"
 #include "log.h"
@@ -8,7 +8,7 @@
 #include "type_fn.h"
 #include "type_virtual_gtype.h"
 #include "type_mgr.h"
-#include "type_restriction.h"
+#include "type_constraint.h"
 #include "variable.h"
 #include "variable_table.h"
 #include "verify_context.h"
@@ -88,16 +88,16 @@ std::string AstNodeGenericFnDef::Instantiate(VerifyContext& ctx, std::vector<Typ
 	}
 	return instantiate(ctx, concrete_gparams);
 }
-void AstNodeGenericFnDef::verify_restriction(VerifyContext& ctx, std::vector<TypeId> concrete_gparams) const {
+void AstNodeGenericFnDef::verify_constraint(VerifyContext& ctx, std::vector<TypeId> concrete_gparams) const {
 	assert(concrete_gparams.size() == m_generic_params.size());
 	// TODO 检查所有泛型参数的实际类型是否满足约束
 	for (size_t i = 0; i < concrete_gparams.size(); i++) {
 		const TypeId			  concrete_gparam_tid = concrete_gparams.at(i);
 		const ParserGenericParam& generic_param		  = m_generic_params.at(i);
 
-		Variable* v = ctx.GetCurStack()->GetVariable(generic_param.restriction_name);
+		Variable* v = ctx.GetCurStack()->GetVariable(generic_param.constraint_name);
 		if (v->GetTypeId() == TYPE_ID_GENERIC_RESTRICTION) {
-			// restriction本身也是泛型. 需要先实例化restriction
+			// constraint本身也是泛型. 需要先实例化constraint
 
 			// 创建vt, 将(泛型名=>实际类型id)定义到vt中
 			VariableTable* vt = new VariableTable();
@@ -106,19 +106,19 @@ void AstNodeGenericFnDef::verify_restriction(VerifyContext& ctx, std::vector<Typ
 			}
 
 			// 推导出该约束的实际类型
-			std::vector<TypeId> restriction_concrete_gparams;
+			std::vector<TypeId> constraint_concrete_gparams;
 			ctx.GetCurStack()->EnterBlock(vt);
-			for (auto iter : generic_param.restriction_generic_params) {
-				restriction_concrete_gparams.push_back(iter->Verify(ctx).GetResultTypeId());
+			for (auto iter : generic_param.constraint_generic_params) {
+				constraint_concrete_gparams.push_back(iter->Verify(ctx).GetResultTypeId());
 			}
 			ctx.GetCurStack()->LeaveBlock();
 
-			AstNodeRestriction* astnode_restriction = v->GetValueRestriction();
-			TypeId				restriction_tid		= astnode_restriction->Instantiate(ctx, restriction_concrete_gparams);
+			AstNodeConstraint* astnode_constraint = v->GetValueConstraint();
+			TypeId				constraint_tid		= astnode_constraint->Instantiate(ctx, constraint_concrete_gparams);
 
 			TypeInfo* ti = g_typemgr.GetTypeInfo(concrete_gparam_tid);
-			if (!ti->MatchRestriction(restriction_tid)) {
-				panicf("type[%d:%s] not implement restriction[%s]", concrete_gparam_tid, GET_TYPENAME_C(concrete_gparam_tid), generic_param.restriction_name.c_str());
+			if (!ti->MatchConstraint(constraint_tid)) {
+				panicf("type[%d:%s] not implement constraint[%s]", concrete_gparam_tid, GET_TYPENAME_C(concrete_gparam_tid), generic_param.constraint_name.c_str());
 			}
 		} else {
 			panicf("not implemented");
@@ -128,7 +128,7 @@ void AstNodeGenericFnDef::verify_restriction(VerifyContext& ctx, std::vector<Typ
 std::string AstNodeGenericFnDef::instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_gparams) {
 	assert(concrete_gparams.size() == m_generic_params.size());
 
-	verify_restriction(ctx, concrete_gparams);
+	verify_constraint(ctx, concrete_gparams);
 
 	std::vector<TypeId> params;
 	VariableTable*		vt = new VariableTable();
@@ -183,21 +183,21 @@ void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
 		}
 
 		// 推导出该约束的实际类型
-		std::vector<TypeId> restriction_concrete_gparams;
+		std::vector<TypeId> constraint_concrete_gparams;
 		ctx.GetCurStack()->EnterBlock(vt);
-		for (auto iter : generic_param.restriction_generic_params) {
-			restriction_concrete_gparams.push_back(iter->Verify(ctx).GetResultTypeId());
+		for (auto iter : generic_param.constraint_generic_params) {
+			constraint_concrete_gparams.push_back(iter->Verify(ctx).GetResultTypeId());
 		}
 		ctx.GetCurStack()->LeaveBlock();
 
 		// 实例化约束
-		Variable*			restriction_v			 = ctx.GetCurStack()->GetVariable(generic_param.restriction_name);
-		AstNodeRestriction* astnode_restriction		 = restriction_v->GetValueRestriction();
-		TypeId				restriction_instance_tid = astnode_restriction->Instantiate(ctx, restriction_concrete_gparams);
+		Variable*			constraint_v			 = ctx.GetCurStack()->GetVariable(generic_param.constraint_name);
+		AstNodeConstraint* astnode_constraint		 = constraint_v->GetValueConstraint();
+		TypeId				constraint_instance_tid = astnode_constraint->Instantiate(ctx, constraint_concrete_gparams);
 
-		// 根据restriction实例, 填充虚拟类型的方法, 使得虚拟类型满足该约束
-		TypeInfoRestriction* restriction_instance = dynamic_cast<TypeInfoRestriction*>(g_typemgr.GetTypeInfo(restriction_instance_tid));
-		restriction_instance->FillVirtualType(*virtual_gparams[generic_param.type_name]);
+		// 根据constraint实例, 填充虚拟类型的方法, 使得虚拟类型满足该约束
+		TypeInfoConstraint* constraint_instance = dynamic_cast<TypeInfoConstraint*>(g_typemgr.GetTypeInfo(constraint_instance_tid));
+		constraint_instance->FillVirtualType(*virtual_gparams[generic_param.type_name]);
 	}
 
 	// 根据虚拟类型, 推导出方法的参数类型

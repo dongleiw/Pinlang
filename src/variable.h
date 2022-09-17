@@ -6,7 +6,7 @@
 
 class ExecuteContext;
 class Function;
-class AstNodeRestriction;
+class AstNodeConstraint;
 class AstNodeGenericFnDef;
 
 class Variable {
@@ -16,7 +16,7 @@ public:
 	Variable(float value);
 	Variable(std::string value);
 	Variable(Function* fn);
-	Variable(AstNodeRestriction* astnode);
+	Variable(AstNodeConstraint* astnode);
 	Variable(AstNodeGenericFnDef* astnode);
 
 	static Variable* CreateTypeVariable(TypeId tid);
@@ -28,7 +28,7 @@ public:
 	float				 GetValueFloat() const;
 	std::string			 GetValueStr() const;
 	Function*			 GetValueFunction() const;
-	AstNodeRestriction*	 GetValueRestriction() const;
+	AstNodeConstraint*	 GetValueConstraint() const;
 	AstNodeGenericFnDef* GetValueGenericFnDef() const;
 
 	bool IsConst() const { return m_is_const; }
@@ -48,6 +48,6 @@ protected:
 	float				 m_value_float;
 	std::string			 m_value_str;
 	Function*			 m_value_fn;
-	AstNodeRestriction*	 m_value_restriction;
+	AstNodeConstraint*	 m_value_constraint;
 	AstNodeGenericFnDef* m_value_generic_fn;
 };

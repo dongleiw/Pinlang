@@ -3,7 +3,7 @@
 #include "define.h"
 #include "type.h"
 #include "type_fn.h"
-#include "type_restriction.h"
+#include "type_constraint.h"
 #include "verify_context.h"
 
 #include <map>
@@ -30,7 +30,7 @@ public:
 	TypeId GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid);
 
 	TypeId AddTypeInfo(TypeInfo* ti);
-	TypeId GetOrAddTypeRestriction(TypeInfoRestriction* ti);
+	TypeId GetOrAddTypeConstraint(TypeInfoConstraint* ti);
 	TypeId AddGenericType(TypeInfo* ti);
 
 	void InitTypes();

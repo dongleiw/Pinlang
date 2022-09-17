@@ -7,7 +7,7 @@
 #include "type_fn.h"
 #include "type_int.h"
 #include "type_mgr.h"
-#include "type_restriction.h"
+#include "type_constraint.h"
 #include "type_str.h"
 #include "type_type.h"
 #include "verify_context.h"
@@ -55,13 +55,13 @@ void TypeMgr::InitTypes() {
 		assert(TYPE_ID_STR == ti_str->GetTypeId());
 	}
 
-	// 定义内置restriction
+	// 定义内置constraint
 	{
-		//AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_add());
-		//AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_sub());
-		//AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_mul());
-		//AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_div());
-		//AddGenericRestriction(TypeInfoGenericRestriction::create_restriction_mod());
+		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_add());
+		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_sub());
+		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_mul());
+		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_div());
+		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_mod());
 	}
 }
 void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
@@ -99,7 +99,7 @@ TypeId TypeMgr::add_type(TypeInfo* ti) {
 
 	return ti->GetTypeId();
 }
-TypeId TypeMgr::GetOrAddTypeRestriction(TypeInfoRestriction* ti) {
+TypeId TypeMgr::GetOrAddTypeConstraint(TypeInfoConstraint* ti) {
 	return add_type(ti);
 }
 TypeId TypeMgr::AddGenericType(TypeInfo* ti) {

@@ -26,9 +26,9 @@ Variable::Variable(Function* fn) {
 	m_tid	   = fn->GetTypeId();
 	m_value_fn = fn;
 }
-Variable::Variable(AstNodeRestriction* astnode) {
+Variable::Variable(AstNodeConstraint* astnode) {
 	m_tid				= TYPE_ID_GENERIC_RESTRICTION;
-	m_value_restriction = astnode;
+	m_value_constraint = astnode;
 }
 Variable::Variable(AstNodeGenericFnDef* astnode) {
 	m_tid			   = TYPE_ID_GENERIC_FN;
@@ -94,9 +94,9 @@ Function* Variable::GetValueFunction() const {
 	assert(g_typemgr.GetTypeInfo(m_tid)->IsFn());
 	return m_value_fn;
 }
-AstNodeRestriction* Variable::GetValueRestriction() const {
+AstNodeConstraint* Variable::GetValueConstraint() const {
 	assert(m_tid == TYPE_ID_GENERIC_RESTRICTION);
-	return m_value_restriction;
+	return m_value_constraint;
 }
 AstNodeGenericFnDef* Variable::GetValueGenericFnDef() const {
 	assert(m_tid == TYPE_ID_GENERIC_FN);

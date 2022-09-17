@@ -17,7 +17,7 @@ enum TypeGroupId {
 	TYPE_GROUP_ID_FUNCTION		   = 3,
 	TYPE_GROUP_ID_CLASS			   = 4,
 	/*
-	 * 泛型restriction
+	 * 泛型constraint
 	 */
 	TYPE_GROUP_ID_RESTRICTION  = 5,
 	TYPE_GROUP_ID_GENERIC_TYPE = 6,
@@ -66,6 +66,6 @@ struct ParserFnDeclare {
  */
 struct ParserGenericParam {
 	std::string				  type_name;				  // 泛型的名字. 不可为空
-	std::string				  restriction_name;			  // 约束的名字
-	std::vector<AstNodeType*> restriction_generic_params; // 约束的参数. 可能为空
+	std::string				  constraint_name;			  // 约束的名字
+	std::vector<AstNodeType*> constraint_generic_params; // 约束的参数. 可能为空
 };

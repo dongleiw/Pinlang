@@ -8,7 +8,7 @@
 #include "astnode_identifier.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
-#include "astnode_restriction.h"
+#include "astnode_constraint.h"
 #include "astnode_return.h"
 #include "astnode_type.h"
 #include "astnode_vardef.h"
@@ -18,7 +18,7 @@
 #include "type_fn.h"
 #include "type_virtual_gtype.h"
 #include "type_mgr.h"
-#include "type_restriction.h"
+#include "type_constraint.h"
 #include "utils.h"
 #include <any>
 #include <ios>
@@ -74,7 +74,7 @@ std::any Visitor::visitExpr_relational(PinlangParser::Expr_relationalContext* co
 std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeContext* ctx) {
 	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
 	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
-	std::string restriction_name;
+	std::string constraint_name;
 	std::string op;
 	if (ctx->MUL() != NULL) {
 		op = "mul";
@@ -85,7 +85,7 @@ std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeConte
 	} else {
 		panicf("unknown op");
 	}
-	return (AstNode*)new AstNodeOperator(left, restriction_name, op, right);
+	return (AstNode*)new AstNodeOperator(left, constraint_name, op, right);
 }
 std::any Visitor::visitExpr_logical(PinlangParser::Expr_logicalContext* ctx) {
 	panicf("not implemented yet\n");
@@ -94,7 +94,7 @@ std::any Visitor::visitExpr_logical(PinlangParser::Expr_logicalContext* ctx) {
 std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
 	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
-	std::string restriction_name;
+	std::string constraint_name;
 	std::string op;
 	if (ctx->ADD() != nullptr) {
 		op = "add";
@@ -103,7 +103,7 @@ std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	} else {
 		panicf("unknown op");
 	}
-	return (AstNode*)new AstNodeOperator(left, restriction_name, op, right);
+	return (AstNode*)new AstNodeOperator(left, constraint_name, op, right);
 }
 std::any Visitor::visitExpr_primary_expr(PinlangParser::Expr_primary_exprContext* ctx) {
 	return ctx->expr_primary()->accept(this);
@@ -122,8 +122,8 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_block()->accept(this);
 	} else if (ctx->stmt_return() != nullptr) {
 		return ctx->stmt_return()->accept(this);
-	} else if (ctx->stmt_restriction_def() != nullptr) {
-		return ctx->stmt_restriction_def()->accept(this);
+	} else if (ctx->stmt_constraint_def() != nullptr) {
+		return ctx->stmt_constraint_def()->accept(this);
 	} else if (ctx->stmt_generic_fndef() != nullptr) {
 		return ctx->stmt_generic_fndef()->accept(this);
 	} else {
@@ -249,14 +249,14 @@ std::any Visitor::visitStmt_fn_declare(PinlangParser::Stmt_fn_declareContext* ct
 		.return_type = return_type,
 	};
 }
-std::any Visitor::visitRestriction_generic_params(PinlangParser::Restriction_generic_paramsContext* ctx) {
+std::any Visitor::visitConstraint_generic_params(PinlangParser::Constraint_generic_paramsContext* ctx) {
 	return ctx->identifier_list()->accept(this);
 }
-std::any Visitor::visitStmt_restriction_def(PinlangParser::Stmt_restriction_defContext* ctx) {
+std::any Visitor::visitStmt_constraint_def(PinlangParser::Stmt_constraint_defContext* ctx) {
 	std::string				 name = ctx->Identifier()->getText();
 	std::vector<std::string> generic_params;
-	if (ctx->restriction_generic_params() != nullptr) {
-		generic_params = std::any_cast<std::vector<std::string>>(ctx->restriction_generic_params()->accept(this));
+	if (ctx->constraint_generic_params() != nullptr) {
+		generic_params = std::any_cast<std::vector<std::string>>(ctx->constraint_generic_params()->accept(this));
 	}
 	std::vector<ParserFnDeclare> rules;
 	for (auto iter : ctx->stmt_fn_declare()) {
@@ -264,18 +264,18 @@ std::any Visitor::visitStmt_restriction_def(PinlangParser::Stmt_restriction_defC
 		rules.push_back(fn_declare);
 	}
 
-	return (AstNode*)new AstNodeRestriction(name, generic_params, rules);
+	return (AstNode*)new AstNodeConstraint(name, generic_params, rules);
 }
 /*
  * 解析一个generics参数的约束
  * @return ParserGenericParam
  */
-std::any Visitor::visitGeneric_param_restriction(PinlangParser::Generic_param_restrictionContext* ctx) {
+std::any Visitor::visitGeneric_param_constraint(PinlangParser::Generic_param_constraintContext* ctx) {
 	ParserGenericParam generic_param;
-	generic_param.restriction_name = ctx->Identifier()->getText();
+	generic_param.constraint_name = ctx->Identifier()->getText();
 	for (auto iter : ctx->type()) {
-		AstNodeType* restriction_type = std::any_cast<AstNodeType*>(iter->accept(this));
-		generic_param.restriction_generic_params.push_back(restriction_type);
+		AstNodeType* constraint_type = std::any_cast<AstNodeType*>(iter->accept(this));
+		generic_param.constraint_generic_params.push_back(constraint_type);
 	}
 	return generic_param;
 }
@@ -284,7 +284,7 @@ std::any Visitor::visitGeneric_param_restriction(PinlangParser::Generic_param_re
  * @return ParserGenericParam
  */
 std::any Visitor::visitGeneric_param(PinlangParser::Generic_paramContext* ctx) {
-	ParserGenericParam generic_param = std::any_cast<ParserGenericParam>(ctx->generic_param_restriction()->accept(this));
+	ParserGenericParam generic_param = std::any_cast<ParserGenericParam>(ctx->generic_param_constraint()->accept(this));
 	generic_param.type_name			 = ctx->Identifier()->getText();
 	return generic_param;
 }

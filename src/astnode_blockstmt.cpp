@@ -19,7 +19,7 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx) {
 		for (auto n : m_predefine_stmts) {
 			n->Verify(ctx);
 		}
-		// 给基础类型添加restriction实现
+		// 给基础类型添加constraint实现
 		g_typemgr.InitBuiltinMethods(ctx);
 	}
 

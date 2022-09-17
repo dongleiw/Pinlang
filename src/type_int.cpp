@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 
-#include "astnode_restriction.h"
+#include "astnode_constraint.h"
 #include "define.h"
 #include "execute_context.h"
 #include "function.h"
@@ -50,14 +50,14 @@ TypeInfoInt::TypeInfoInt() {
 }
 void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 	{
-		AstNodeRestriction*	   restriction	   = ctx.GetCurStack()->GetVariable("Add")->GetValueRestriction();
-		TypeId				   restriction_tid = restriction->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT, TYPE_ID_INT});
+		AstNodeConstraint*	   constraint	   = ctx.GetCurStack()->GetVariable("Add")->GetValueConstraint();
+		TypeId				   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT, TYPE_ID_INT});
 		std::map<std::string, Function*> methods;
 
 		TypeId	  tid = g_typemgr.GetOrAddTypeFn(std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT);
 		Function* f	  = new Function(tid, builtin_fn_add_int);
 		methods["add"] = f;
 
-		AddRestriction(restriction_tid, methods);
+		AddConstraint(constraint_tid, methods);
 	}
 }

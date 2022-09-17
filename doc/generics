@@ -1,185 +1,70 @@
 ######
-1. 定义restriction
-2. restriction需要支持类似继承的概念
-3. 多个restriction的相同方法的冲突处理
-4. 要不要支持给第三方库添加restriction?
-5. restriction是否支持属性? 是否支持默认函数实现?
-6. restriction和类型之间如何进行转换?
-	type也是restriction
-7. 如何利用restriction实现泛型?
-8. 如何实现restriction
+1. 什么是泛型? 为什么需要泛型?
+	泛型字面意思就是泛化的类型. 一般的逻辑(函数/方法)是和具体类型绑定的, 这种函数(方法)只能接受明确的类型. 但是一些逻辑可以作用于多种类型, 只要类型满足某些约束条件. 
+	比如以下两个函数. 逻辑都是求两个参数的和. 
+		fn sum(a int, b int) int{ return a+b; }
+		fn sum(a float, b float) float{ return a+b; }
 
+		这两个函数可以简化为以下方式:
+			fn sum [ T {T是int 或者T是float} ]  (a T, b T) T { return a+b; }
+		
 
-### 1. define restriction
-restriction restriction_name [ <T,...> ] [ : restriction_name, ... ] {
-	fn GetName() str;
-	fn GreatherThan(another T) bool;
-}
+	泛型的实现方式选择
+		从上面例中中可以看出, 泛型的构建依赖于一个更基础的概念"对类型的约束", 也就是类型需要满足的条件. 泛型通过约束来限定可接受的类型集合
+		那么如何描述"对类型的约束"哪? 不同语言选择了不同的方式.
+			隐式声明约束:
+				比如C++中的template, 无需显示定义约束条件. 所有约束由编译器自动推导. 坏处是编译耗时长, 错误提示不友好, 不够直观
+				(C++20引入了concept, 是一种显式声明的方式) 
+			显示定义约束, 隐式声明约束(duck type):
+				比如Golang中的interface. 需要显式定义. 但是只要类型实现了interface的相关接口, 就会自动满足了interface的限定. 
+				(Golang没有泛型, 这是一个不严谨的例子)
+			显式定义约束, 显式声明约束:
+				比如Rust中的trait. 需要显式定义约束(Rust中为类型的特性), 同时需要使用impl显式声明实现某个约束. 可以在定义时进行类型检测, 错误提示更友好, 比较直观
+				我们选择这种方式
+			
 
-restriction Empty{}
+2. 约束(constraint)
+	constraint(约束)是类型的限定条件的集合. 限定方式包括
+		* 提供的接口 ( 目前只考虑这一点 )
+			{ T | T必须有接口'add(int)'. T必须有接口'GetId()int'.  }
+		* 类型大小
+		* 类型名
+		* 提供的字段属性
+	
+	约束和类型的关系:
+		类型是对值的限定. 
+			比如值'1'是int类型, 那么'1'大小为4byte, 有方法add/sub/mul/div/mod等方法
+		约束是对类型的限定. 
+			比如类型'T'满足约束Add, 那么'T'有方法: 'add(int)int'
 
-restriction Printable{
-	fn ToString() str;
-}
-
-restriction Identify{
-	fn Id() int;
-}
-
-restriction Foo : Printable, Identify{}
-
-restriction GreatherThan<T>{
-	fn GreatherThan(another T) bool;
-}
-
-### 2. 如果把类型也视作restriction
-
-// 没啥用, 相当于Foo这个restriction唯一能接受的类型就是int
-restriction Foo : int{}
-
-// 没意义. Student类型如果是int, 那没啥用. 如果Student类型不是int, 那
-impl int for Student{}
-
-// 通过或得到一个新的restriction. 约束为"类型只能为int或者float"
-int | float
-
-// 定义一个restriction
-restriction Number : int | float{}
-
-var a Number = 1.1;
-
-// 有啥意义?
-impl Number for Student{}
-
-### 3. restriction作为类型
-
-restriction Foo{
-	fn ToString() str;	
-	fn GetId() int;
-}
-// Foo是一个restriction, 因此print函数其实是一个泛型, 可以接受满足Foo限定的类型作为参数
-fn print[T foo](f T){
-	printf("%d %s", f.GetId(), f.ToString());
-}
-// 那么有一个问题: 该函数调用时, f是什么类型?
-// 如果f的类型是Foo:
-//		也就是说restriction可以作为类型, 而不仅仅是约束. 这样的设计有些类似与一些编程语言中的interface, 不过是静态分发的
-// 如果f的类型是Student:
-//		虽然类型是Student, 但是只能使用restriction限定的方法
-// 两种选择的区别在于, 是否允许语法:
-//		var f Foo = Student{};
-print( Student{} );
-
-restriction name : GreatherThan, Equal{
-	fn GetName() str;
-}
-restriction{ {int,float} }
-GreatherThan & Equal
-
-######
-restriction GreatherThan<T>{
-	fn GreaterThan(another const T) bool;
-}
-restriction Equal<T>{
-	fn Equal(another const T) bool;
-}
-restriction Comparable <T> : GreaterThan,Equal{
-}
-
-// 内置类型自动实现一些预定义的restriction
-type Equal Stringify
-int GreatherThan Equal Comparable Stringify
-float GreatherThan Equal Comparable Stringify
-str GreatherThan Equal Comparable Stringify
-bool Equal Stringify
-
-// Student实现Comparable. 自动实现了Comparable包含的GreatherThan, Equal
-class Student{
-	fn Equal(another const Student) bool{
-		return this.score == another.score;
-	}
-	restriction Equal1[Student]{
-		fn Equal = Equal;
-	}
-	restriction Equal2[Student]{
-		fn Equal = Equal;
-	}
-	restriction Equal3[Student]{
-		fn Equal(another const Student) bool{
-			return this.id > another.id;
+	定义约束
+		// 定义约束
+		constraint AddInt{
+			fn add(another int);
 		}
-	}
-}
-impl restriction Comparable[Student] for Student{
-	fn GreaterThan(another const Student) bool{
-		return this.score > another.score;
-	}
-	fn Equal(another const Student) bool{
-		return this.score == another.score;
-	}
-}
-fn max<T GreatherThan<T>>(a T, b T) T{
-	if(a>b)
-		return a;
-	else
-		return b;
-}
+		// 定义泛型约束
+		constraint Add[ AnotherT, ReturnT ]{
+			fn add(another AnotherT) ReturnT;
+		}
+		
+	内置类型自动实现一些预定义的restriction
+		int: Add Sub Mul Div Mod Strinfiy
+		float: Add Sub Mul Div Strinfiy
+		str: Add Strinfiy
+		bool: Strinfiy
 
-fn max<T int>(a T, b T) T{}
-=> fn max(a int, b int) int{}
-
-int == restriction{{int}}
-
-fn max<T int | float>(a T, b T) T{}
-=> 
-	fn max(a int, b int) int{}
-	fn max(a float, b float) float{}
-
-var s1 = Student{score:90};
-var s2 = Student{score:70};
-max(s1, s2)
+	问题:
+		是否支持字段属性? 
+		是否支持默认函数实现?
+		如何处理多个restriction的相同方法的冲突问题?
+		约束如何复用(继承?)
+		要不要支持给第三方库添加restriction?
+		如何实现restriction?
 
 
-########## 如何检查泛型函数? 
-比如如下sum函数
-restriction Add[T]{
-	fn add(another T) T;
-}
-fn sum[T Display](a T) str{
-	return a.ToString();
-}
-一个方法是: 
-	增加一个临时的仅用于检查该函数的类型T
-	然后将Display的方法都拷贝到T中, 让T满足Display约束
-	然后就可以使用类型T来verify函数了
+3. 泛型函数
+	在约束的基础上, 就可以实现泛型函数了. 
+	定义泛型函数:
+		fn sum[T Add[T,T]] (a T, b T) T { return a+b; }
 
-那假如是如下函数那?
-fn sum[T Add[T]](a T, b T) T{
-	return a+b;
-}
-T的类型约束是Add[T], Add[T]本身又是泛型, 无法直接校验. 
-一个方法是: 
-	增加一个临时的仅用于检查该函数的类型T
-	然后把restriction实例化出来得到Add[T]
-	然后将Add[T]的方法都拷贝到T中, 让T满足Add[T]
-	然后就可以使用类型T来verify函数了
-
-fn sum[T Add[T]](a []T) T{
-	//...
-}
-
-总结一下校验方法: 假如函数泛型参数为T1,T2,...,Tn. 对应约束为R1,R2,...,Rn
-	增加临时的仅用于检查该函数的类型T1,T2,...
-	如果类型的约束是泛型, 先把restriction实例化出来
-	然后将约束的方法信息拷贝到对应类型中, 让T1满足R1, T2满足R2, ..., Tn满足Rn
-	然后就可以像普通函数那样校验了
-	
-######### 泛型类型的实例化
-[]T是一个泛型
-T类型是12, []T类型是13
-假如T实际类型为int(3), '[]T'中的所有T都需要替换为类型'int(3)':
-	创建一个新类型TN, 将TN中的所有12替换为3. 然后加入到type_mgr中
-
-假如有泛型记作F(T,F), 其中T和F是泛型参数, T类型id为19, F类型id为20
-假如实际类型是(T=121, F=193). 那么实例化的过程就是将F(T,F)中的所有19替换为121, 20替换为193
-	
+		

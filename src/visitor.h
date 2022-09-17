@@ -26,11 +26,11 @@ public:
 	virtual std::any visitExpr_primary_fncall(PinlangParser::Expr_primary_fncallContext* ctx) override;
 	virtual std::any visitStmt_fn_declare(PinlangParser::Stmt_fn_declareContext* ctx) override;
 
-	virtual std::any visitRestriction_generic_params(PinlangParser::Restriction_generic_paramsContext *ctx)override;
-	virtual std::any visitStmt_restriction_def(PinlangParser::Stmt_restriction_defContext* ctx) override;
+	virtual std::any visitConstraint_generic_params(PinlangParser::Constraint_generic_paramsContext *ctx)override;
+	virtual std::any visitStmt_constraint_def(PinlangParser::Stmt_constraint_defContext* ctx) override;
 
 	virtual std::any visitStmt_generic_fndef(PinlangParser::Stmt_generic_fndefContext* ctx) override;
 	virtual std::any visitGeneric_param(PinlangParser::Generic_paramContext* ctx) override;
-	virtual std::any visitGeneric_param_restriction(PinlangParser::Generic_param_restrictionContext* ctx) override;
+	virtual std::any visitGeneric_param_constraint(PinlangParser::Generic_param_constraintContext* ctx) override;
 	virtual std::any visitIdentifier_list(PinlangParser::Identifier_listContext* ctx) override;
 };

@@ -64,7 +64,7 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx) {
 			// 使用该类型来选择合适的函数重载
 			TypeId		expect_result_tid = vc_param.GetResultTid();
 			TypeInfoFn* tifn			  = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(expect_result_tid));
-			std::string uniq_fnname		  = m_id + "_" + TypeInfoFn::GetUniqFnName(m_id, tifn->GetParmsTid());
+			std::string uniq_fnname		  = TypeInfoFn::GetUniqFnName(m_id, tifn->GetParmsTid());
 			Variable*	v				  = ctx.GetCurStack()->GetVariableOrNull(uniq_fnname);
 			if (v == nullptr) {
 				panicf("var[%s] uniq_fnname[%s] not exist", m_id.c_str(), uniq_fnname.c_str());
