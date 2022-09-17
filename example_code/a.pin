@@ -1,24 +1,36 @@
-var a int =1+1;
-
-constraint MyConstraint{
-	fn print(s str);
-}
-
 fn gsum[T Add[T,T]](a T, b T) T{
 	return a+b;
 }
 
-fn sum(a int, b int) int{
-	return a+b;
+//fn sum(a int, b int) int{
+//	return a+b;
+//}
+//
+{
+	var si = gsum(1, 2);
+	var sf = gsum(1.1, 2.3);
+	var ss = gsum("hello", "world");
+}
+//
+//var gf fn(int,int)int = gsum;
+//var gfr = gf(1,9);
+//
+//var f fn(int,int)int = sum;
+//var fr = f(1,2);
+
+{
+	printf("call generic function with gparams: result=%d\n", gsum[int](10,25));
+	var f fn(int,int)int = gsum[int];
+	var fr = f(9, 10);
 }
 
-var si = gsum(1, 2);
-var si2 = gsum(1, 2);
-var sf = gsum(1.1, 2.3);
-var ss = gsum("hello", "world");
+// 获取对应函数实例
+{
+	var fi = gsum[int];
+	var ff fn(float,float)float = gsum;
+	var fs fn(str,str)str = gsum[str];
 
-var gf fn(int,int)int = gsum;
-var gfr = gf(1,9);
-
-var f fn(int,int)int = sum;
-var fr = f(1,2);
+	var rfi = fi(1,2);
+	var rff = ff(9.1, 10.3);
+	var rfs = fs("yes", "ok");
+}

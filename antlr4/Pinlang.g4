@@ -16,6 +16,7 @@ expr_primary
     | Identifier                                        # expr_primary_identifier
     | L_PAREN expr R_PAREN                              # expr_primary_parens
 	| expr_primary L_PAREN expr_list R_PAREN            # expr_primary_fncall
+	| Identifier L_BRACKET type_list R_BRACKET          # expr_primary_gparam   // 泛参的实例化, 数组下标使用()
 	;
 
 expr_list

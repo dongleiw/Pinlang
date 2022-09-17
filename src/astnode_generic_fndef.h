@@ -47,6 +47,10 @@ public:
 	 * 根据函数类型来推导出泛型参数, 然后实例化出来
 	 */
 	Instance Instantiate(VerifyContext& ctx, TypeId tid);
+	/*
+	 * 根据泛参的实际类型实例化
+	 */
+	Instance Instantiate(VerifyContext& ctx, std::vector<TypeId> gparams_tid);
 
 private:
 	/*

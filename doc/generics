@@ -4,8 +4,15 @@
 		fn sum(a int, b int) int{ return a+b; }
 		fn sum(a float, b float) float{ return a+b; }
 
-		这两个函数可以简化为以下方式:
-			fn sum [ T {T是int 或者T是float} ]  (a T, b T) T { return a+b; }
+		这两个函数可以用以下伪码描述:
+			泛型参数:
+				T T是int or T是float
+			函数体:
+				fn sum(a T, b T) T{
+					return a+b; 
+				}
+
+			其中T是泛型参数(简称为泛参), 泛型函数可以看作是一个接受类型作为参数的函数, 根据具体的参数来生成实际函数的过程称为泛型函数的实例化. 
 		
 
 	泛型的实现方式选择
@@ -20,6 +27,28 @@
 			显式定义约束, 显式声明约束:
 				比如Rust中的trait. 需要显式定义约束(Rust中为类型的特性), 同时需要使用impl显式声明实现某个约束. 可以在定义时进行类型检测, 错误提示更友好, 比较直观
 				我们选择这种方式
+			
+	泛型的符号选择
+		<>
+			fn sum<T Add<T,T>>(a T, b T) T{
+				return a+b;
+			}
+			sum<int>(1,2);
+
+		turborfish
+			Add::<int,int>
+			sum::<int>
+
+		[]
+			fn sum[T Add[T,T]](a T, b T) T{
+				return a+b;
+			}
+			sum[int](1,2);
+
+			数组下标访问则改为()
+				var array = {1,2,3};
+				array(0)
+				array(1)
 			
 
 2. 约束(constraint)

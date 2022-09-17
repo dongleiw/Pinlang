@@ -6,6 +6,7 @@
 #include "astnode_fncall.h"
 #include "astnode_fndef.h"
 #include "astnode_generic_fndef.h"
+#include "astnode_generic_instantiate.h"
 #include "astnode_identifier.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
@@ -328,4 +329,9 @@ std::any Visitor::visitIdentifier_list(PinlangParser::Identifier_listContext* ct
 		ids.push_back(iter->getText());
 	}
 	return ids;
+}
+std::any Visitor::visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) {
+	std::string id = ctx->Identifier()->getText();
+	std::vector<AstNodeType*> type_list = std::any_cast<std::vector<AstNodeType*>>(ctx->type_list()->accept(this));
+	return (AstNode*)new AstNodeGenericInstantiate(id, type_list);
 }

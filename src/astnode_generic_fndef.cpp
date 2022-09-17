@@ -312,3 +312,7 @@ void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
 	m_body->Verify(ctx);
 	ctx.PopSTack();
 }
+AstNodeGenericFnDef::Instance AstNodeGenericFnDef::Instantiate(VerifyContext& ctx, std::vector<TypeId> gparams_tid){
+	InstantiateParam instantiate_param = infer_by_gparams(ctx, gparams_tid);
+	return instantiate(ctx, instantiate_param);
+}
