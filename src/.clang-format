@@ -10,3 +10,10 @@ ColumnLimit: 0
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AccessModifierOffset: -4
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterEnum: false
+  AfterStruct: false
+  AfterCaseLabel: true
+  SplitEmptyFunction: false

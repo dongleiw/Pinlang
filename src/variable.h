@@ -23,12 +23,12 @@ public:
 
 	TypeId GetTypeId() const { return m_tid; }
 
-	TypeId				GetValueTid() const { return m_value_tid; }
-	int					GetValueInt() const { return m_value_int; }
-	float				GetValueFloat() const { return m_value_float; }
-	std::string			GetValueStr() const { return m_value_str; }
-	Function*			GetValueFunction() const { return m_value_fn; }
-	AstNodeRestriction* GetValueRestriction() const;
+	TypeId				 GetValueTid() const;
+	int					 GetValueInt() const;
+	float				 GetValueFloat() const;
+	std::string			 GetValueStr() const;
+	Function*			 GetValueFunction() const;
+	AstNodeRestriction*	 GetValueRestriction() const;
 	AstNodeGenericFnDef* GetValueGenericFnDef() const;
 
 	bool IsConst() const { return m_is_const; }
@@ -41,13 +41,13 @@ public:
 	std::string ToString() const;
 
 protected:
-	TypeId				m_tid;
-	bool				m_is_const;
-	TypeId				m_value_tid;
-	int					m_value_int;
-	float				m_value_float;
-	std::string			m_value_str;
-	Function*			m_value_fn;
-	AstNodeRestriction* m_value_restriction;
+	TypeId				 m_tid;
+	bool				 m_is_const;
+	TypeId				 m_value_tid;
+	int					 m_value_int;
+	float				 m_value_float;
+	std::string			 m_value_str;
+	Function*			 m_value_fn;
+	AstNodeRestriction*	 m_value_restriction;
 	AstNodeGenericFnDef* m_value_generic_fn;
 };

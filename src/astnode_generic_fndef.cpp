@@ -6,9 +6,12 @@
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
+#include "type_generic_type.h"
 #include "type_mgr.h"
+#include "type_restriction.h"
 #include "variable.h"
 #include "variable_table.h"
+#include "verify_context.h"
 #include <cassert>
 
 AstNodeGenericFnDef::AstNodeGenericFnDef(std::string fn_name, std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body) {
@@ -20,6 +23,8 @@ AstNodeGenericFnDef::AstNodeGenericFnDef(std::string fn_name, std::vector<Parser
 }
 VerifyContextResult AstNodeGenericFnDef::Verify(VerifyContext& ctx) {
 	log_debug("begin to verify generic fndef: fnname[%s]", m_fnname.c_str());
+
+	verify_body(ctx);
 
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_fnname, new Variable(this));
 	m_result_typeid = TYPE_ID_GENERIC_FN;
@@ -97,13 +102,13 @@ void AstNodeGenericFnDef::verify_restriction(VerifyContext& ctx, std::vector<Typ
 			// 创建vt, 将(泛型名=>实际类型id)定义到vt中
 			VariableTable* vt = new VariableTable();
 			for (size_t j = 0; j < m_generic_params.size(); j++) {
-				vt->AddVariable(m_generic_params.at(j).type_name, new Variable(concrete_gparams.at(j)));
+				vt->AddVariable(m_generic_params.at(j).type_name, Variable::CreateTypeVariable(concrete_gparams.at(j)));
 			}
 
 			// 推导出该约束的实际类型
 			std::vector<TypeId> restriction_concrete_gparams;
 			ctx.GetCurStack()->EnterBlock(vt);
-			for (auto iter:generic_param.restriction_generic_params) {
+			for (auto iter : generic_param.restriction_generic_params) {
 				restriction_concrete_gparams.push_back(iter->Verify(ctx).GetResultTypeId());
 			}
 			ctx.GetCurStack()->LeaveBlock();
@@ -113,7 +118,7 @@ void AstNodeGenericFnDef::verify_restriction(VerifyContext& ctx, std::vector<Typ
 
 			TypeInfo* ti = g_typemgr.GetTypeInfo(concrete_gparam_tid);
 			if (!ti->MatchRestriction(restriction_tid)) {
-				panicf("type[%d:%s] not implement restriction[%s]", concrete_gparam_tid, GET_TYPENAME_C(concrete_gparam_tid), generic_param.restriction_name.c_str());	
+				panicf("type[%d:%s] not implement restriction[%s]", concrete_gparam_tid, GET_TYPENAME_C(concrete_gparam_tid), generic_param.restriction_name.c_str());
 			}
 		} else {
 			panicf("not implemented");
@@ -123,12 +128,12 @@ void AstNodeGenericFnDef::verify_restriction(VerifyContext& ctx, std::vector<Typ
 std::string AstNodeGenericFnDef::instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_gparams) {
 	assert(concrete_gparams.size() == m_generic_params.size());
 
-	verify_restriction(ctx,concrete_gparams);
+	verify_restriction(ctx, concrete_gparams);
 
 	std::vector<TypeId> params;
 	VariableTable*		vt = new VariableTable();
 	for (size_t i = 0; i < m_generic_params.size(); i++) {
-		vt->AddVariable(m_generic_params.at(i).type_name, new Variable(concrete_gparams.at(i)));
+		vt->AddVariable(m_generic_params.at(i).type_name, Variable::CreateTypeVariable(concrete_gparams.at(i)));
 	}
 
 	ctx.GetCurStack()->EnterBlock(vt);
@@ -157,4 +162,84 @@ void AstNodeGenericFnDef::add_instance_to_vt(VerifyContext& ctx, std::string nam
 		panicf("generic_fn[%s] not found", m_fnname.c_str());
 	}
 	vt->AddVariable(name, new Variable(fn));
+}
+void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
+	log_debug("begin to verify body of generic function name[%s]", m_fnname.c_str());
+
+	// 创建虚拟类型
+	std::map<std::string, TypeInfoGenericType*> virtual_gparams;
+	for (auto iter : m_generic_params) {
+		TypeInfoGenericType* ti			= new TypeInfoGenericType(iter.type_name);
+		virtual_gparams[iter.type_name] = ti;
+		g_typemgr.AddTypeInfo(ti);
+	}
+
+	// 填充虚拟类型
+	for (auto generic_param : m_generic_params) {
+		// 创建vt, 将(泛型名=>虚拟类型id)定义到vt中
+		VariableTable* vt = new VariableTable();
+		for (auto virtual_gparam : virtual_gparams) {
+			vt->AddVariable(virtual_gparam.first, Variable::CreateTypeVariable(virtual_gparam.second->GetTypeId()));
+		}
+
+		// 推导出该约束的实际类型
+		std::vector<TypeId> restriction_concrete_gparams;
+		ctx.GetCurStack()->EnterBlock(vt);
+		for (auto iter : generic_param.restriction_generic_params) {
+			restriction_concrete_gparams.push_back(iter->Verify(ctx).GetResultTypeId());
+		}
+		ctx.GetCurStack()->LeaveBlock();
+
+		// 实例化约束
+		Variable*			restriction_v			 = ctx.GetCurStack()->GetVariable(generic_param.restriction_name);
+		AstNodeRestriction* astnode_restriction		 = restriction_v->GetValueRestriction();
+		TypeId				restriction_instance_tid = astnode_restriction->Instantiate(ctx, restriction_concrete_gparams);
+
+		// 根据restriction实例, 填充虚拟类型的方法, 使得虚拟类型满足该约束
+		TypeInfoRestriction* restriction_instance = dynamic_cast<TypeInfoRestriction*>(g_typemgr.GetTypeInfo(restriction_instance_tid));
+		restriction_instance->FillVirtualType(*virtual_gparams[generic_param.type_name]);
+	}
+
+	// 根据虚拟类型, 推导出方法的参数类型
+	std::vector<TypeId> fn_params_tid;
+	for (auto iter : m_params) {
+		// 创建vt, 将(泛型名=>虚拟类型id)定义到vt中
+		VariableTable* vt = new VariableTable();
+		for (auto virtual_gparam : virtual_gparams) {
+			vt->AddVariable(virtual_gparam.first, Variable::CreateTypeVariable(virtual_gparam.second->GetTypeId()));
+		}
+		ctx.GetCurStack()->EnterBlock(vt);
+		TypeId param_tid = iter.type->Verify(ctx).GetResultTypeId();
+		ctx.GetCurStack()->LeaveBlock();
+
+		fn_params_tid.push_back(param_tid);
+	}
+	assert(fn_params_tid.size() == m_params.size());
+
+	// 根据虚拟类型, 推导出函数的返回类型
+	TypeId return_tid = TYPE_ID_NONE;
+	{
+		// 创建vt, 将(泛型名=>虚拟类型id)定义到vt中
+		VariableTable* vt = new VariableTable();
+		for (auto virtual_gparam : virtual_gparams) {
+			vt->AddVariable(virtual_gparam.first, Variable::CreateTypeVariable(virtual_gparam.second->GetTypeId()));
+		}
+		ctx.GetCurStack()->EnterBlock(vt);
+		return_tid = m_return_type->Verify(ctx).GetResultTypeId();
+		ctx.GetCurStack()->LeaveBlock();
+	}
+
+	// 创建参数vt, 将参数定义到vt中
+	VariableTable* params_vt = new VariableTable();
+	for (size_t i = 0; i < m_params.size(); i++) {
+		params_vt->AddVariable(m_params.at(i).name, new Variable(fn_params_tid.at(i)));
+	}
+
+	// 校验body
+	ctx.PushStack();
+	ctx.GetCurStack()->EnterBlock(params_vt);
+	ctx.GetParam().Clear();
+	ctx.GetParam().SetReturnTid(return_tid);
+	m_body->Verify(ctx);
+	ctx.PopSTack();
 }

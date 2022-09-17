@@ -1,4 +1,4 @@
-var a=1+1;
+var a int =1+1;
 
 fn sum[T Add[T,T]](a T, b T) T{
 	return a+b;

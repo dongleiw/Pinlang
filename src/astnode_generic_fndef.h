@@ -36,9 +36,11 @@ private:
 	 */
 	std::string instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_generic_params);
 
+	// 将实例添加到vt的合适位置
 	void add_instance_to_vt(VerifyContext& ctx, std::string name, Function* fn) const;
-
+	// 校验泛型的实际类型是否满足约束
 	void verify_restriction(VerifyContext& ctx, std::vector<TypeId> concrete_generic_params)const;
+	void verify_body(VerifyContext& ctx);
 
 private:
 	std::string						m_fnname;

@@ -70,6 +70,6 @@ Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
 	std::vector<Variable*> args;
 	args.push_back(right_v);
 	Variable* result = left_v->CallMethod(ctx, m_method_idx, args);
-	log_debug("%d.%s(%d)=>%s", left_v->GetValueInt(), m_op.c_str(), right_v->GetValueInt(), result->ToString().c_str());
+	log_debug("%s.%s(%s)=>%s", left_v->ToString().c_str(), m_op.c_str(), right_v->ToString().c_str(), result->ToString().c_str());
 	return result;
 }

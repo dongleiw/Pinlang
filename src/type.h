@@ -30,7 +30,7 @@ public:
 	TypeInfo() : m_typeid(TYPE_ID_NONE), m_typegroup_id(TYPE_GROUP_ID_UNRESOLVE) {
 	}
 
-	TypeId		GetTypeId() { return m_typeid; }
+	TypeId		GetTypeId() const{ return m_typeid; }
 	void		SetTypeId(TypeId tid) { m_typeid = tid; }
 	std::string GetName() { return m_name; }
 	void		SetName(std::string name) { m_name = name; }

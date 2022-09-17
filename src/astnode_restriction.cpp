@@ -28,7 +28,7 @@ TypeId AstNodeRestriction::Instantiate(VerifyContext& ctx, std::vector<TypeId> c
 	// 泛型名映射到实际类型id
 	VariableTable* vt = new VariableTable();
 	for (size_t i = 0; i < m_generic_params.size(); i++) {
-		vt->AddVariable(m_generic_params.at(i), new Variable(concrete_params.at(i)));
+		vt->AddVariable(m_generic_params.at(i), Variable::CreateTypeVariable(concrete_params.at(i)));
 	}
 
 	// 添加一个临时vt, 避免污染现有vt

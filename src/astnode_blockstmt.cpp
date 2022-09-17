@@ -1,8 +1,8 @@
 #include "astnode_blockstmt.h"
 #include "type.h"
+#include "type_mgr.h"
 #include "variable_table.h"
 #include "verify_context.h"
-#include "type_mgr.h"
 
 AstNodeBlockStmt::AstNodeBlockStmt(const std::vector<AstNode*>& stmts) {
 	m_result_typeid = TYPE_ID_NONE;
@@ -14,12 +14,15 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx) {
 	VerifyContextResult vr(m_result_typeid);
 
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
-	for (auto n : m_predefine_stmts) {
-		n->Verify(ctx);
+	if (!m_predefine_stmts.empty()) {
+		// 加载预定义内容
+		for (auto n : m_predefine_stmts) {
+			n->Verify(ctx);
+		}
+		// 给基础类型添加restriction实现
+		g_typemgr.InitBuiltinMethods(ctx);
 	}
-	
-	// 给基础类型添加restriction实现
-	g_typemgr.InitBuiltinMethods(ctx);
+
 	for (auto n : m_stmts) {
 		n->Verify(ctx);
 	}

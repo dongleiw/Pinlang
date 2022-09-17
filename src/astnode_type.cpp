@@ -29,8 +29,12 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx) {
 		vr.SetResultTypeId(TYPE_ID_TYPE);
 		break;
 	case TYPE_KIND_IDENTIFIER:
-		vr.SetResultTypeId(ctx.GetCurStack()->GetVariableType(m_id));
+	{
+		//vr.SetResultTypeId(ctx.GetCurStack()->GetVariableType(m_id));
+		Variable* v = ctx.GetCurStack()->GetVariable(m_id);
+		vr.SetResultTypeId(v->GetValueTid());
 		break;
+	}
 	default:
 		panicf("unknown type_kind[%d]", m_type_kind);
 		break;
@@ -38,10 +42,10 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx) {
 	return vr;
 }
 std::map<std::string, TypeId> AstNodeType::InferType(TypeId target_tid) const {
-	std::map<std::string,TypeId> result;
+	std::map<std::string, TypeId> result;
 	switch (m_type_kind) {
 	case TYPE_KIND_TYPE:
-		if(target_tid!=TYPE_ID_TYPE){
+		if (target_tid != TYPE_ID_TYPE) {
 			panicf("bug");
 		}
 		return result;

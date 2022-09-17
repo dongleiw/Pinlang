@@ -47,7 +47,7 @@ Variable* Variable::CallMethod(ExecuteContext& ctx, int method_idx, std::vector<
 }
 std::string Variable::ToString() const {
 	std::string s;
-	char buf[128];
+	char		buf[128];
 	switch (m_tid) {
 	case TYPE_ID_TYPE:
 		snprintf(buf, sizeof(buf) - 1, "type(%d:%s)", m_value_tid, GET_TYPENAME_C(m_value_tid));
@@ -73,6 +73,26 @@ std::string Variable::ToString() const {
 		break;
 	}
 	return s;
+}
+TypeId Variable::GetValueTid() const {
+	assert(m_tid == TYPE_ID_TYPE);
+	return m_value_tid;
+}
+int Variable::GetValueInt() const {
+	assert(m_tid == TYPE_ID_INT);
+	return m_value_int;
+}
+float Variable::GetValueFloat() const {
+	assert(m_tid == TYPE_ID_FLOAT);
+	return m_value_float;
+}
+std::string Variable::GetValueStr() const {
+	assert(m_tid == TYPE_ID_STR);
+	return m_value_str;
+}
+Function* Variable::GetValueFunction() const {
+	assert(g_typemgr.GetTypeInfo(m_tid)->IsFn());
+	return m_value_fn;
 }
 AstNodeRestriction* Variable::GetValueRestriction() const {
 	assert(m_tid == TYPE_ID_GENERIC_RESTRICTION);
