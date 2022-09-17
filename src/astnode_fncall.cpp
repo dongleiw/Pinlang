@@ -1,5 +1,6 @@
 #include "astnode_fncall.h"
 #include "function.h"
+#include "function_obj.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
@@ -38,10 +39,10 @@ VerifyContextResult AstNodeFnCall::Verify(VerifyContext& ctx) {
 Variable* AstNodeFnCall::Execute(ExecuteContext& ctx) {
 	log_debug("fncall");
 	Variable*			   fn_var = m_fn_expr->Execute(ctx);
-	Function*			   fn	  = fn_var->GetValueFunction();
+	FunctionObj			   fnobj  = fn_var->GetValueFunctionObj();
 	std::vector<Variable*> args;
 	for (auto iter : m_args) {
 		args.push_back(iter->Execute(ctx));
 	}
-	return fn->Call(ctx, args);
+	return fnobj.Call(ctx, args);
 }

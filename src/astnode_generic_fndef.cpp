@@ -33,7 +33,7 @@ VerifyContextResult AstNodeGenericFnDef::Verify(VerifyContext& ctx) {
 }
 Variable* AstNodeGenericFnDef::Execute(ExecuteContext& ctx) {
 	for (auto instance : m_instances) {
-		ctx.GetCurStack()->GetCurVariableTable()->AddVariable(instance.instance_name, new Variable(instance.fn));
+		ctx.GetCurStack()->GetCurVariableTable()->AddVariable(instance.instance_name, new Variable(instance.fnobj));
 	}
 	return nullptr;
 }
@@ -241,19 +241,20 @@ AstNodeGenericFnDef::Instance AstNodeGenericFnDef::instantiate(VerifyContext& ct
 
 	instance.gparams_tid   = instantiate_param.vec_gparams_tid;
 	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instantiate_param.vec_gparams_tid, instantiate_param.params_tid);
-	TypeId fn_tid		   = g_typemgr.GetOrAddTypeFn(instantiate_param.params_tid, instantiate_param.return_tid);
-	instance.fn			   = new Function(fn_tid, params_name, m_body);
+	TypeId	  fn_tid	   = g_typemgr.GetOrAddTypeFn(instantiate_param.params_tid, instantiate_param.return_tid);
+	Function* fn		   = new Function(fn_tid, params_name, m_body);
+	instance.fnobj		   = FunctionObj(nullptr, fn);
 
 	m_instances.push_back(instance);
-	add_instance_to_vt(ctx, instance.instance_name, instance.fn);
+	add_instance_to_vt(ctx, instance.instance_name, instance.fnobj);
 	return instance;
 }
-void AstNodeGenericFnDef::add_instance_to_vt(VerifyContext& ctx, std::string name, Function* fn) const {
+void AstNodeGenericFnDef::add_instance_to_vt(VerifyContext& ctx, std::string name, FunctionObj fnobj) const {
 	VariableTable* vt = ctx.GetCurStack()->GetVariableTableByVarName(m_fnname);
 	if (vt == nullptr) {
 		panicf("generic_fn[%s] not found", m_fnname.c_str());
 	}
-	vt->AddVariable(name, new Variable(fn));
+	vt->AddVariable(name, new Variable(fnobj));
 }
 void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
 	log_debug("begin to verify body of generic function name[%s]", m_fnname.c_str());
@@ -312,7 +313,7 @@ void AstNodeGenericFnDef::verify_body(VerifyContext& ctx) {
 	m_body->Verify(ctx);
 	ctx.PopSTack();
 }
-AstNodeGenericFnDef::Instance AstNodeGenericFnDef::Instantiate(VerifyContext& ctx, std::vector<TypeId> gparams_tid){
+AstNodeGenericFnDef::Instance AstNodeGenericFnDef::Instantiate(VerifyContext& ctx, std::vector<TypeId> gparams_tid) {
 	InstantiateParam instantiate_param = infer_by_gparams(ctx, gparams_tid);
 	return instantiate(ctx, instantiate_param);
 }

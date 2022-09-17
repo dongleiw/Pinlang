@@ -11,6 +11,7 @@
 #include "type_fn.h"
 #include "variable.h"
 #include "verify_context.h"
+#include "function_obj.h"
 
 /*
  * 泛型函数定义
@@ -23,7 +24,7 @@ public:
 	struct Instance {
 		std::vector<TypeId> gparams_tid;
 		std::string			instance_name;
-		Function*			fn;
+		FunctionObj			fnobj;
 	};
 	// 推导结果
 	struct InstantiateParam {
@@ -59,7 +60,7 @@ private:
 	Instance instantiate(VerifyContext& ctx, InstantiateParam instantiate_param);
 
 	// 将实例添加到vt的合适位置
-	void add_instance_to_vt(VerifyContext& ctx, std::string name, Function* fn) const;
+	void add_instance_to_vt(VerifyContext& ctx, std::string name, FunctionObj fnobj) const;
 	// 校验泛型的实际类型是否满足约束
 	void verify_constraint(VerifyContext& ctx, std::vector<TypeId> concrete_generic_params) const;
 	void verify_body(VerifyContext& ctx);

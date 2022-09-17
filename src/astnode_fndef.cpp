@@ -3,6 +3,7 @@
 #include "astnode_type.h"
 #include "define.h"
 #include "function.h"
+#include "function_obj.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
@@ -60,9 +61,10 @@ VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 	for (auto iter : m_params) {
 		params_name.push_back(iter.name);
 	}
-	Function* fn  = new Function(m_result_typeid, params_name, m_body);
-	m_uniq_fnname = TypeInfoFn::GetUniqFnName(m_fnname, params);
-	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fn));
+	Function*	fn	  = new Function(m_result_typeid, params_name, m_body);
+	FunctionObj fnobj = FunctionObj(nullptr, fn);
+	m_uniq_fnname	  = TypeInfoFn::GetUniqFnName(m_fnname, params);
+	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fnobj));
 	ctx.GetCurStack()->GetCurVariableTable()->AddCandidateFn(m_fnname, fn);
 
 	log_debug("end to verify fndef: fnname[%s] uniqfnname[%s]", m_fnname.c_str(), m_uniq_fnname.c_str());
@@ -75,7 +77,8 @@ Variable* AstNodeFnDef::Execute(ExecuteContext& ctx) {
 	for (auto iter : m_params) {
 		params_name.push_back(iter.name);
 	}
-	Function* fn = new Function(m_result_typeid, params_name, m_body);
-	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fn));
+	Function*	fn	  = new Function(m_result_typeid, params_name, m_body);
+	FunctionObj fnobj = FunctionObj(nullptr, fn);
+	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_uniq_fnname, new Variable(fnobj));
 	return nullptr;
 }

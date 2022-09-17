@@ -27,7 +27,7 @@ VerifyContextResult AstNodeGenericInstantiate::Verify(VerifyContext& ctx) {
 		// 泛型函数
 		AstNodeGenericFnDef* astnode_generic_fndef = v->GetValueGenericFnDef();
 		AstNodeGenericFnDef::Instance instance = astnode_generic_fndef->Instantiate(ctx, gparams_tid);
-		m_result_typeid = instance.fn->GetTypeId();
+		m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
 		m_instance_name = instance.instance_name;
 	} else {
 		panicf("bug");

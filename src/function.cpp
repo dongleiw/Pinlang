@@ -1,4 +1,5 @@
 #include "function.h"
+#include "define.h"
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "variable_table.h"
@@ -11,10 +12,18 @@ VerifyContextResult Function::Verify(VerifyContext& ctx) {
 		return vr;
 	panicf("not implemented yet");
 }
-Variable* Function::Call(ExecuteContext& ctx, std::vector<Variable*> args) {
+bool Function::VerifyArgsType(std::vector<TypeId> args_type) const {
+	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_typeid));
+	return tifn->VerifyArgsType(args_type);
+}
+TypeId Function::GetReturnTypeId() const {
+	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_typeid));
+	return tifn->GetReturnTypeId();
+}
+Variable* Function::Call(ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
 	if (m_builtin_callback != nullptr) {
 		ctx.PushStack();
-		Variable* result = m_builtin_callback(ctx, m_thisobj, args);
+		Variable* result = m_builtin_callback(ctx, obj, args);
 		ctx.PopStack();
 		return result;
 	} else if (m_body != nullptr) {
@@ -33,12 +42,4 @@ Variable* Function::Call(ExecuteContext& ctx, std::vector<Variable*> args) {
 	} else {
 		panicf("bug");
 	}
-}
-bool Function::VerifyArgsType(std::vector<TypeId> args_type) const {
-	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_typeid));
-	return tifn->VerifyArgsType(args_type);
-}
-TypeId Function::GetReturnTypeId() const {
-	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_typeid));
-	return tifn->GetReturnTypeId();
 }

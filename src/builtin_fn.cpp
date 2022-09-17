@@ -1,6 +1,7 @@
 #include "builtin_fn.h"
 #include "define.h"
 #include "function.h"
+#include "function_obj.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -51,7 +52,7 @@ void register_builtin_fn(VariableTable& vt, std::string fnname, std::vector<Type
 	std::string uniq_fnname = TypeInfoFn::GetUniqFnName(fnname, params_tid);
 	TypeId		tid			= g_typemgr.GetOrAddTypeFn(params_tid, ret_tid);
 	Function*	f			= new Function(tid, cb);
-	vt.AddVariable(uniq_fnname, new Variable(f));
+	vt.AddVariable(uniq_fnname, new Variable(FunctionObj(nullptr, f)));
 	vt.AddCandidateFn(fnname, f);
 }
 void register_all_builtin_fn(VariableTable& vt) {

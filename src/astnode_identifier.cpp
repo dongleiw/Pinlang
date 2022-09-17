@@ -31,14 +31,14 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx) {
 				AstNodeGenericFnDef::Instance instance = astnode_generic_fndef->Instantiate(ctx, vc_param.GetFnCallArgs(), vc_param.GetResultTid());
 				log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
 				m_id			= instance.instance_name;
-				m_result_typeid = instance.fn->GetTypeId();
+				m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
 			} else if (vc_param.GetResultTid() != TYPE_ID_INFER) {
 				// 父节点传递过来了期望的结果类型
 				// 使用该类型来选择合适的函数重载
 				AstNodeGenericFnDef::Instance instance = astnode_generic_fndef->Instantiate(ctx, vc_param.GetResultTid());
 				log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
 				m_id			= instance.instance_name;
-				m_result_typeid = instance.fn->GetTypeId();
+				m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
 
 			} else {
 				panicf("bug");

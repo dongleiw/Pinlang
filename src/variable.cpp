@@ -22,9 +22,9 @@ Variable::Variable(std::string value) {
 	m_tid		= TYPE_ID_STR;
 	m_value_str = value;
 }
-Variable::Variable(Function* fn) {
-	m_tid	   = fn->GetTypeId();
-	m_value_fn = fn;
+Variable::Variable(FunctionObj fnobj) {
+	m_tid		  = fnobj.GetFunction()->GetTypeId();
+	m_value_fnobj = fnobj;
 }
 Variable::Variable(AstNodeConstraint* astnode) {
 	m_tid			   = TYPE_ID_GENERIC_RESTRICTION;
@@ -42,8 +42,7 @@ Variable* Variable::CreateTypeVariable(TypeId tid) {
 Variable* Variable::CallMethod(ExecuteContext& ctx, int method_idx, std::vector<Variable*> args) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
 	Function* f	 = ti->GetMethodByIdx(method_idx);
-	f->SetThisObj(this);
-	return f->Call(ctx, args);
+	return f->Call(ctx, this, args);
 }
 std::string Variable::ToString() const {
 	std::string s;
@@ -90,9 +89,9 @@ std::string Variable::GetValueStr() const {
 	assert(m_tid == TYPE_ID_STR);
 	return m_value_str;
 }
-Function* Variable::GetValueFunction() const {
+FunctionObj Variable::GetValueFunctionObj() const {
 	assert(g_typemgr.GetTypeInfo(m_tid)->IsFn());
-	return m_value_fn;
+	return m_value_fnobj;
 }
 AstNodeConstraint* Variable::GetValueConstraint() const {
 	assert(m_tid == TYPE_ID_GENERIC_RESTRICTION);
@@ -109,7 +108,6 @@ Variable* Variable::GetAttrValue(int attr_idx) {
 		panicf("not implemented yet");
 		return nullptr;
 	} else {
-		attr.method.fn->SetThisObj(this);
-		return new Variable(attr.method.fn);
+		return new Variable(FunctionObj(this, attr.method.fn));
 	}
 }

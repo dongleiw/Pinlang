@@ -1,11 +1,12 @@
 #pragma once
 
 #include "define.h"
+#include "function_obj.h"
 #include "type.h"
 #include <vector>
 
 class ExecuteContext;
-class Function;
+class FunctionObj;
 class AstNodeConstraint;
 class AstNodeGenericFnDef;
 
@@ -15,7 +16,7 @@ public:
 	Variable(int value);
 	Variable(float value);
 	Variable(std::string value);
-	Variable(Function* fn);
+	Variable(FunctionObj fnobj);
 	Variable(AstNodeConstraint* astnode);
 	Variable(AstNodeGenericFnDef* astnode);
 
@@ -27,7 +28,7 @@ public:
 	int					 GetValueInt() const;
 	float				 GetValueFloat() const;
 	std::string			 GetValueStr() const;
-	Function*			 GetValueFunction() const;
+	FunctionObj			 GetValueFunctionObj() const;
 	AstNodeConstraint*	 GetValueConstraint() const;
 	AstNodeGenericFnDef* GetValueGenericFnDef() const;
 
@@ -49,7 +50,7 @@ protected:
 	int					 m_value_int;
 	float				 m_value_float;
 	std::string			 m_value_str;
-	Function*			 m_value_fn;
+	FunctionObj			 m_value_fnobj;
 	AstNodeConstraint*	 m_value_constraint;
 	AstNodeGenericFnDef* m_value_generic_fn;
 };
