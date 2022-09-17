@@ -16,6 +16,9 @@ AstNodeOperator::AstNodeOperator(AstNode* left_expr, std::string constraint_name
 	m_constraint_name = constraint_name;
 	m_op			   = op;
 	m_right_expr	   = right_expr;
+
+	m_left_expr->SetParent(this);
+	m_right_expr->SetParent(this);
 }
 
 /*
@@ -38,14 +41,14 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx) {
 
 		TypeInfo* ti = g_typemgr.GetTypeInfo(tid_left);
 
-		int method_idx = -1;
+		MethodIndex method_idx;
 		if (m_constraint_name.empty()) {
 			method_idx = ti->GetMethodIdx(m_op, args_tid);
 		} else {
 			TypeId constraint_tid = ctx.GetCurStack()->GetVariableType(m_constraint_name);
 			method_idx			   = ti->GetMethodIdx(constraint_tid, m_op, args_tid);
 		}
-		if (method_idx < 0) {
+		if (!method_idx.IsValid()) {
 			panicf("type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left, ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
 		}
 		Function* f = ti->GetMethodByIdx(method_idx);

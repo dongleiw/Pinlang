@@ -73,6 +73,6 @@ int main(int argc, char* argv[]) {
 	block_stmt->Execute(ectx);
 	log_info("execute end");
 
-	printf("succ\n");
+	printf("execute end. succ\n");
 	return 0;
 }

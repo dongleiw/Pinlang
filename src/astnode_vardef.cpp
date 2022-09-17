@@ -18,6 +18,10 @@ AstNodeVarDef::AstNodeVarDef(std::string var_name, AstNodeType* declared_type, A
 	m_declared_type = declared_type;
 	m_init_expr		= init_expr;
 	m_is_const		= is_const;
+
+	if (m_init_expr != nullptr) {
+		m_init_expr->SetParent(this);
+	}
 }
 VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx) {
 	log_debug("verify vardef: varname[%s]", m_varname.c_str());
@@ -27,7 +31,7 @@ VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx) {
 	TypeId declared_tid = TYPE_ID_INFER;
 	if (m_declared_type != nullptr) {
 		VerifyContextResult vr = m_declared_type->Verify(ctx);
-		declared_tid = vr.GetResultTypeId();
+		declared_tid		   = vr.GetResultTypeId();
 	}
 
 	if (m_init_expr != nullptr) {

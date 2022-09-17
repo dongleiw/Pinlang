@@ -3,6 +3,7 @@
 #include <string>
 
 #include "astnode.h"
+#include "define.h"
 #include "execute_context.h"
 #include "type.h"
 #include "variable.h"
@@ -23,6 +24,7 @@ private:
 	AstNode*	m_left_expr;
 	std::string m_constraint_name;
 	std::string m_op;
-	int			m_method_idx;
 	AstNode*	m_right_expr;
+
+	MethodIndex m_method_idx;
 };

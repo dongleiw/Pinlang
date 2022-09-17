@@ -44,6 +44,7 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std
 	snprintf(buf, sizeof(buf), "%d", thisobj->GetValueInt());
 	return new Variable(std::string(buf));
 }
+
 TypeInfoInt::TypeInfoInt() {
 	m_name		   = "int";
 	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;

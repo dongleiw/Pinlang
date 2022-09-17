@@ -30,11 +30,7 @@ public:
 	 * generic_params 泛型约束的参数
 	 * rules 规则
 	 */
-	AstNodeConstraint(std::string name, std::vector<std::string> generic_params, std::vector<ParserFnDeclare> rules) {
-		m_name			 = name;
-		m_generic_params = generic_params;
-		m_rules			 = rules;
-	}
+	AstNodeConstraint(std::string name, std::vector<std::string> generic_params, std::vector<ParserFnDeclare> rules);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
 	virtual Variable*			Execute(ExecuteContext& ctx);

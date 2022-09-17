@@ -16,6 +16,8 @@ AstNodeFnDef::AstNodeFnDef(std::string fn_name, std::vector<ParserParameter> par
 	m_params	  = params;
 	m_return_type = return_type;
 	m_body		  = body;
+
+	m_body->SetParent(this);
 }
 VerifyContextResult AstNodeFnDef::Verify(VerifyContext& ctx) {
 	log_debug("begin to verify fndef: fnname[%s]", m_fnname.c_str());

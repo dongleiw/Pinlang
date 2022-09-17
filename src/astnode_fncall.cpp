@@ -8,6 +8,11 @@
 AstNodeFnCall::AstNodeFnCall(AstNode* fn_expr, std::vector<AstNode*> args) {
 	m_fn_expr = fn_expr;
 	m_args	  = args;
+
+	m_fn_expr->SetParent(this);
+	for (auto iter : m_args) {
+		iter->SetParent(this);
+	}
 }
 
 VerifyContextResult AstNodeFnCall::Verify(VerifyContext& ctx) {

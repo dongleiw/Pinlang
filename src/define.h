@@ -11,11 +11,11 @@ enum TypeGroupId {
 	 * 未完成定义的类别. 由于解析的顺序问题, 可能类型的使用先于类型的定义. 这种会先临时标记为unresolved
 	 * 在后续解析到类型定义时, 在修正为实际类型
 	 */
-	TYPE_GROUP_ID_UNRESOLVE		   = 0,
-	TYPE_GROUP_ID_PRIMARY		   = 1,
-	TYPE_GROUP_ID_ARRAY			   = 2,
-	TYPE_GROUP_ID_FUNCTION		   = 3,
-	TYPE_GROUP_ID_CLASS			   = 4,
+	TYPE_GROUP_ID_UNRESOLVE = 0,
+	TYPE_GROUP_ID_PRIMARY	= 1,
+	TYPE_GROUP_ID_ARRAY		= 2,
+	TYPE_GROUP_ID_FUNCTION	= 3,
+	TYPE_GROUP_ID_CLASS		= 4,
 	/*
 	 * 泛型constraint
 	 */
@@ -65,7 +65,25 @@ struct ParserFnDeclare {
  * parse得到的泛型参数信息. 包括类型名字, 约束
  */
 struct ParserGenericParam {
-	std::string				  type_name;				  // 泛型的名字. 不可为空
-	std::string				  constraint_name;			  // 约束的名字
+	std::string				  type_name;				 // 泛型的名字. 不可为空
+	std::string				  constraint_name;			 // 约束的名字
 	std::vector<AstNodeType*> constraint_generic_params; // 约束的参数. 可能为空
+};
+
+/*
+ * verify得到的方法的位置
+ */
+struct MethodIndex {
+	MethodIndex() {
+		constraint_tid = TYPE_ID_NONE;
+		method_idx	   = -1;
+	}
+	MethodIndex(TypeId constraint_tid, size_t method_idx) {
+		this->constraint_tid = constraint_tid;
+		this->method_idx	 = (int)method_idx;
+	}
+	bool IsValid() const { return method_idx >= 0; }
+
+	TypeId constraint_tid; // 方法所在的constraint_tid
+	int method_idx;	   // 方法在constraint中的下标
 };

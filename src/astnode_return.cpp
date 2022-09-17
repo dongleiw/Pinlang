@@ -6,6 +6,10 @@
 
 AstNodeReturn::AstNodeReturn(AstNode* returned_expr) {
 	m_returned_expr = returned_expr;
+
+	if(m_returned_expr!=nullptr){
+		m_returned_expr->SetParent(this);
+	}
 }
 
 VerifyContextResult AstNodeReturn::Verify(VerifyContext& ctx) {

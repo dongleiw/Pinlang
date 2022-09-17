@@ -3,19 +3,20 @@
 #include <string>
 
 #include "astnode.h"
+#include "define.h"
 #include "execute_context.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
 
 /*
- * 操作符: + - * / %
- * 操作符可以转换为方法调用, 但是目前还没不支持方法
+ * 访问对象的属性
+ *		2.tostring
+ *		person.name
  */
 class AstNodeAccessAttr : public AstNode {
 public:
-	AstNodeAccessAttr(AstNode* obj_expr, std::string attr_name) : m_obj_expr(obj_expr), m_attr_name(attr_name) {
-	}
+	AstNodeAccessAttr(AstNode* obj_expr, std::string attr_name);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx);
 	virtual Variable*			Execute(ExecuteContext& ctx);
@@ -24,5 +25,7 @@ private:
 	AstNode*	m_obj_expr;
 	std::string m_attr_name;
 
-	int m_attr_idx;
+	bool		m_is_field;
+	int			m_field_idx;
+	MethodIndex m_method_idx;
 };

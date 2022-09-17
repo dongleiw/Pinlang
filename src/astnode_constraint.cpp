@@ -2,9 +2,9 @@
 #include "astnode_type.h"
 #include "define.h"
 #include "type.h"
+#include "type_constraint.h"
 #include "type_fn.h"
 #include "type_mgr.h"
-#include "type_constraint.h"
 #include "variable.h"
 
 #include "log.h"
@@ -12,6 +12,11 @@
 #include "verify_context.h"
 #include <cassert>
 
+AstNodeConstraint::AstNodeConstraint(std::string name, std::vector<std::string> generic_params, std::vector<ParserFnDeclare> rules) {
+	m_name			 = name;
+	m_generic_params = generic_params;
+	m_rules			 = rules;
+}
 VerifyContextResult AstNodeConstraint::Verify(VerifyContext& ctx) {
 	log_debug("verify constraint");
 
@@ -69,8 +74,8 @@ TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> co
 		return constraint_v->GetTypeId();
 	}
 
-	TypeInfoConstraint* constraint_ti	 = new TypeInfoConstraint(uniq_constraint_name, concrete_rules);
-	TypeId				 constraint_tid = g_typemgr.GetOrAddTypeConstraint(constraint_ti);
+	TypeInfoConstraint* constraint_ti  = new TypeInfoConstraint(uniq_constraint_name, concrete_rules);
+	TypeId				constraint_tid = g_typemgr.GetOrAddTypeConstraint(constraint_ti);
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(uniq_constraint_name, new Variable(constraint_tid));
 	log_debug("instantiate constraint[%s]: name=%s typeid=%d", m_name.c_str(), uniq_constraint_name.c_str(), constraint_tid);
 	return constraint_tid;

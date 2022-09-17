@@ -20,6 +20,8 @@ AstNodeGenericFnDef::AstNodeGenericFnDef(std::string fn_name, std::vector<Parser
 	m_params		 = params;
 	m_return_type	 = return_type;
 	m_body			 = body;
+
+	m_body->SetParent(this);
 }
 VerifyContextResult AstNodeGenericFnDef::Verify(VerifyContext& ctx) {
 	log_debug("begin to verify generic fndef: fnname[%s]", m_fnname.c_str());

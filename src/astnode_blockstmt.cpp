@@ -5,9 +5,9 @@
 #include "verify_context.h"
 
 AstNodeBlockStmt::AstNodeBlockStmt(const std::vector<AstNode*>& stmts) {
-	m_result_typeid = TYPE_ID_NONE;
-	for (size_t i = 0; i < stmts.size(); i++) {
-		m_stmts.push_back(stmts.at(i));
+	m_stmts = stmts;
+	for (auto iter : m_stmts) {
+		iter->SetParent(this);
 	}
 }
 VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx) {

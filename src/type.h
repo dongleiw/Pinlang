@@ -14,13 +14,13 @@ class VerifyContext;
  */
 class TypeInfo {
 public:
-	/*
-	 * 类型的方法
-	 */
 	struct Method {
-		TypeId		constraint_tid; // 方法所属constraint. 如果不属于constraint, 则为TYPE_ID_NONE
-		std::string name;			// 方法名
-		Function*	f;				// 方法的实现
+		std::string method_name; // 方法名
+		Function*	fn;			 // 方法的实现
+	};
+	struct Constraint {
+		TypeId				constraint_tid;
+		std::vector<Method> methods;
 	};
 
 public:
@@ -35,24 +35,26 @@ public:
 	/*
 	 * 根据方法名和参数类型查找函数, 如果出现多个匹配的情况则panic
 	 */
-	int GetMethodIdx(std::string method_name, std::vector<TypeId> args_tid) const;
+	MethodIndex GetMethodIdx(std::string method_name, std::vector<TypeId> args_tid) const;
 	/*
 	 * 根据方法名和参数类型查找函数, 如果出现多个匹配的情况则panic
 	 */
-	int GetMethodIdx(std::string method_name, TypeId tid) const;
+	MethodIndex GetMethodIdx(std::string method_name, TypeId tid) const;
 	/*
 	 * 根据参数类型查找属于某个constraint的某个方法
 	 */
-	int GetMethodIdx(TypeId constraint_tid, std::string method_name, std::vector<TypeId> args_tid) const;
+	MethodIndex GetMethodIdx(TypeId constraint_tid, std::string method_name, std::vector<TypeId> args_tid) const;
 	/*
 	 * 根据类型查找属于某个constraint的某个方法
 	 */
-	int GetMethodIdx(TypeId constraint_tid, std::string method_name, TypeId tid) const;
+	MethodIndex GetMethodIdx(TypeId constraint_tid, std::string method_name, TypeId tid) const;
+	/*
+	 * 只根据函数名查找. 找到多个会panic
+	 */
+	MethodIndex GetMethodIdx(std::string method_name) const;
 
-	Function* GetMethodByIdx(int idx);
+	Function* GetMethodByIdx(MethodIndex method_idx);
 
-	void		 AddMethod(TypeId constraint_tid, std::string method_name, Function* function);
-	void		 AddBuiltinMethod(TypeId constraint_tid, std::string method_name, std::vector<TypeId> params_tid, TypeId ret_tid, BuiltinFnCallback cb);
 	void		 AddConstraint(TypeId constraint_tid, std::map<std::string, Function*> methods);
 	virtual void InitBuiltinMethods(VerifyContext& ctx) {}
 	/*
@@ -72,15 +74,6 @@ public:
 	bool MatchConstraint(TypeId tid) const;
 
 	bool HasField(std::string attr_name) const;
-	/*
-	 * 如果只有一个名为attr_name的方法, attr_idx赋值为对应index. 
-	 * 否则返回false, attr_idx不修改
-	 */
-	bool HasSingleMethod(std::string attr_name, size_t& attr_idx) const;
-	Attr GetAttr(int attr_idx);
-
-protected:
-	bool has_duplicate_method(TypeId constraint_tid, std::string method_name, TypeId new_tid) const;
 
 protected:
 	TypeId		m_typeid;
@@ -88,9 +81,7 @@ protected:
 	std::string m_name;
 
 	/*
-	 * 该类型的属性(包括字段和方法)
-	 * 字段名不允许重复
-	 * 方法可能会重复. 比如有重载, 或者多个约束有重名函数
+	 * 该类型实现的约束列表. 
 	 */
-	std::vector<Attr> m_attrs;
+	std::vector<Constraint> m_constraints;
 };

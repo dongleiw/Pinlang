@@ -39,7 +39,7 @@ Variable* Variable::CreateTypeVariable(TypeId tid) {
 	v->m_value_tid = tid;
 	return v;
 }
-Variable* Variable::CallMethod(ExecuteContext& ctx, int method_idx, std::vector<Variable*> args) {
+Variable* Variable::CallMethod(ExecuteContext& ctx, MethodIndex method_idx, std::vector<Variable*> args) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
 	Function* f	 = ti->GetMethodByIdx(method_idx);
 	return f->Call(ctx, this, args);
@@ -101,13 +101,8 @@ AstNodeGenericFnDef* Variable::GetValueGenericFnDef() const {
 	assert(m_tid == TYPE_ID_GENERIC_FN);
 	return m_value_generic_fn;
 }
-Variable* Variable::GetAttrValue(int attr_idx) {
-	TypeInfo* ti   = g_typemgr.GetTypeInfo(m_tid);
-	Attr	  attr = ti->GetAttr(attr_idx);
-	if (attr.is_field) {
-		panicf("not implemented yet");
-		return nullptr;
-	} else {
-		return new Variable(FunctionObj(this, attr.method.fn));
-	}
+Variable* Variable::GetMethodValue(MethodIndex method_idx) {
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
+	Function* fn = ti->GetMethodByIdx(method_idx);
+	return new Variable(FunctionObj(this, fn));
 }

@@ -37,11 +37,11 @@ public:
 	/*
 	 * 找不到method, panic
 	 */
-	Variable* CallMethod(ExecuteContext& ctx, int method_idx, std::vector<Variable*> args);
+	Variable* CallMethod(ExecuteContext& ctx, MethodIndex method_idx, std::vector<Variable*> args);
 
 	std::string ToString() const;
 
-	Variable* GetAttrValue(int attr_idx);
+	Variable* GetMethodValue(MethodIndex method_idx);
 
 protected:
 	TypeId				 m_tid;
