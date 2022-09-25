@@ -28,10 +28,8 @@ std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
 	AstNodeType* r = new AstNodeType();
 	if (ctx->TYPE() != nullptr) {
 		r->InitWithType();
-		return r;
 	} else if (ctx->Identifier() != nullptr) {
 		r->InitWithIdentifier(ctx->Identifier()->getText());
-		return r;
 	} else if (ctx->FN() != nullptr) {
 		std::vector<ParserParameter> params		 = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
 		AstNodeType*				 return_type = nullptr;
@@ -39,11 +37,13 @@ std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
 			return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 		}
 		r->InitWithFn(params, return_type);
-		return r;
+	} else if (ctx->L_BRACKET() != nullptr) {
+		AstNodeType* array_element_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+		r->InitWithArray(array_element_type);
 	} else {
 		panicf("unknown type");
 	}
-	return nullptr;
+	return r;
 }
 std::any Visitor::visitType_list(PinlangParser::Type_listContext* ctx) {
 	std::vector<AstNodeType*> type_list;
@@ -216,11 +216,11 @@ std::any Visitor::visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) {
 		return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 	}
 
-	AstNodeComplexFnDef::Implement implement(std::vector<ParserGenericParam>(), params,return_type,body,nullptr);
+	AstNodeComplexFnDef::Implement				implement(std::vector<ParserGenericParam>(), params, return_type, body, nullptr);
 	std::vector<AstNodeComplexFnDef::Implement> implements;
 	implements.push_back(implement);
 
-	return (AstNode*)new AstNodeComplexFnDef(fn_name,implements);
+	return (AstNode*)new AstNodeComplexFnDef(fn_name, implements);
 
 	//return (AstNode*)new AstNodeFnDef(fn_name, params, return_type, body);
 }

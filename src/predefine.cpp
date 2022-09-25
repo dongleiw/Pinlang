@@ -25,7 +25,7 @@ std::string format_string(ExecuteContext& ctx, std::vector<Variable*> args) {
 			Variable* arg = args.at(arg_count);
 
 			// 调用tostring方法来转换为str
-			// 目前得先获取MethodIndex然后调用
+			// TODO 目前得先获取MethodIndex然后调用
 			TypeInfo*	ti			 = g_typemgr.GetTypeInfo(arg->GetTypeId());
 			MethodIndex method_index = ti->GetMethodIdx("tostring");
 			Variable*	str_v		 = arg->CallMethod(ctx, method_index, std::vector<Variable*>());

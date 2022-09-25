@@ -10,6 +10,9 @@ class FunctionObj;
 class AstNodeConstraint;
 class AstNodeComplexFnDef;
 
+/*
+ * 提供一个简单的变量存储功能. 目前不考虑内存占用性能等问题
+ */
 class Variable {
 public:
 	Variable(TypeId tid);
@@ -20,19 +23,21 @@ public:
 	Variable(FunctionObj fnobj);
 	Variable(AstNodeConstraint* astnode);
 	Variable(AstNodeComplexFnDef* astnode);
+	Variable(TypeId array_tid, std::vector<Variable*> array);
 
 	static Variable* CreateTypeVariable(TypeId tid);
 
 	TypeId GetTypeId() const { return m_tid; }
 
-	TypeId				 GetValueTid() const;
-	int					 GetValueInt() const;
-	float				 GetValueFloat() const;
-	bool				 GetValueBool() const;
-	std::string			 GetValueStr() const;
-	FunctionObj			 GetValueFunctionObj() const;
-	AstNodeConstraint*	 GetValueConstraint() const;
-	AstNodeComplexFnDef* GetValueComplexFn() const;
+	TypeId						 GetValueTid() const;
+	int							 GetValueInt() const;
+	float						 GetValueFloat() const;
+	bool						 GetValueBool() const;
+	std::string					 GetValueStr() const;
+	FunctionObj					 GetValueFunctionObj() const;
+	AstNodeConstraint*			 GetValueConstraint() const;
+	AstNodeComplexFnDef*		 GetValueComplexFn() const;
+	const std::vector<Variable*> GetValueArray() const;
 
 	bool IsConst() const { return m_is_const; }
 
@@ -46,14 +51,15 @@ public:
 	Variable* GetMethodValue(MethodIndex method_idx);
 
 protected:
-	TypeId				 m_tid;
-	bool				 m_is_const;
-	TypeId				 m_value_tid;
-	int					 m_value_int;
-	float				 m_value_float;
-	bool				 m_value_bool;
-	std::string			 m_value_str;
-	FunctionObj			 m_value_fnobj;
-	AstNodeConstraint*	 m_value_constraint;
-	AstNodeComplexFnDef* m_value_complex_fn;
+	TypeId				   m_tid;
+	bool				   m_is_const;
+	TypeId				   m_value_tid;
+	int					   m_value_int;
+	float				   m_value_float;
+	bool				   m_value_bool;
+	std::string			   m_value_str;
+	FunctionObj			   m_value_fnobj;
+	AstNodeConstraint*	   m_value_constraint;
+	AstNodeComplexFnDef*   m_value_complex_fn;
+	std::vector<Variable*> m_value_array;
 };

@@ -2,8 +2,8 @@
 
 #include "define.h"
 #include "type.h"
-#include "type_fn.h"
 #include "type_constraint.h"
+#include "type_fn.h"
 #include "verify_context.h"
 
 #include <map>
@@ -28,6 +28,8 @@ public:
 	 * 如果不存在, 增加一个
 	 */
 	TypeId GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid);
+
+	TypeId GetOrAddTypeArray(TypeId element_tid);
 
 	TypeId AddTypeInfo(TypeInfo* ti);
 	TypeId GetOrAddTypeConstraint(TypeInfoConstraint* ti);

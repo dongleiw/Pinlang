@@ -5,6 +5,7 @@ type
     : TYPE
 	| Identifier
 	| FN L_PAREN parameter_list R_PAREN type?
+	| L_BRACKET R_BRACKET type
 	;
 
 type_list
@@ -46,36 +47,31 @@ parameter_list
 	: 
 	| parameter (',' parameter)*
 	;
+
+
+
+/////////// function definition /////////////
+// 简单函数定义
 stmt_fndef
 	: FN Identifier L_PAREN parameter_list R_PAREN type? stmt_block
 	;
-
 generic_param_constraint
 	: Identifier
 	| Identifier L_BRACKET type (',' type)* R_BRACKET
 	;
 generic_param: Identifier generic_param_constraint;
+// 泛型函数定义
 stmt_generic_fndef
 	: FN Identifier L_BRACKET generic_param (',' generic_param)* R_BRACKET L_PAREN parameter_list R_PAREN type? stmt_block
 	;
-
-
-/* 
-	complex fndef
-	例子:
-		fn foo{
-			(a int){}
-			(a str){}
-			[T Stringify](a T, b T){} 
-			[T Printable](a T, b T, c T){}
-		}
-*/
+// 复杂函数定义
 stmt_complex_fndef_implement
 	: (L_BRACKET generic_param (',' generic_param)* R_BRACKET)? L_PAREN parameter_list R_PAREN type? stmt_block
 	;
 stmt_complex_fndef
 	: FN Identifier L_CURLY stmt_complex_fndef_implement+ R_CURLY
 	;
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 stmt_return
 	: RETURN expr? ';'

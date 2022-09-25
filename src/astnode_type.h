@@ -19,6 +19,7 @@ public:
 		TYPE_KIND_TYPE,
 		TYPE_KIND_IDENTIFIER,
 		TYPE_KIND_FN,
+		TYPE_KIND_ARRAY,
 	};
 
 public:
@@ -26,18 +27,29 @@ public:
 	void InitWithType();
 	void InitWithIdentifier(std::string id);
 	void InitWithFn(std::vector<ParserParameter> params, AstNodeType* return_type);
+	void InitWithArray(AstNodeType* element_type);
 
 	// 生成类型id
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override { return nullptr; };
 
+	/*
+	 * 已知结果类型, 推导出该类型包含的所有类型名字对应的类型
+	 * 比如: 
+	 *		已知[]fn(a T, b F)类型id为19. 推导出T和F的类型id是多少
+	 */
 	std::map<std::string, TypeId> InferType(TypeId target_tid) const;
 
-	virtual AstNode*  DeepClone() override { return DeepCloneT(); }
-	AstNodeType* DeepCloneT();
+	virtual AstNode* DeepClone() override { return DeepCloneT(); }
+	AstNodeType*	 DeepCloneT();
+
+private:
+	void merge_infer_result(std::map<std::string, TypeId> to, std::map<std::string, TypeId> another) const;
+
 private:
 	TypeKind					 m_type_kind;
 	std::string					 m_id;
 	std::vector<ParserParameter> m_fn_params;
 	AstNodeType*				 m_fn_return_type;
+	AstNodeType*				 m_element_type;
 };

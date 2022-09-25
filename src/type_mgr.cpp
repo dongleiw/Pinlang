@@ -3,6 +3,7 @@
 #include "define.h"
 #include "log.h"
 #include "type.h"
+#include "type_array.h"
 #include "type_bool.h"
 #include "type_constraint.h"
 #include "type_float.h"
@@ -139,4 +140,15 @@ TypeId TypeMgr::GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid) {
 		}
 	}
 	return add_type(new TypeInfoFn(params, return_tid));
+}
+TypeId TypeMgr::GetOrAddTypeArray(TypeId element_tid) {
+	for (const auto ti : m_typeinfos) {
+		if (ti->IsArray()) {
+			const TypeInfoArray* tiarray = dynamic_cast<TypeInfoArray*>(ti);
+			if (tiarray->GetElementType() == element_tid) {
+				return ti->GetTypeId();
+			}
+		}
+	}
+	return add_type(new TypeInfoArray(element_tid));
 }

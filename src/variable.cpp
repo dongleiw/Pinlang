@@ -3,6 +3,7 @@
 #include "function.h"
 #include "log.h"
 #include "type.h"
+#include "type_array.h"
 #include "type_mgr.h"
 #include <cassert>
 
@@ -36,6 +37,18 @@ Variable::Variable(AstNodeConstraint* astnode) {
 Variable::Variable(AstNodeComplexFnDef* astnode) {
 	m_tid			   = TYPE_ID_COMPLEX_FN;
 	m_value_complex_fn = astnode;
+}
+Variable::Variable(TypeId array_tid, std::vector<Variable*> array) {
+	const TypeInfoArray* tiarray	 = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(array_tid));
+	TypeId				 element_tid = tiarray->GetElementType();
+	for (auto iter : array) {
+		if (iter->GetTypeId() != element_tid) {
+			panicf("bug");
+		}
+	}
+
+	m_tid		  = array_tid;
+	m_value_array = array;
 }
 Variable* Variable::CreateTypeVariable(TypeId tid) {
 	Variable* v	   = new Variable(TYPE_ID_TYPE);
@@ -107,6 +120,10 @@ AstNodeConstraint* Variable::GetValueConstraint() const {
 AstNodeComplexFnDef* Variable::GetValueComplexFn() const {
 	assert(m_tid == TYPE_ID_COMPLEX_FN);
 	return m_value_complex_fn;
+}
+const std::vector<Variable*> Variable::GetValueArray() const {
+	assert(g_typemgr.GetTypeInfo(m_tid)->IsArray());
+	return m_value_array;
 }
 Variable* Variable::GetMethodValue(MethodIndex method_idx) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);

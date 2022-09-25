@@ -51,52 +51,6 @@
 				array(1)
 			
 
-2. 约束(constraint)
-	constraint(约束)是类型的限定条件的集合. 限定方式包括
-		* 提供的接口 ( 目前只考虑这一点 )
-			{ T | T必须有接口'add(int)'. T必须有接口'GetId()int'.  }
-		* 类型大小
-		* 类型名
-		* 提供的字段属性
-	
-	多个constraint的相同方法的冲突问题
-		在引入constraint之前, 类型的方法是平面的, 所有方法都处于相同层级. 名称相同参数不同的方法构成重载. 名字相同参数相同的方法构成冲突
-		但是在引入constraint之后, 方法有了层级:
-			一种是不属于任何constraint的方法
-			一种是为了实现constraint而引入的方法.
-		这种情况下, 函数重载和冲突逻辑如何判定? 不同constraint的相同函数如何处理? 判定为冲突, 还是允许存在?
-
-		
-	约束和类型的关系:
-		类型是对值的限定. 
-			比如值'1'是int类型, 那么'1'大小为4byte, 有方法add/sub/mul/div/mod等方法
-		约束是对类型的限定. 
-			比如类型'T'满足约束Add, 那么'T'有方法: 'add(int)int'
-
-	定义约束
-		// 定义约束
-		constraint AddInt{
-			fn add(another int);
-		}
-		// 定义泛型约束
-		constraint Add[ AnotherT, ReturnT ]{
-			fn add(another AnotherT) ReturnT;
-		}
-		
-	内置类型自动实现一些预定义的constraint
-		int: Add Sub Mul Div Mod Strinfiy
-		float: Add Sub Mul Div Strinfiy
-		str: Add Strinfiy
-		bool: Strinfiy
-
-	问题:
-		是否支持字段属性限定?
-		是否支持编译期常量表达式限定?
-		是否支持默认函数实现?
-		约束如何复用(继承?)
-		要不要支持给第三方库添加constraint?
-		如何实现constraint?
-
 
 3. 泛型函数
 	在约束的基础上, 就可以实现泛型函数了. 
@@ -109,6 +63,30 @@
 	方案要求: 
 		* 避免复杂的选择candidate的规则, 更加直观, 实现简单
 		* 尽可能整合泛型函数和函数重载的优秀的地方
+	规则: 
+		* 如果有多个参数个数相同的实现, 必须都是非泛型实现, 且参数类型不同
+	方案缺陷:
+		* 由于相同泛参可以有多个参数个数不同的实现. 这导致无法根据泛参来生成实际的函数. 
+			fn foo{
+				[T Stringify](a T){}				// A
+				[T Printable](a T, b T){} 			// B
+				[T Printable](a T, b T, c T){}		// C
+				[T Printable](a T, b T, c T, d T){} // D
+			}
+			以上面函数定义为例, 仅仅根据`foo[int]`无法确定应该选择那个实现. 一般泛型函数都被理解为'参数为类型的元函数'. 但是对于这个方案来说, 这个理解是错的. 
+			必须提供参数个数
+			使用泛型函数的一些情况:
+				- 函数调用
+					var a = foo(1); // 可以自动推导
+				- 函数赋值
+					var a fn(int) = foo; // 无法自动推导, 必须显示提供类型信息
+				- 参数传递
+					fn callf( f fn(int,int));
+					call(foo); // 可以自动推导
+				- return函数
+					fn returnf() fn(int,int){
+						return f; // 可以自动推导
+					}
 
 	// 普通函数的简单定义
 	fn foo(){}
@@ -116,7 +94,6 @@
 	// 泛型函数的简单定义
 	fn foo[T Add[T,T]](a T, b T){}
 	
-	// 如果有多个参数个数相同的实现, 必须都是非泛型实现, 且参数类型不同
 	fn foo{
 		(a int){}
 		(a str){}
@@ -137,10 +114,4 @@
 	fn foo{
 		[T Stringify](a T){} 
 		[T Printable](a T, b T){} // 没有歧义, 参数个数不同, 可以区分. (如果支持缺省参数, 那就有歧义了)
-	}
-	
-	// 泛参的限制条件可以是具体类型, 也可以是约束
-	fn foo{
-		[T int || str || Stringify](a T){}
-		[T int || (Printable && Stringify)](a T){}
 	}

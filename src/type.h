@@ -67,6 +67,7 @@ public:
 	void SetTypeGroupId(TypeGroupId tgid) { m_typegroup_id = tgid; }
 
 	bool IsFn() const { return m_typegroup_id == TYPE_GROUP_ID_FUNCTION; }
+	bool IsArray() const { return m_typegroup_id == TYPE_GROUP_ID_ARRAY; }
 	bool IsType() const { return m_typeid == TYPE_ID_TYPE; }
 	bool IsConstraint() const { return m_typegroup_id == TYPE_GROUP_ID_CONSTRAINT; }
 	bool IsGenericType() const { return m_typegroup_id == TYPE_GROUP_ID_VIRTUAL_GTYPE; }
