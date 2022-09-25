@@ -4,9 +4,9 @@
 #include "type.h"
 #include "type_mgr.h"
 #include "variable.h"
-#include "astnode_generic_fndef.h"
 #include "function.h"
 #include "verify_context.h"
+#include "astnode_type.h"
 #include <cassert>
 
 AstNodeGenericInstantiate::AstNodeGenericInstantiate(std::string generic_name, std::vector<AstNodeType*> type_list) {
@@ -24,15 +24,7 @@ VerifyContextResult AstNodeGenericInstantiate::Verify(VerifyContext& ctx, Verify
 
 	Variable* v	 = ctx.GetCurStack()->GetVariable(m_generic_name);
 	TypeInfo* ti = g_typemgr.GetTypeInfo(v->GetTypeId());
-	if (ti->GetTypeId() == TYPE_ID_GENERIC_FN) {
-		// 泛型函数
-		AstNodeGenericFnDef* astnode_generic_fndef = v->GetValueGenericFnDef();
-		AstNodeGenericFnDef::Instance instance = astnode_generic_fndef->Instantiate(ctx, gparams_tid);
-		m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
-		m_instance_name = instance.instance_name;
-	} else {
-		panicf("bug");
-	}
+	// TODO
 	VerifyContextResult vr(m_result_typeid);
 	return vr;
 }

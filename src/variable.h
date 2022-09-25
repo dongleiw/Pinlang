@@ -8,7 +8,6 @@
 class ExecuteContext;
 class FunctionObj;
 class AstNodeConstraint;
-class AstNodeGenericFnDef;
 class AstNodeComplexFnDef;
 
 class Variable {
@@ -20,7 +19,6 @@ public:
 	Variable(std::string value);
 	Variable(FunctionObj fnobj);
 	Variable(AstNodeConstraint* astnode);
-	Variable(AstNodeGenericFnDef* astnode);
 	Variable(AstNodeComplexFnDef* astnode);
 
 	static Variable* CreateTypeVariable(TypeId tid);
@@ -34,7 +32,6 @@ public:
 	std::string			 GetValueStr() const;
 	FunctionObj			 GetValueFunctionObj() const;
 	AstNodeConstraint*	 GetValueConstraint() const;
-	AstNodeGenericFnDef* GetValueGenericFnDef() const;
 	AstNodeComplexFnDef* GetValueComplexFn() const;
 
 	bool IsConst() const { return m_is_const; }
@@ -58,6 +55,5 @@ protected:
 	std::string			 m_value_str;
 	FunctionObj			 m_value_fnobj;
 	AstNodeConstraint*	 m_value_constraint;
-	AstNodeGenericFnDef* m_value_generic_fn;
 	AstNodeComplexFnDef* m_value_complex_fn;
 };

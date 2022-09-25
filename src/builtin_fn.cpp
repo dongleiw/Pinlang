@@ -48,7 +48,6 @@ void register_builtin_fn(VariableTable& vt, std::string fnname, std::vector<Type
 	TypeId		tid			= g_typemgr.GetOrAddTypeFn(params_tid, ret_tid);
 	Function*	f			= new Function(tid, cb);
 	vt.AddVariable(uniq_fnname, new Variable(FunctionObj(nullptr, f)));
-	vt.AddCandidateFn(fnname, f);
 }
 void register_all_builtin_fn(VariableTable& vt) {
 	//register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR}, TYPE_ID_NONE, builtin_fn_printf_str);

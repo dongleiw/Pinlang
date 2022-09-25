@@ -6,8 +6,6 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "astnode_fncall.h"
-#include "astnode_fndef.h"
-#include "astnode_generic_fndef.h"
 #include "astnode_generic_instantiate.h"
 #include "astnode_identifier.h"
 #include "astnode_if.h"

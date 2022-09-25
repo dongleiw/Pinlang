@@ -1,5 +1,4 @@
 #include "variable.h"
-#include "astnode_generic_fndef.h"
 #include "define.h"
 #include "function.h"
 #include "log.h"
@@ -33,10 +32,6 @@ Variable::Variable(FunctionObj fnobj) {
 Variable::Variable(AstNodeConstraint* astnode) {
 	m_tid			   = TYPE_ID_GENERIC_CONSTRAINT;
 	m_value_constraint = astnode;
-}
-Variable::Variable(AstNodeGenericFnDef* astnode) {
-	m_tid			   = TYPE_ID_GENERIC_FN;
-	m_value_generic_fn = astnode;
 }
 Variable::Variable(AstNodeComplexFnDef* astnode) {
 	m_tid			   = TYPE_ID_COMPLEX_FN;
@@ -108,10 +103,6 @@ FunctionObj Variable::GetValueFunctionObj() const {
 AstNodeConstraint* Variable::GetValueConstraint() const {
 	assert(m_tid == TYPE_ID_GENERIC_CONSTRAINT);
 	return m_value_constraint;
-}
-AstNodeGenericFnDef* Variable::GetValueGenericFnDef() const {
-	assert(m_tid == TYPE_ID_GENERIC_FN);
-	return m_value_generic_fn;
 }
 AstNodeComplexFnDef* Variable::GetValueComplexFn() const {
 	assert(m_tid == TYPE_ID_COMPLEX_FN);

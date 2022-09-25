@@ -36,8 +36,7 @@ enum TypeId {
 	TYPE_ID_BOOL			   = 5,
 	TYPE_ID_STR				   = 6,
 	TYPE_ID_GENERIC_CONSTRAINT = 7, // 泛型约束
-	TYPE_ID_GENERIC_FN		   = 8, // 泛型函数
-	TYPE_ID_COMPLEX_FN		   = 9, // 复杂函数
+	TYPE_ID_COMPLEX_FN		   = 8, // 复杂函数
 };
 
 class ExecuteContext;

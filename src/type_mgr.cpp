@@ -71,12 +71,6 @@ void TypeMgr::InitTypes() {
 		TypeInfo* ti = new TypeInfo();
 		ti->SetTypeId(allocate_typeid());
 		m_typeinfos.push_back(ti);
-		assert(TYPE_ID_GENERIC_FN == ti->GetTypeId());
-	}
-	{
-		TypeInfo* ti = new TypeInfo();
-		ti->SetTypeId(allocate_typeid());
-		m_typeinfos.push_back(ti);
 		assert(TYPE_ID_COMPLEX_FN == ti->GetTypeId());
 	}
 

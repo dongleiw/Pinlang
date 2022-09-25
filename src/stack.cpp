@@ -49,14 +49,6 @@ Variable* Stack::GetVariable(std::string name) {
 	}
 	return v;
 }
-VariableTable* Stack::GetVariableTableByFnName(std::string fnname) {
-	for (auto iter = m_vt_list.rbegin(); iter != m_vt_list.rend(); iter++) {
-		VariableTable* vt = *iter;
-		if (vt->HasCandidateFn(fnname))
-			return vt;
-	}
-	return nullptr;
-}
 VariableTable* Stack::GetVariableTableByVarName(std::string varname) {
 	for (auto iter = m_vt_list.rbegin(); iter != m_vt_list.rend(); iter++) {
 		VariableTable* vt = *iter;

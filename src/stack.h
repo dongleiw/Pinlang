@@ -30,7 +30,6 @@ public:
 	Variable* GetReturnedValue() const { return m_returned_value; }
 	void	  SetReturnedValue(Variable* v) { m_returned_value = v; }
 
-	VariableTable* GetVariableTableByFnName(std::string fnname);
 	VariableTable* GetVariableTableByVarName(std::string varname);
 private:
 	Stack*					  m_next;	 // 下一层栈

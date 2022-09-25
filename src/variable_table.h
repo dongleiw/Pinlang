@@ -12,6 +12,7 @@
 class VariableTable {
 public:
 	static VariableTable& GetGlobal() { return m_global; }
+
 public:
 	VariableTable() {}
 
@@ -21,16 +22,8 @@ public:
 	Variable* GetVariableOrNull(std::string name);
 	// 根据名字查找变量的类型, 找不到panic
 	TypeId GetVariableType(std::string name);
-	bool	  HasVariable(std::string name);
-	void	  AddVariable(std::string name, Variable* variable);
-
-	/*
-	 * 增加函数重载
-	 */
-	void AddCandidateFn(std::string name, Function* fn);
-	bool HasCandidateFn(std::string name)const;
-	Function* SelectCandidateFnByArgsTypeId(std::string name, std::vector<TypeId> args_tid)const;
-	Function* SelectCandidateFnByTypeId(std::string name, TypeId tid)const;
+	bool   HasVariable(std::string name);
+	void   AddVariable(std::string name, Variable* variable);
 
 	void InitAsGlobal();
 
@@ -38,5 +31,4 @@ private:
 	static VariableTable m_global;
 
 	std::map<std::string, Variable*> m_table;
-	std::map<std::string, std::vector<Function*> > m_candidate_fn_map;
 };
