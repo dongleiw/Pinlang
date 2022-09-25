@@ -1,9 +1,9 @@
 #include "type_bool.h"
+#include "astnode_constraint.h"
+#include "function.h"
+#include "type_mgr.h"
 #include "variable.h"
 #include "verify_context.h"
-#include "astnode_constraint.h"
-#include "type_mgr.h"
-#include "function.h"
 
 #include <cassert>
 
@@ -28,7 +28,7 @@ void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
 		std::map<std::string, Function*> methods;
 
 		TypeId	  tid		= g_typemgr.GetOrAddTypeFn(std::vector<TypeId>{}, TYPE_ID_STR);
-		Function* f			= new Function(tid, builtin_fn_tostring);
+		Function* f			= new Function(tid, std::vector<ConcreteGParam>(), builtin_fn_tostring);
 		methods["tostring"] = f;
 
 		AddConstraint(constraint_tid, methods);

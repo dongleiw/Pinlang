@@ -1,0 +1,26 @@
+编译期表达式是在编译阶段可以确定结果, 且结果在运行时不会改变的表达式. 
+编译期表达式可以在编译阶段优化为结果, 可以提升运行时性能, 同时也是实现泛型特化的工具
+
+编译期常量:
+	字面值: 1 1.0 true "hello"
+	a op b:
+		a/b是编译器常量
+		且a和b都是内置基础类型, 比如int/float/str/bool. 否则的话, 可能op被用户重载了, 也就是op可能不是纯方法
+		op是+ - * / % and or > >= == < <= == !=
+		
+	数组:
+		[]T{expr_list} expr_list中的所有expr都是编译器常量
+	泛型中的泛参:
+		fn foo[T ToString](a T){
+			// T是编译器常量
+		}
+	数组下标访问:
+		array_expr[index_expr] array_expr是常量, index_expr也是常量
+		等immutable支持后再考虑
+	纯函数/纯方法调用:
+		编译器能自动判断一个函数是否是纯函数么?
+		pure_fn(args1, args2, ...) 所有参数都是编译器常量
+		暂时不考虑支持
+	immutable变量
+		暂时不考虑支持
+

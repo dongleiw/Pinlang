@@ -43,13 +43,5 @@ Variable* builtin_fn_printf_str_str(ExecuteContext& ctx, Variable* thisobj, std:
 	printf(fmt.c_str(), arg1.c_str());
 	return nullptr;
 }
-void register_builtin_fn(VariableTable& vt, std::string fnname, std::vector<TypeId> params_tid, TypeId ret_tid, BuiltinFnCallback cb) {
-	std::string uniq_fnname = TypeInfoFn::GetUniqFnName(fnname, params_tid);
-	TypeId		tid			= g_typemgr.GetOrAddTypeFn(params_tid, ret_tid);
-	Function*	f			= new Function(tid, cb);
-	vt.AddVariable(uniq_fnname, new Variable(FunctionObj(nullptr, f)));
-}
 void register_all_builtin_fn(VariableTable& vt) {
-	//register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR}, TYPE_ID_NONE, builtin_fn_printf_str);
-	//register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_STR}, TYPE_ID_NONE, builtin_fn_printf_str);
 }

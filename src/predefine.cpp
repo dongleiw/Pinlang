@@ -20,7 +20,7 @@ std::string format_string(ExecuteContext& ctx, std::vector<Variable*> args) {
 		char ch = fmt.at(i);
 		if (ch == '{') {
 			need_foramt = true;
-		} else if (ch == '}') {
+		} else if (need_foramt && ch == '}') {
 			need_foramt	  = false;
 			Variable* arg = args.at(arg_count);
 

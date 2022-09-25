@@ -13,14 +13,16 @@ class Variable;
  */
 class Function {
 public:
-	Function(TypeId tid, std::vector<std::string> params_name, AstNodeBlockStmt* body) {
+	Function(TypeId tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body) {
 		m_typeid		   = tid;
 		m_builtin_callback = nullptr;
+		m_gparams		   = gparams;
 		m_params_name	   = params_name;
 		m_body			   = body;
 	}
-	Function(TypeId tid, BuiltinFnCallback builtin_callback) {
+	Function(TypeId tid, std::vector<ConcreteGParam> gparams, BuiltinFnCallback builtin_callback) {
 		m_typeid		   = tid;
+		m_gparams		   = gparams;
 		m_builtin_callback = builtin_callback;
 		m_body			   = nullptr;
 	}
@@ -36,8 +38,9 @@ public:
 	TypeId GetReturnTypeId() const;
 
 private:
-	TypeId					 m_typeid;
-	BuiltinFnCallback		 m_builtin_callback;
-	std::vector<std::string> m_params_name;
-	AstNodeBlockStmt*		 m_body;
+	TypeId						m_typeid;
+	BuiltinFnCallback			m_builtin_callback;
+	std::vector<ConcreteGParam> m_gparams;
+	std::vector<std::string>	m_params_name;
+	AstNodeBlockStmt*			m_body;
 };

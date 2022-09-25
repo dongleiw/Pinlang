@@ -1,6 +1,8 @@
 #include "astnode_operator.h"
+#include "astnode_compile_const.h"
 #include "astnode_literal.h"
 #include "define.h"
+#include "execute_context.h"
 #include "function.h"
 #include "log.h"
 #include "type.h"
@@ -28,26 +30,26 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 	log_debug("verify operator[%s]", m_op.c_str());
 	VerifyContextResult vr;
 
-	VerifyContextResult vr_left	 = m_left_expr->Verify(ctx,VerifyContextParam());
-	VerifyContextResult vr_right = m_right_expr->Verify(ctx,VerifyContextParam());
+	VerifyContextResult vr_left	 = m_left_expr->Verify(ctx, VerifyContextParam());
+	VerifyContextResult vr_right = m_right_expr->Verify(ctx, VerifyContextParam());
 
 	TypeId tid_left	 = vr_left.GetResultTypeId();
 	TypeId tid_right = vr_right.GetResultTypeId();
 
+	std::vector<TypeId> args_tid;
+	args_tid.push_back(tid_right);
+
+	TypeInfo*	ti = g_typemgr.GetTypeInfo(tid_left);
+	MethodIndex method_idx;
+	if (m_constraint_name.empty()) {
+		method_idx = ti->GetMethodIdx(m_op, args_tid);
+	} else {
+		TypeId constraint_tid = ctx.GetCurStack()->GetVariableType(m_constraint_name);
+		method_idx			  = ti->GetMethodIdx(constraint_tid, m_op, args_tid);
+	}
+
 	// 检查左表达式的operator对应方法
 	{
-		std::vector<TypeId> args_tid;
-		args_tid.push_back(tid_right);
-
-		TypeInfo* ti = g_typemgr.GetTypeInfo(tid_left);
-
-		MethodIndex method_idx;
-		if (m_constraint_name.empty()) {
-			method_idx = ti->GetMethodIdx(m_op, args_tid);
-		} else {
-			TypeId constraint_tid = ctx.GetCurStack()->GetVariableType(m_constraint_name);
-			method_idx			  = ti->GetMethodIdx(constraint_tid, m_op, args_tid);
-		}
 		if (!method_idx.IsValid()) {
 			panicf("type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left, ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
 		}
@@ -65,6 +67,24 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 
 		log_debug("verify pass: type[%s] op[%s:%s] type[%s]", GET_TYPENAME_C(tid_left), m_constraint_name.c_str(), m_op.c_str(), GET_TYPENAME_C(tid_right));
 	}
+
+	// 处理编译期常量表达式
+	// 必须是基本类型. 否则是operator overloading. 目前没法确认是否是纯方法. 如果不是纯方法, `left op right`也不是编译期常量表达式
+	if(vr_left.IsConst()){
+		m_left_expr = new AstNodeCompileConst(vr_left.GetConstResult());
+	}
+	if(vr_right.IsConst()){
+		m_right_expr = new AstNodeCompileConst(vr_right.GetConstResult());
+	}
+	if (ti->IsPrimaryType() && vr_left.IsConst() && vr_right.IsConst()) {
+		// 这里临时搞了一个ExecuteContext用来调用方法. TODO 太丑陋了
+		ExecuteContext		   exe_ctx;
+		Variable*			   v_left = vr_left.GetConstResult();
+		std::vector<Variable*> args{vr_right.GetConstResult()};
+		Variable*			   v_result = v_left->CallMethod(exe_ctx, method_idx, args);
+		vr.SetConstResult(v_result);
+	}
+
 	return vr;
 }
 Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {

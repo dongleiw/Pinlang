@@ -48,7 +48,7 @@ void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 				std::map<std::string, Function*> methods;
 
 				TypeId	  tid		= g_typemgr.GetOrAddTypeFn(std::vector<TypeId>{}, TYPE_ID_STR);
-				Function* f			= new Function(tid, builtin_fn_tostring);
+				Function* f			= new Function(tid, std::vector<ConcreteGParam>(), builtin_fn_tostring);
 				methods["tostring"] = f;
 
 				AddConstraint(constraint_tid, methods);

@@ -12,7 +12,11 @@ VerifyContextResult Function::Verify(VerifyContext& ctx) {
 	if (m_body != nullptr) {
 		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_typeid));
 
+		// 构造参数block(包括泛参)
 		VariableTable* params_vt = new VariableTable();
+		for (auto iter : m_gparams) {
+			params_vt->AddVariable(iter.gparam_name, Variable::CreateTypeVariable(iter.gparam_tid));
+		}
 		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
 			params_vt->AddVariable(m_params_name.at(i), new Variable(tifn->GetParamType(i)));
 		}
@@ -24,7 +28,7 @@ VerifyContextResult Function::Verify(VerifyContext& ctx) {
 
 		ctx.PopSTack();
 		return vr;
-	}else{
+	} else {
 		return vr;
 	}
 }
@@ -43,8 +47,11 @@ Variable* Function::Call(ExecuteContext& ctx, Variable* obj, std::vector<Variabl
 		ctx.PopStack();
 		return result;
 	} else if (m_body != nullptr) {
-		// 构造参数block
+		// 构造参数block(包括泛参)
 		VariableTable* vt_args = new VariableTable();
+		for (auto iter : m_gparams) {
+			vt_args->AddVariable(iter.gparam_name, Variable::CreateTypeVariable(iter.gparam_tid));
+		}
 		for (size_t i = 0; i < args.size(); i++) {
 			vt_args->AddVariable(m_params_name.at(i), args.at(i));
 		}

@@ -1,6 +1,9 @@
 constraint Add[AnotherT,ReturnT]{
 	fn add(another AnotherT) ReturnT;
 }
+constraint Equal[AnotherT]{
+	fn equal(another AnotherT) bool;
+}
 constraint ToString{
 	fn tostring() str;
 }

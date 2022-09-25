@@ -1,6 +1,13 @@
-fn print_array[T ToString](array []T){
-	printf("in print_array {}\n",array[0]);
+var a =1+1;
+printf("a={}\n",a);
+
+fn foo[T ToString](a T){
+	printf("T={}\n", T);
+	if(T == int){
+		printf("T==int: a={}\n", a);
+	}else{
+		printf("T!=int: a={}\n", a);
+	}
 }
-var a = [][]int{ []int{1} };
-print_array(a);
-printf("outside {}\n",a);
+foo(true);
+foo(1);

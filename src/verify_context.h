@@ -3,6 +3,7 @@
 #include "stack.h"
 #include "type.h"
 #include "variable.h"
+#include "variable_table.h"
 
 #include <cassert>
 
@@ -11,16 +12,6 @@ public:
 	VerifyContextParam() {
 		Clear();
 	}
-	VerifyContextParam(TypeId expect_result_tid) {
-		Clear();
-		m_expect_result_tid = expect_result_tid;
-	}
-	VerifyContextParam(TypeId expect_result_tid, TypeId expect_return_tid) {
-		Clear();
-		m_expect_result_tid = expect_result_tid;
-		m_expect_return_tid = expect_return_tid;
-	}
-
 	VerifyContextParam& SetResultTid(TypeId tid) {
 		m_expect_result_tid = tid;
 		return *this;
@@ -73,6 +64,7 @@ public:
 	TypeId GetResultTypeId() const { return m_result_tid; }
 	void   SetResultTypeId(TypeId tid) { m_result_tid = tid; }
 
+	bool	  IsConst() const { return m_const_result != nullptr; }
 	void	  SetConstResult(Variable* const_result) { m_const_result = const_result; }
 	Variable* GetConstResult() { return m_const_result; }
 
@@ -84,9 +76,10 @@ private:
 class VerifyContext {
 public:
 	VerifyContext();
-	void   PushStack();
-	void   PopSTack();
-	Stack* GetCurStack() { return m_top_stack; }
+	void		   PushStack();
+	void		   PopSTack();
+	Stack*		   GetCurStack() { return m_top_stack; }
+	VariableTable* GetGlobalVt() { return &m_global_vt; }
 
 private:
 	void init_global_vt();

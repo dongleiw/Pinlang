@@ -88,9 +88,27 @@ std::any Visitor::visitExpr_primary_identifier(PinlangParser::Expr_primary_ident
 std::any Visitor::visitExpr_primary_parens(PinlangParser::Expr_primary_parensContext* ctx) {
 	return ctx->expr()->accept(this);
 }
-std::any Visitor::visitExpr_relational(PinlangParser::Expr_relationalContext* context) {
-	panicf("not implemented yet\n");
-	return NULL;
+std::any Visitor::visitExpr_relational(PinlangParser::Expr_relationalContext* ctx) {
+	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
+	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
+	std::string constraint_name;
+	std::string op;
+	if (ctx->EQUALS() != NULL) {
+		op = "equal";
+	} else if (ctx->LESS() != NULL) {
+		op = "less";
+	} else if (ctx->LESS_OR_EQUALS() != NULL) {
+		op = "lessEqual";
+	} else if (ctx->GREATER() != NULL) {
+		op = "greater";
+	} else if (ctx->GREATER_OR_EQUALS() != NULL) {
+		op = "greaterEqual";
+	} else if (ctx->NOT_EQUALS() != NULL) {
+		op = "notEqual";
+	} else {
+		panicf("unknown op");
+	}
+	return (AstNode*)new AstNodeOperator(left, constraint_name, op, right);
 }
 std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeContext* ctx) {
 	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));

@@ -57,7 +57,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 		std::map<std::string, Function*> methods;
 
 		TypeId	  tid = g_typemgr.GetOrAddTypeFn(std::vector<TypeId>{TYPE_ID_INT}, TYPE_ID_INT);
-		Function* f	  = new Function(tid, builtin_fn_add_int);
+		Function* f	  = new Function(tid, std::vector<ConcreteGParam>(),builtin_fn_add_int);
 		methods["add"] = f;
 
 		AddConstraint(constraint_tid, methods);
@@ -69,7 +69,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 		std::map<std::string, Function*> methods;
 
 		TypeId	  tid = g_typemgr.GetOrAddTypeFn(std::vector<TypeId>{}, TYPE_ID_STR);
-		Function* f	  = new Function(tid, builtin_fn_tostring);
+		Function* f	  = new Function(tid, std::vector<ConcreteGParam>(),builtin_fn_tostring);
 		methods["tostring"] = f;
 
 		AddConstraint(constraint_tid, methods);

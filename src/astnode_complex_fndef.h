@@ -39,12 +39,13 @@ public:
 		std::vector<TypeId> m_params_tid;
 		TypeId				m_return_tid;
 
-		void				Verify(VerifyContext& ctx);
-		Implement			DeepClone();
-		bool				is_generic_param(std::string name) const;
-		std::vector<TypeId> infer_gparams_by_param_return(std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid) const;
-		bool				satisfy_constraint(VerifyContext&ctx, std::vector<TypeId> gparams_tid) const;
-		TypeId				infer_return_type_by_gparams(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
+		void					 Verify(VerifyContext& ctx);
+		Implement				 DeepClone();
+		bool					 is_generic_param(std::string name) const;
+		std::vector<TypeId>		 infer_gparams_by_param_return(std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid) const;
+		bool					 satisfy_constraint(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
+		TypeId					 infer_return_type_by_gparams(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
+		std::vector<std::string> GetGParamsName() const;
 
 	private:
 		Implement() {}

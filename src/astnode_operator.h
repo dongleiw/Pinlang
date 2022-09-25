@@ -30,4 +30,6 @@ private:
 	AstNode*	m_right_expr;
 
 	MethodIndex m_method_idx;
+
+	Variable* m_const_result; // 如果是编译期常量表达式, 这里存结果
 };

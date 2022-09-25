@@ -95,3 +95,9 @@ struct MethodIndex {
 };
 
 bool is_vec_typeid_equal(const std::vector<TypeId>& a, const std::vector<TypeId>& b);
+
+// 泛参的实际类型
+struct ConcreteGParam {
+	std::string gparam_name;
+	TypeId gparam_tid;
+};

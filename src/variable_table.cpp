@@ -47,6 +47,7 @@ void VariableTable::InitAsGlobal() {
 	AddVariable("int", Variable::CreateTypeVariable(TYPE_ID_INT));
 	AddVariable("float", Variable::CreateTypeVariable(TYPE_ID_FLOAT));
 	AddVariable("str", Variable::CreateTypeVariable(TYPE_ID_STR));
+	AddVariable("bool", Variable::CreateTypeVariable(TYPE_ID_BOOL));
 
 	register_all_builtin_fn(*this);
 }

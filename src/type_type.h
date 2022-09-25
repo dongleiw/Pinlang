@@ -19,4 +19,5 @@
 class TypeInfoType : public TypeInfo{
 public:
 	TypeInfoType();
+	void InitBuiltinMethods(VerifyContext& ctx) override;
 };

@@ -1,11 +1,11 @@
 #include "astnode_complex_fndef.h"
+#include "astnode_constraint.h"
 #include "define.h"
 #include "function.h"
 #include "log.h"
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "variable.h"
-#include "astnode_constraint.h"
 
 AstNodeComplexFnDef::AstNodeComplexFnDef(std::string fn_name, std::vector<Implement> implements) {
 	m_fnname	 = fn_name;
@@ -68,13 +68,6 @@ VerifyContextResult AstNodeComplexFnDef::Verify(VerifyContext& ctx, VerifyContex
 	}
 
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_fnname, new Variable(this));
-
-	// test
-	{
-		//Instantiate_param_return(ctx, std::vector<TypeId>{TYPE_ID_INT, TYPE_ID_INT}, TYPE_ID_INT);
-	}
-
-	// test end
 
 	return VerifyContextResult(m_result_typeid);
 }
@@ -215,6 +208,18 @@ void AstNodeComplexFnDef::Implement::Verify(VerifyContext& ctx) {
 			m_return_tid = m_return_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 		}
 	}
+
+	// 检查: 所有泛参的名字和全局变量名不冲突, 和参数名也不冲突
+	for (auto iter : m_generic_params) {
+		if (ctx.GetGlobalVt()->HasVariable(iter.type_name)) {
+			panicf("generic type[%s] conflict with global variable", iter.type_name.c_str());
+		}
+		for (auto p : m_params) {
+			if (p.name == iter.type_name) {
+				panicf("generic type[%s] conflict with argument variable", iter.type_name.c_str());
+			}
+		}
+	}
 }
 bool AstNodeComplexFnDef::Implement::is_generic_param(std::string name) const {
 	for (auto iter : m_generic_params) {
@@ -317,13 +322,18 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 		params_name.push_back(iter.name);
 	}
 
+	std::vector<ConcreteGParam> concrete_gparams;
+	for (size_t i = 0; i < instance.gparams_tid.size(); i++) {
+		concrete_gparams.push_back(ConcreteGParam{.gparam_name = instance.implement->m_generic_params.at(i).type_name, .gparam_tid = instance.gparams_tid.at(i)});
+	}
+
 	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instance.gparams_tid, instance.params_tid);
 	TypeId	  fn_tid	   = g_typemgr.GetOrAddTypeFn(instance.params_tid, instance.return_tid);
 	Function* fn		   = nullptr;
 	if (instance.implement->m_body != nullptr) {
-		fn = new Function(fn_tid, params_name, instance.implement->m_body->DeepCloneT());
+		fn = new Function(fn_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT());
 	} else {
-		fn = new Function(fn_tid, instance.implement->m_builtin_callback);
+		fn = new Function(fn_tid, concrete_gparams, instance.implement->m_builtin_callback);
 	}
 	instance.fnobj = FunctionObj(nullptr, fn);
 
@@ -338,4 +348,11 @@ void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string nam
 		panicf("generic_fn[%s] not found", m_fnname.c_str());
 	}
 	vt->AddVariable(name, new Variable(fnobj));
+}
+std::vector<std::string> AstNodeComplexFnDef::Implement::GetGParamsName() const {
+	std::vector<std::string> gparams_name;
+	for (auto iter : m_generic_params) {
+		gparams_name.push_back(iter.type_name);
+	}
+	return gparams_name;
 }
