@@ -10,9 +10,9 @@
 static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
 	if (thisobj->GetValueBool()) {
-		return new Variable("true");
+		return new Variable(std::string("true"));
 	} else {
-		return new Variable("false");
+		return new Variable(std::string("false"));
 	}
 }
 

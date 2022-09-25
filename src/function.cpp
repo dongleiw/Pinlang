@@ -24,8 +24,9 @@ VerifyContextResult Function::Verify(VerifyContext& ctx) {
 
 		ctx.PopSTack();
 		return vr;
+	}else{
+		return vr;
 	}
-	panicf("not implemented yet");
 }
 bool Function::VerifyArgsType(std::vector<TypeId> args_type) const {
 	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_typeid));

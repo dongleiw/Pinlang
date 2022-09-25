@@ -59,6 +59,24 @@ stmt_generic_fndef
 	: FN Identifier L_BRACKET generic_param (',' generic_param)* R_BRACKET L_PAREN parameter_list R_PAREN type? stmt_block
 	;
 
+
+/* 
+	complex fndef
+	例子:
+		fn foo{
+			(a int){}
+			(a str){}
+			[T Stringify](a T, b T){} 
+			[T Printable](a T, b T, c T){}
+		}
+*/
+stmt_complex_fndef_implement
+	: (L_BRACKET generic_param (',' generic_param)* R_BRACKET)? L_PAREN parameter_list R_PAREN type? stmt_block
+	;
+stmt_complex_fndef
+	: FN Identifier L_CURLY stmt_complex_fndef_implement+ R_CURLY
+	;
+
 stmt_return
 	: RETURN expr? ';'
 	;
@@ -75,6 +93,7 @@ stmt_constraint_def
 	: CONSTRAINT Identifier constraint_generic_params? L_CURLY stmt_fn_declare* R_CURLY
 	;
 
+///// if statement
 stmt_if 
 	: IF expr stmt_block (ELSE IF expr stmt_block)* (ELSE stmt_block)?
 	;
@@ -88,6 +107,7 @@ statement
 	| stmt_return
 	| stmt_constraint_def
 	| stmt_if
+	| stmt_complex_fndef
     ;
 
 literal

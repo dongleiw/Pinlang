@@ -38,6 +38,10 @@ Variable::Variable(AstNodeGenericFnDef* astnode) {
 	m_tid			   = TYPE_ID_GENERIC_FN;
 	m_value_generic_fn = astnode;
 }
+Variable::Variable(AstNodeComplexFnDef* astnode) {
+	m_tid			   = TYPE_ID_COMPLEX_FN;
+	m_value_complex_fn = astnode;
+}
 Variable* Variable::CreateTypeVariable(TypeId tid) {
 	Variable* v	   = new Variable(TYPE_ID_TYPE);
 	v->m_value_tid = tid;
@@ -108,6 +112,10 @@ AstNodeConstraint* Variable::GetValueConstraint() const {
 AstNodeGenericFnDef* Variable::GetValueGenericFnDef() const {
 	assert(m_tid == TYPE_ID_GENERIC_FN);
 	return m_value_generic_fn;
+}
+AstNodeComplexFnDef* Variable::GetValueComplexFn() const {
+	assert(m_tid == TYPE_ID_COMPLEX_FN);
+	return m_value_complex_fn;
 }
 Variable* Variable::GetMethodValue(MethodIndex method_idx) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);

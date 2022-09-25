@@ -1,4 +1,5 @@
 #include "astnode_identifier.h"
+#include "astnode_complex_fndef.h"
 #include "astnode_generic_fndef.h"
 #include "define.h"
 #include "function.h"
@@ -22,7 +23,7 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 	if (v != nullptr) {
 		if (v->GetTypeId() == TYPE_ID_GENERIC_FN) {
 			// 这是一个泛型函数, 需要根据上下文实例化
-			AstNodeGenericFnDef*	 astnode_generic_fndef = v->GetValueGenericFnDef();
+			AstNodeGenericFnDef* astnode_generic_fndef = v->GetValueGenericFnDef();
 			if (vparam.HasFnCallArgs()) {
 				// 父节点传递过来了函数调用的参数类型
 				// 这说明该变量是函数
@@ -35,6 +36,28 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 				// 父节点传递过来了期望的结果类型
 				// 使用该类型来选择合适的函数重载
 				AstNodeGenericFnDef::Instance instance = astnode_generic_fndef->Instantiate(ctx, vparam.GetResultTid());
+				log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
+				m_id			= instance.instance_name;
+				m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
+
+			} else {
+				panicf("bug");
+			}
+		} else if (v->GetTypeId() == TYPE_ID_COMPLEX_FN) {
+			// 这是一个复杂函数, 需要根据上下文实例化
+			AstNodeComplexFnDef* astnode_complex_fndef = v->GetValueComplexFn();
+			if (vparam.HasFnCallArgs()) {
+				// 父节点传递过来了函数调用的参数类型
+				// 这说明该变量是函数
+				// 根据参数类型和结果类型来实例化
+				AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate_param_return(ctx, vparam.GetFnCallArgs(), vparam.GetResultTid());
+				log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
+				m_id			= instance.instance_name;
+				m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
+			} else if (vparam.GetResultTid() != TYPE_ID_INFER) {
+				// 父节点传递过来了期望的结果类型
+				// 使用该类型来选择合适的函数重载
+				AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate_type(ctx, vparam.GetResultTid());
 				log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
 				m_id			= instance.instance_name;
 				m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
@@ -84,6 +107,6 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 	return ctx.GetCurStack()->GetVariable(m_id);
 }
-AstNodeIdentifier* AstNodeIdentifier::DeepCloneT(){
+AstNodeIdentifier* AstNodeIdentifier::DeepCloneT() {
 	return new AstNodeIdentifier(m_id);
 }

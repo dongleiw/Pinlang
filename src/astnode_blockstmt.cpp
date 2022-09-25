@@ -15,6 +15,7 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextPa
 	VerifyContextResult vr(m_result_typeid);
 
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
+
 	if (!m_predefine_stmts.empty()) {
 		// 加载预定义内容
 		for (auto n : m_predefine_stmts) {
@@ -38,6 +39,13 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextPa
 Variable* AstNodeBlockStmt::Execute(ExecuteContext& ctx) {
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
 
+	if (!m_predefine_stmts.empty()) {
+		// 加载预定义内容
+		for (auto n : m_predefine_stmts) {
+			n->Execute(ctx);
+		}
+	}
+
 	for (auto n : m_stmts) {
 		n->Execute(ctx);
 	}
@@ -59,4 +67,7 @@ AstNodeBlockStmt* AstNodeBlockStmt::DeepCloneT() {
 	}
 
 	return newone;
+}
+void AstNodeBlockStmt::AddChildStmt(AstNode* node){
+	m_stmts.push_back(node);
 }

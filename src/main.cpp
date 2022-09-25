@@ -10,6 +10,7 @@
 #include "type_mgr.h"
 #include "verify_context.h"
 #include "visitor.h"
+#include "predefine.h"
 
 #include "log.h"
 
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]) {
 	g_typemgr.InitTypes();
 	VariableTable::GetGlobal().InitAsGlobal();
 
-	// predefine
+	// 加载predefine
 	AstNodeBlockStmt* predefine_block_stmts;
 	{
 		const std::string predefine_filename = "../example_code/predefine.pin";
@@ -43,6 +44,7 @@ int main(int argc, char* argv[]) {
 
 		Visitor visitor;
 		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
+		register_predefine(*predefine_block_stmts);
 	}
 
 	std::ifstream	 infile(filename);

@@ -19,7 +19,7 @@ enum TypeGroupId {
 	/*
 	 * constraint
 	 */
-	TYPE_GROUP_ID_CONSTRAINT   = 5,
+	TYPE_GROUP_ID_CONSTRAINT	= 5,
 	TYPE_GROUP_ID_VIRTUAL_GTYPE = 6,
 };
 
@@ -37,6 +37,7 @@ enum TypeId {
 	TYPE_ID_STR				   = 6,
 	TYPE_ID_GENERIC_CONSTRAINT = 7, // 泛型约束
 	TYPE_ID_GENERIC_FN		   = 8, // 泛型函数
+	TYPE_ID_COMPLEX_FN		   = 9, // 复杂函数
 };
 
 class ExecuteContext;
@@ -93,3 +94,5 @@ struct MethodIndex {
 	TypeId constraint_tid; // 方法所在的constraint_tid
 	int	   method_idx;	   // 方法在constraint中的下标
 };
+
+bool is_vec_typeid_equal(const std::vector<TypeId>& a, const std::vector<TypeId>& b);

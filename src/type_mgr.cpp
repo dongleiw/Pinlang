@@ -61,6 +61,24 @@ void TypeMgr::InitTypes() {
 		m_typeinfos.push_back(ti_str);
 		assert(TYPE_ID_STR == ti_str->GetTypeId());
 	}
+	{
+		TypeInfo* ti = new TypeInfo();
+		ti->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti);
+		assert(TYPE_ID_GENERIC_CONSTRAINT == ti->GetTypeId());
+	}
+	{
+		TypeInfo* ti = new TypeInfo();
+		ti->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti);
+		assert(TYPE_ID_GENERIC_FN == ti->GetTypeId());
+	}
+	{
+		TypeInfo* ti = new TypeInfo();
+		ti->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti);
+		assert(TYPE_ID_COMPLEX_FN == ti->GetTypeId());
+	}
 
 	// 定义内置constraint
 	{

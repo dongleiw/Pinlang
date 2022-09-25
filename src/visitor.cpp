@@ -3,6 +3,7 @@
 #include "astnode.h"
 #include "astnode_access_attr.h"
 #include "astnode_blockstmt.h"
+#include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "astnode_fncall.h"
 #include "astnode_fndef.h"
@@ -145,6 +146,8 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_generic_fndef()->accept(this);
 	} else if (ctx->stmt_if() != nullptr) {
 		return ctx->stmt_if()->accept(this);
+	} else if (ctx->stmt_complex_fndef() != nullptr) {
+		return ctx->stmt_complex_fndef()->accept(this);
 	} else {
 		panicf("bug");
 	}
@@ -362,4 +365,30 @@ std::any Visitor::visitStmt_if(PinlangParser::Stmt_ifContext* ctx) {
 		panicf("bug");
 	}
 	return (AstNode*)new AstNodeIf(cond_exprs, cond_blocks, else_cond_block);
+}
+std::any Visitor::visitStmt_complex_fndef_implement(PinlangParser::Stmt_complex_fndef_implementContext* ctx) {
+	std::vector<ParserGenericParam> generic_params;
+	for (auto iter : ctx->generic_param()) {
+		ParserGenericParam generic_param = std::any_cast<ParserGenericParam>(iter->accept(this));
+		generic_params.push_back(generic_param);
+	}
+	std::vector<ParserParameter> params		 = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
+	AstNodeType*				 return_type = nullptr;
+	if (ctx->type() != nullptr) {
+		return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	}
+	AstNodeBlockStmt* body = dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
+
+	AstNodeComplexFnDef::Implement implement(generic_params, params, return_type, body,nullptr);
+
+	return implement;
+}
+std::any Visitor::visitStmt_complex_fndef(PinlangParser::Stmt_complex_fndefContext* ctx) {
+	std::string									fn_name = ctx->Identifier()->getText();
+	std::vector<AstNodeComplexFnDef::Implement> implements;
+	for (auto iter : ctx->stmt_complex_fndef_implement()) {
+		AstNodeComplexFnDef::Implement implement = std::any_cast<AstNodeComplexFnDef::Implement>(iter->accept(this));
+		implements.push_back(implement);
+	}
+	return (AstNode*)new AstNodeComplexFnDef(fn_name, implements);
 }

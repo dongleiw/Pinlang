@@ -21,6 +21,7 @@ public:
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	void AddPreDefine(AstNodeBlockStmt& another);
+	void AddChildStmt(AstNode* node);
 
 	virtual AstNode*  DeepClone() override { return DeepCloneT(); }
 	AstNodeBlockStmt* DeepCloneT();

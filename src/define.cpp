@@ -32,3 +32,13 @@ ParserFnDeclare ParserFnDeclare::DeepClone(){
 
 	return newone;
 }
+bool is_vec_typeid_equal(const std::vector<TypeId>& a, const std::vector<TypeId>& b){
+	if (a.size() != b.size())
+		return false;
+	for (size_t i = 0; i < a.size(); i++) {
+		if (a.at(i) != b.at(i)) {
+			return false;
+		}
+	}
+	return true;
+}

@@ -1,4 +1,6 @@
 #include "builtin_fn.h"
+#include "astnode_complex_fndef.h"
+#include "astnode_type.h"
 #include "define.h"
 #include "function.h"
 #include "function_obj.h"
@@ -7,7 +9,7 @@
 #include "type_mgr.h"
 #include "variable.h"
 
-#include <assert.h>
+#include <cassert>
 
 Variable* builtin_fn_printf_type(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj == nullptr);
@@ -15,13 +17,6 @@ Variable* builtin_fn_printf_type(ExecuteContext& ctx, Variable* thisobj, std::ve
 	std::string fmt = args.at(0)->GetValueStr();
 	TypeId		tid = args.at(1)->GetValueTid();
 	printf(fmt.c_str(), GET_TYPENAME_C(tid));
-	return nullptr;
-}
-Variable* builtin_fn_printf_str(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj == nullptr);
-	assert(args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_STR);
-	std::string fmt = args.at(0)->GetValueStr();
-	printf(fmt.c_str());
 	return nullptr;
 }
 Variable* builtin_fn_printf_str_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
@@ -56,9 +51,6 @@ void register_builtin_fn(VariableTable& vt, std::string fnname, std::vector<Type
 	vt.AddCandidateFn(fnname, f);
 }
 void register_all_builtin_fn(VariableTable& vt) {
-	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_TYPE}, TYPE_ID_NONE, builtin_fn_printf_type);
-	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_INT}, TYPE_ID_NONE, builtin_fn_printf_str_int);
-	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_FLOAT}, TYPE_ID_NONE, builtin_fn_printf_str_float);
-	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_STR}, TYPE_ID_NONE, builtin_fn_printf_str_str);
-	register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR}, TYPE_ID_NONE, builtin_fn_printf_str);
+	//register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR}, TYPE_ID_NONE, builtin_fn_printf_str);
+	//register_builtin_fn(vt, "printf", std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_STR}, TYPE_ID_NONE, builtin_fn_printf_str);
 }
