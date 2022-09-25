@@ -1,0 +1,15 @@
+var a1 = []int{1,2,3};
+printf("a1={}\n", a1);
+
+var a2 = [][]int{ 
+	[]int{1,2},
+	[]int{3,4}
+};
+printf("a2={}\n", a2);
+
+
+fn foo[E Add[E,E]](a1 []E, a2 [][]E){
+	printf("a1={}\n", a1);
+	printf("a2={}\n", a2);
+}
+foo([]int{1,2}, [][]int{ []int{1,2},  []int{3,4} });

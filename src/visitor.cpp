@@ -9,6 +9,7 @@
 #include "astnode_generic_instantiate.h"
 #include "astnode_identifier.h"
 #include "astnode_if.h"
+#include "astnode_init_array.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
 #include "astnode_return.h"
@@ -24,6 +25,12 @@
 #include "utils.h"
 #include <any>
 
+std::any Visitor::visitType_array(PinlangParser::Type_arrayContext* ctx) {
+	AstNodeType* r					= new AstNodeType();
+	AstNodeType* array_element_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	r->InitWithArray(array_element_type);
+	return r;
+}
 std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
 	AstNodeType* r = new AstNodeType();
 	if (ctx->TYPE() != nullptr) {
@@ -37,9 +44,8 @@ std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
 			return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 		}
 		r->InitWithFn(params, return_type);
-	} else if (ctx->L_BRACKET() != nullptr) {
-		AstNodeType* array_element_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
-		r->InitWithArray(array_element_type);
+	} else if (ctx->type_array() != nullptr) {
+		return ctx->type_array()->accept(this);
 	} else {
 		panicf("unknown type");
 	}
@@ -121,6 +127,9 @@ std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 }
 std::any Visitor::visitExpr_primary_expr(PinlangParser::Expr_primary_exprContext* ctx) {
 	return ctx->expr_primary()->accept(this);
+}
+std::any Visitor::visitExpr_primary_init_array(PinlangParser::Expr_primary_init_arrayContext* ctx) {
+	return ctx->expr_init_array()->accept(this);
 }
 /*
  * 解析一个statement, 返回AstNode*
@@ -398,4 +407,9 @@ std::any Visitor::visitStmt_complex_fndef(PinlangParser::Stmt_complex_fndefConte
 		implements.push_back(implement);
 	}
 	return (AstNode*)new AstNodeComplexFnDef(fn_name, implements);
+}
+std::any Visitor::visitExpr_init_array(PinlangParser::Expr_init_arrayContext* ctx) {
+	AstNodeType*		  astnode_type = std::any_cast<AstNodeType*>(ctx->type_array()->accept(this));
+	std::vector<AstNode*> list		   = std::any_cast<std::vector<AstNode*>>(ctx->expr_list()->accept(this));
+	return (AstNode*)new AstNodeInitArray(astnode_type, list);
 }

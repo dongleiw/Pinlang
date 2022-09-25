@@ -1,6 +1,23 @@
+var a = []int{1,2,3,4};
+printf("outside {}\n",a);
+
 fn foo(a []int){
+	printf("in foo {}\n",a);
 }
-fn bar{
-	[T Add[T,T]](a []T) []int{
+foo(a);
+
+fn bar[T Add[T,T]](a []T){
+	printf("in bar {}\n", a);
+}
+bar(a);
+
+fn qoo{
+	(a []int){
+		printf("in qoo.1 {}\n", a);
+	}
+	(a []int, s str){
+		printf("in qoo.2 {} {}\n", a, s);
 	}
 }
+qoo(a);
+qoo(a,"hello");

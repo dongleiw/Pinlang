@@ -44,7 +44,7 @@ public:
 	AstNodeType*	 DeepCloneT();
 
 private:
-	void merge_infer_result(std::map<std::string, TypeId> to, std::map<std::string, TypeId> another) const;
+	void merge_infer_result(std::map<std::string, TypeId>& to, std::map<std::string, TypeId> another) const;
 
 private:
 	TypeKind					 m_type_kind;

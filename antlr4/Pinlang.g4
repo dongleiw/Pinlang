@@ -1,16 +1,30 @@
 grammar Pinlang;
 import Pinlang_lex;
 
+type_array: L_BRACKET R_BRACKET type ;
 type
     : TYPE
 	| Identifier
 	| FN L_PAREN parameter_list R_PAREN type?
-	| L_BRACKET R_BRACKET type
+	| type_array
 	;
 
 type_list
 	: type (',' type)*
 	;
+
+
+
+///////////////// expr init array ////////////////
+/*
+	var a = []int{1,2,3};
+*/
+expr_init_array
+	: type_array L_CURLY expr_list ','? R_CURLY
+	;
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 
 expr_primary
     : literal                                           # expr_primary_literal
@@ -19,11 +33,7 @@ expr_primary
 	| expr_primary L_PAREN expr_list R_PAREN            # expr_primary_fncall
 	| Identifier L_BRACKET type_list R_BRACKET          # expr_primary_gparam       // 泛参的实例化, 数组下标使用()
 	| expr_primary '.' Identifier                       # expr_primary_access_attr  // 访问属性
-	;
-
-expr_list
-	:
-	| expr (',' expr)*
+	| expr_init_array                                   # expr_primary_init_array   // 数组初始化
 	;
 
 expr
@@ -33,6 +43,11 @@ expr
     | expr op=(EQUALS|NOT_EQUALS|LESS|GREATER|LESS_OR_EQUALS|GREATER_OR_EQUALS) expr  	# expr_relational
     | expr op=(LOGICAL_OR| LOGICAL_AND) expr											# expr_logical
     ;
+
+expr_list
+	:
+	| expr (',' expr)*
+	;
 
 stmt_vardef
 	: VAR Identifier type ';'

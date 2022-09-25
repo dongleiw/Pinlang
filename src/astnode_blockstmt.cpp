@@ -14,10 +14,9 @@ AstNodeBlockStmt::AstNodeBlockStmt(const std::vector<AstNode*>& stmts) {
 VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	VerifyContextResult vr(m_result_typeid);
 
-	ctx.GetCurStack()->EnterBlock(new VariableTable());
-
 	if (!m_predefine_stmts.empty()) {
-		// 加载预定义内容
+		// 检查预定义内容
+		// 这些内容需要在globalVt中, 因此需要在EnterBlock外面
 		for (auto n : m_predefine_stmts) {
 			n->Verify(ctx, VerifyContextParam());
 		}
@@ -25,6 +24,7 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextPa
 		g_typemgr.InitBuiltinMethods(ctx);
 	}
 
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
 	for (auto n : m_stmts) {
 		AstNodeReturn* astnode_return = dynamic_cast<AstNodeReturn*>(n);
 		if (astnode_return != nullptr) {
@@ -37,14 +37,15 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextPa
 	return vr;
 }
 Variable* AstNodeBlockStmt::Execute(ExecuteContext& ctx) {
-	ctx.GetCurStack()->EnterBlock(new VariableTable());
-
 	if (!m_predefine_stmts.empty()) {
-		// 加载预定义内容
+		// 执行预定义内容
+		// 这些内容需要在globalVt中, 因此需要在EnterBlock外面
 		for (auto n : m_predefine_stmts) {
 			n->Execute(ctx);
 		}
 	}
+
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
 
 	for (auto n : m_stmts) {
 		n->Execute(ctx);

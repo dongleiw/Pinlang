@@ -8,6 +8,7 @@
 #include "type_mgr.h"
 #include "variable.h"
 #include "verify_context.h"
+#include <array>
 #include <vector>
 
 void AstNodeType::InitWithType() {
@@ -61,8 +62,11 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam v
 	}
 	case TYPE_KIND_ARRAY:
 	{
-		TypeId element_tid = m_element_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
-		TypeId array_tid   = g_typemgr.GetOrAddTypeArray(element_tid);
+		TypeId		   element_tid = m_element_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
+		TypeId		   array_tid   = g_typemgr.GetOrAddTypeArray(element_tid);
+		TypeInfoArray* ti		   = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(array_tid));
+		ti->InitBuiltinMethods(ctx);
+
 		vr.SetResultTypeId(array_tid);
 		break;
 	}
@@ -133,7 +137,7 @@ AstNodeType* AstNodeType::DeepCloneT() {
 
 	return newone;
 }
-void AstNodeType::merge_infer_result(std::map<std::string, TypeId> to, std::map<std::string, TypeId> another) const {
+void AstNodeType::merge_infer_result(std::map<std::string, TypeId>& to, std::map<std::string, TypeId> another) const {
 	for (auto iter : another) {
 		auto found = to.find(iter.first);
 		if (found == to.end()) {

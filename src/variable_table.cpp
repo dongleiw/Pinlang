@@ -48,27 +48,5 @@ void VariableTable::InitAsGlobal() {
 	AddVariable("float", Variable::CreateTypeVariable(TYPE_ID_FLOAT));
 	AddVariable("str", Variable::CreateTypeVariable(TYPE_ID_STR));
 
-	//AddVariable("builtin_fn_printf_str_int", Variable::CreateTypeVariable(TYPE_ID_STR));
 	register_all_builtin_fn(*this);
-
-	// 添加内置constraint的变量
-	{
-		//{
-		//	std::vector<ParserFnDeclare> rules;
-		//	AstNodeType*				 param_type = new AstNodeType();
-		//	param_type->InitWithIdentifier("AnotherT");
-		//	AstNodeType* return_type = new AstNodeType();
-		//	return_type->InitWithIdentifier("ReturnT");
-		//	ParserFnDeclare fndec{
-		//		.fnname		 = "add",
-		//		.param_list	 = std::vector<ParserParameter>{ParserParameter{
-		//			 .name = "another",
-		//			 .type = param_type,
-		//		 }},
-		//		.return_type = return_type,
-		//	};
-		//	AstNodeGenericConstraint* generic_constraint_add = new AstNodeGenericConstraint("Add", std::vector<std::string>{"AnotherT", "ReturnT"}, rules);
-		//	AddVariable("Add", new Variable(generic_constraint_add));
-		//}
-	}
 }

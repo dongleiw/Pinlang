@@ -28,7 +28,9 @@ Variable* AstNodeConstraint::Execute(ExecuteContext& ctx) {
 }
 TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params) const {
 	//assert(HasGenericParam());
-	assert(concrete_params.size() == m_generic_params.size());
+	if(concrete_params.size()!=m_generic_params.size()){
+		panicf("wrong number of generic_params");
+	}
 
 	// 泛型名映射到实际类型id
 	VariableTable* vt = new VariableTable();

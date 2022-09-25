@@ -5,6 +5,7 @@
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "variable.h"
+#include "astnode_constraint.h"
 
 AstNodeComplexFnDef::AstNodeComplexFnDef(std::string fn_name, std::vector<Implement> implements) {
 	m_fnname	 = fn_name;
@@ -123,7 +124,7 @@ void AstNodeComplexFnDef::infer_by_param_return(VerifyContext& ctx, std::vector<
 		// 匹配到一个且是泛型
 		const Implement*	implement	= param_number_match_list.at(0);
 		std::vector<TypeId> gparams_tid = implement->infer_gparams_by_param_return(concrete_params_tid, concrete_return_tid);
-		if (!implement->satisfy_constraint(gparams_tid)) {
+		if (!implement->satisfy_constraint(ctx, gparams_tid)) {
 			panicf("not satisfy constraint");
 		}
 		TypeId implement_return_tid = implement->infer_return_type_by_gparams(ctx, gparams_tid);
@@ -238,8 +239,42 @@ TypeId AstNodeComplexFnDef::Implement::infer_return_type_by_gparams(VerifyContex
 	ctx.GetCurStack()->LeaveBlock();
 	return return_tid;
 }
-bool AstNodeComplexFnDef::Implement::satisfy_constraint(std::vector<TypeId> gparams_tid) const {
-	// TODO
+bool AstNodeComplexFnDef::Implement::satisfy_constraint(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const {
+	assert(gparams_tid.size() == m_generic_params.size());
+	// 检查所有泛型参数的实际类型是否满足约束
+	for (size_t i = 0; i < gparams_tid.size(); i++) {
+		const TypeId			  concrete_gparam_tid = gparams_tid.at(i);
+		const ParserGenericParam& generic_param		  = m_generic_params.at(i);
+
+		Variable* v = ctx.GetCurStack()->GetVariable(generic_param.constraint_name);
+		if (v->GetTypeId() == TYPE_ID_GENERIC_CONSTRAINT) {
+			// constraint本身也是泛型. 需要先实例化constraint
+
+			// 创建vt, 将(泛型名=>实际类型id)定义到vt中
+			VariableTable* vt = new VariableTable();
+			for (size_t j = 0; j < m_generic_params.size(); j++) {
+				vt->AddVariable(m_generic_params.at(j).type_name, Variable::CreateTypeVariable(concrete_gparam_tid));
+			}
+
+			// 推导出该约束的实际类型
+			std::vector<TypeId> constraint_concrete_gparams;
+			ctx.GetCurStack()->EnterBlock(vt);
+			for (auto iter : generic_param.constraint_generic_params) {
+				constraint_concrete_gparams.push_back(iter->Verify(ctx, VerifyContextParam()).GetResultTypeId());
+			}
+			ctx.GetCurStack()->LeaveBlock();
+
+			AstNodeConstraint* astnode_constraint = v->GetValueConstraint();
+			TypeId			   constraint_tid	  = astnode_constraint->Instantiate(ctx, constraint_concrete_gparams);
+
+			TypeInfo* ti = g_typemgr.GetTypeInfo(concrete_gparam_tid);
+			if (!ti->MatchConstraint(constraint_tid)) {
+				panicf("type[%d:%s] not implement constraint[%s]", concrete_gparam_tid, GET_TYPENAME_C(concrete_gparam_tid), generic_param.constraint_name.c_str());
+			}
+		} else {
+			panicf("not implemented");
+		}
+	}
 	return true;
 }
 void AstNodeComplexFnDef::infer_by_type(VerifyContext& ctx, TypeId fn_tid, Instance& instance) const {

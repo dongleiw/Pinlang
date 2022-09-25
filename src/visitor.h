@@ -5,6 +5,10 @@
 class Visitor : public PinlangBaseVisitor {
 public:
 	/*
+	 * 解析数组类型
+	 */
+	virtual std::any visitType_array(PinlangParser::Type_arrayContext* ctx) override;
+	/*
 	 * 解析类型. 返回AstNodeType*
 	 */
 	virtual std::any visitType(PinlangParser::TypeContext* ctx) override;
@@ -26,6 +30,9 @@ public:
 	virtual std::any visitExpr_primary_fncall(PinlangParser::Expr_primary_fncallContext* ctx) override;
 	virtual std::any visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) override;
 	virtual std::any visitExpr_primary_access_attr(PinlangParser::Expr_primary_access_attrContext* ctx) override;
+	virtual std::any visitExpr_primary_init_array(PinlangParser::Expr_primary_init_arrayContext* ctx) override;
+
+	virtual std::any visitExpr_init_array(PinlangParser::Expr_init_arrayContext* ctx) override;
 
 	virtual std::any visitStatement(PinlangParser::StatementContext* context) override;
 	virtual std::any visitLiteral(PinlangParser::LiteralContext* context) override;
