@@ -28,7 +28,8 @@ public:
 	virtual std::any visitExpr_primary_identifier(PinlangParser::Expr_primary_identifierContext* context) override;
 	virtual std::any visitExpr_primary_parens(PinlangParser::Expr_primary_parensContext* context) override;
 	virtual std::any visitExpr_primary_fncall(PinlangParser::Expr_primary_fncallContext* ctx) override;
-	virtual std::any visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) override;
+	//virtual std::any visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) override;
+	virtual std::any visitExpr_primary_access_array_element(PinlangParser::Expr_primary_access_array_elementContext* ctx) override;
 	virtual std::any visitExpr_primary_access_attr(PinlangParser::Expr_primary_access_attrContext* ctx) override;
 	virtual std::any visitExpr_primary_init_array(PinlangParser::Expr_primary_init_arrayContext* ctx) override;
 

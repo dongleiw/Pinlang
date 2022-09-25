@@ -1,6 +1,7 @@
 #include "visitor.h"
 
 #include "astnode.h"
+#include "astnode_access_array_element.h"
 #include "astnode_access_attr.h"
 #include "astnode_blockstmt.h"
 #include "astnode_complex_fndef.h"
@@ -356,11 +357,11 @@ std::any Visitor::visitIdentifier_list(PinlangParser::Identifier_listContext* ct
 	}
 	return ids;
 }
-std::any Visitor::visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) {
-	std::string				  id		= ctx->Identifier()->getText();
-	std::vector<AstNodeType*> type_list = std::any_cast<std::vector<AstNodeType*>>(ctx->type_list()->accept(this));
-	return (AstNode*)new AstNodeGenericInstantiate(id, type_list);
-}
+//std::any Visitor::visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) {
+//	std::string				  id		= ctx->Identifier()->getText();
+//	std::vector<AstNodeType*> type_list = std::any_cast<std::vector<AstNodeType*>>(ctx->type_list()->accept(this));
+//	return (AstNode*)new AstNodeGenericInstantiate(id, type_list);
+//}
 std::any Visitor::visitExpr_primary_access_attr(PinlangParser::Expr_primary_access_attrContext* ctx) {
 	AstNode*	expr	  = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
 	std::string attr_name = ctx->Identifier()->getText();
@@ -412,4 +413,10 @@ std::any Visitor::visitExpr_init_array(PinlangParser::Expr_init_arrayContext* ct
 	AstNodeType*		  astnode_type = std::any_cast<AstNodeType*>(ctx->type_array()->accept(this));
 	std::vector<AstNode*> list		   = std::any_cast<std::vector<AstNode*>>(ctx->expr_list()->accept(this));
 	return (AstNode*)new AstNodeInitArray(astnode_type, list);
+}
+std::any Visitor::visitExpr_primary_access_array_element(PinlangParser::Expr_primary_access_array_elementContext* ctx) {
+	AstNode* array_expr = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
+	AstNode* index_expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
+
+	return (AstNode*)new AstNodeAccessArrayElement(array_expr, index_expr);
 }

@@ -1,15 +1,18 @@
-var a1 = []int{1,2,3};
+var a1 = []int{1,2};
 printf("a1={}\n", a1);
+printf("a1[0]={}\n", a1[0]);
 
-var a2 = [][]int{ 
-	[]int{1,2},
-	[]int{3,4}
-};
+var a2 = [][]int{ []int{1,2},  []int{3,4} };
 printf("a2={}\n", a2);
+printf("a2[0][0] + a2[0][1]={}\n", a2[0][0] + a2[0][1]);
 
-
-fn foo[E Add[E,E]](a1 []E, a2 [][]E){
-	printf("a1={}\n", a1);
-	printf("a2={}\n", a2);
-}
-foo([]int{1,2}, [][]int{ []int{1,2},  []int{3,4} });
+printf("a3={}\n", [][][]int{ 
+	[][]int{
+		[]int{1,2},
+		[]int{3,4},
+	},
+	[][]int{
+		[]int{5,6},
+		[]int{7,8},
+	}
+});

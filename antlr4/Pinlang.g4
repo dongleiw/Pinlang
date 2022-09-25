@@ -31,7 +31,8 @@ expr_primary
     | Identifier                                        # expr_primary_identifier
     | L_PAREN expr R_PAREN                              # expr_primary_parens
 	| expr_primary L_PAREN expr_list R_PAREN            # expr_primary_fncall
-	| Identifier L_BRACKET type_list R_BRACKET          # expr_primary_gparam       // 泛参的实例化, 数组下标使用()
+	//| Identifier L_BRACKET type_list R_BRACKET          # expr_primary_gparam       // 提供泛参将泛型函数实例化. 由于仅仅通过泛参无法实例化, 这个先搁置了
+	| expr_primary L_BRACKET expr R_BRACKET             # expr_primary_access_array_element // 数组下标访问
 	| expr_primary '.' Identifier                       # expr_primary_access_attr  // 访问属性
 	| expr_init_array                                   # expr_primary_init_array   // 数组初始化
 	;
