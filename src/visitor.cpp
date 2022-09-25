@@ -25,8 +25,6 @@
 #include "type_virtual_gtype.h"
 #include "utils.h"
 #include <any>
-#include <ios>
-#include <memory>
 
 std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
 	AstNodeType* r = new AstNodeType();
@@ -219,7 +217,14 @@ std::any Visitor::visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) {
 	if (ctx->type() != nullptr) {
 		return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 	}
-	return (AstNode*)new AstNodeFnDef(fn_name, params, return_type, body);
+
+	AstNodeComplexFnDef::Implement implement(std::vector<ParserGenericParam>(), params,return_type,body,nullptr);
+	std::vector<AstNodeComplexFnDef::Implement> implements;
+	implements.push_back(implement);
+
+	return (AstNode*)new AstNodeComplexFnDef(fn_name,implements);
+
+	//return (AstNode*)new AstNodeFnDef(fn_name, params, return_type, body);
 }
 std::any Visitor::visitStmt_block(PinlangParser::Stmt_blockContext* ctx) {
 	std::vector<AstNode*> stmts;
@@ -330,7 +335,11 @@ std::any Visitor::visitStmt_generic_fndef(PinlangParser::Stmt_generic_fndefConte
 
 	AstNodeBlockStmt* body = dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
 
-	return (AstNode*)new AstNodeGenericFnDef(fn_name, generic_params, params, return_type, body);
+	AstNodeComplexFnDef::Implement				implement(generic_params, params, return_type, body, nullptr);
+	std::vector<AstNodeComplexFnDef::Implement> implements;
+	implements.push_back(implement);
+	return (AstNode*)new AstNodeComplexFnDef(fn_name, implements);
+	//return (AstNode*)new AstNodeGenericFnDef(fn_name, generic_params, params, return_type, body);
 }
 // return std::vector<std::string>
 std::any Visitor::visitIdentifier_list(PinlangParser::Identifier_listContext* ctx) {
@@ -379,7 +388,7 @@ std::any Visitor::visitStmt_complex_fndef_implement(PinlangParser::Stmt_complex_
 	}
 	AstNodeBlockStmt* body = dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
 
-	AstNodeComplexFnDef::Implement implement(generic_params, params, return_type, body,nullptr);
+	AstNodeComplexFnDef::Implement implement(generic_params, params, return_type, body, nullptr);
 
 	return implement;
 }

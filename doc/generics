@@ -132,28 +132,11 @@
 	}
 	fn foo{
 		[T Stringify](a T, b int){} 
-		[T Printable](a T, b str){} // 有歧义. 类型可能同时满足Stringify和Printable的限制
+		[T Printable](a T, b str){} // 没有歧义. 虽然类型可能同时满足Stringify和Printable的限制, 但是由于第二个参数类型不是泛型, 可以区分. 但是目前的规则下是不允许的
 	}
 	fn foo{
 		[T Stringify](a T){} 
 		[T Printable](a T, b T){} // 没有歧义, 参数个数不同, 可以区分. (如果支持缺省参数, 那就有歧义了)
-	}
-	fn printf{
-		[T ToString](fmt str){} 
-		[T ToString](fmt str, a1 T){} 
-		[T ToString](fmt str, a1 T, a2 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T, a7 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T, a7 T, a8 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T, a7 T, a8 T, a9 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T, a7 T, a8 T, a9 T, a10 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T, a7 T, a8 T, a9 T, a10 T, a11 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T, a7 T, a8 T, a9 T, a10 T, a11 T, a12 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T, a7 T, a8 T, a9 T, a10 T, a11 T, a12 T, a13 T){} 
-		[T ToString](fmt str, a1 T, a2 T, a3 T, a4 T, a5 T, a6 T, a7 T, a8 T, a9 T, a10 T, a11 T, a12 T, a13 T, a14 T){} 
 	}
 	
 	// 泛参的限制条件可以是具体类型, 也可以是约束
