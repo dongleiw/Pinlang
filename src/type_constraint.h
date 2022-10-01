@@ -3,6 +3,7 @@
 #include "define.h"
 #include "type.h"
 #include "type_virtual_gtype.h"
+#include "verify_context.h"
 
 /*
  * 类型约束. 对类型的限定条件的集合
@@ -26,7 +27,7 @@ public:
 	}
 
 	// 生成一个虚拟的泛型类型, 满足该约束
-	void FillVirtualType(TypeInfoVirtualGType& ti) const;
+	void FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGType& ti) const;
 
 private:
 	std::vector<Rule> m_rules;

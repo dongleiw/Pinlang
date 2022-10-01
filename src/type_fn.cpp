@@ -12,9 +12,7 @@ TypeInfoFn::TypeInfoFn(std::vector<TypeId> params, TypeId return_tid) {
 	m_typegroup_id = TYPE_GROUP_ID_FUNCTION;
 }
 
-std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid) {
-	// 生成实例的唯一名字. 形式为: fn-name[泛型参数的实际类型id...](各参数类型id...)
-	// 这里使用泛型参数的typeid而不是typename, 是因为typename可能会重复
+std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid, TypeId return_tid) {
 	std::string s = fnname + "[";
 	char		buf[8];
 	for (size_t i = 0; i < concrete_generic_params.size(); i++) {
@@ -33,14 +31,14 @@ std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> co
 		}
 	}
 	s += ")";
+	s += GET_TYPENAME(return_tid);
 	return s;
 }
-std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> params_tid) {
-	return GetUniqFnName(fnname, std::vector<TypeId>(), params_tid);
+std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> params_tid, TypeId return_tid) {
+	return GetUniqFnName(fnname, std::vector<TypeId>(), params_tid, return_tid);
 }
 void TypeInfoFn::set_name() {
-	m_uniq_fnname_suffix = GetUniqFnName("", m_params);
-	m_name				 = "fn" + m_uniq_fnname_suffix + GET_TYPENAME(m_return_tid);
+	m_name = "fn" + GetUniqFnName("", m_params, GetReturnTypeId());
 }
 bool TypeInfoFn::VerifyArgsType(std::vector<TypeId> args_type) {
 	if (args_type.size() != m_params.size()) {

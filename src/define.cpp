@@ -10,6 +10,14 @@ ParserParameter ParserParameter::DeepClone() {
 
 	return newone;
 }
+ParserClassField ParserClassField::DeepClone() {
+	ParserClassField newone;
+
+	newone.name = this->name;
+	newone.type = this->type->DeepCloneT();
+
+	return newone;
+}
 ParserGenericParam ParserGenericParam::DeepClone() {
 	ParserGenericParam newone;
 

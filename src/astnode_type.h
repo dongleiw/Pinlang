@@ -20,6 +20,7 @@ public:
 		TYPE_KIND_IDENTIFIER,
 		TYPE_KIND_FN,
 		TYPE_KIND_ARRAY,
+		TYPE_KIND_TARGET_TYPE_ID,
 	};
 
 public:
@@ -28,6 +29,9 @@ public:
 	void InitWithIdentifier(std::string id);
 	void InitWithFn(std::vector<ParserParameter> params, AstNodeType* return_type);
 	void InitWithArray(AstNodeType* element_type);
+	// 固定解析为特定类型id
+	// 目前只是为了手动构造AstNodeComplexFnDef
+	void InitWithTargetTypeId(TypeId tid);
 
 	// 生成类型id
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
@@ -52,4 +56,5 @@ private:
 	std::vector<ParserParameter> m_fn_params;
 	AstNodeType*				 m_fn_return_type;
 	AstNodeType*				 m_element_type;
+	TypeId						 m_target_tid;
 };

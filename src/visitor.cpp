@@ -4,6 +4,7 @@
 #include "astnode_access_array_element.h"
 #include "astnode_access_attr.h"
 #include "astnode_blockstmt.h"
+#include "astnode_class_def.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "astnode_fncall.h"
@@ -24,6 +25,7 @@
 #include "type_mgr.h"
 #include "type_virtual_gtype.h"
 #include "utils.h"
+#include "variable.h"
 #include <any>
 
 std::any Visitor::visitType_array(PinlangParser::Type_arrayContext* ctx) {
@@ -76,6 +78,7 @@ std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalC
 		value = value.substr(1, value.size() - 2);
 		replace_str(value, "\\n", "\n");
 		replace_str(value, "\\t", "\t");
+		replace_str(value, "\\\"", "\"");
 		return (AstNode*)new AstNodeLiteral(value);
 	} else {
 		panicf("unknown literal");
@@ -166,12 +169,12 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_return()->accept(this);
 	} else if (ctx->stmt_constraint_def() != nullptr) {
 		return ctx->stmt_constraint_def()->accept(this);
-	} else if (ctx->stmt_generic_fndef() != nullptr) {
-		return ctx->stmt_generic_fndef()->accept(this);
+	} else if (ctx->stmt_fndef() != nullptr) {
+		return ctx->stmt_fndef()->accept(this);
 	} else if (ctx->stmt_if() != nullptr) {
 		return ctx->stmt_if()->accept(this);
-	} else if (ctx->stmt_complex_fndef() != nullptr) {
-		return ctx->stmt_complex_fndef()->accept(this);
+	} else if (ctx->stmt_class_def() != nullptr) {
+		return ctx->stmt_class_def()->accept(this);
 	} else {
 		panicf("bug");
 	}
@@ -235,7 +238,7 @@ std::any Visitor::visitParameter_list(PinlangParser::Parameter_listContext* ctx)
  * 解析一个函数定义
  * @return
  */
-std::any Visitor::visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) {
+std::any Visitor::visitStmt_simple_fndef(PinlangParser::Stmt_simple_fndefContext* ctx) {
 	std::string					 fn_name	 = ctx->Identifier()->getText();
 	std::vector<ParserParameter> params		 = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
 	AstNodeBlockStmt*			 body		 = dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
@@ -437,4 +440,46 @@ std::any Visitor::visitExpr_primary_access_array_element(PinlangParser::Expr_pri
 	AstNode* index_expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
 
 	return (AstNode*)new AstNodeAccessArrayElement(array_expr, index_expr);
+}
+std::any Visitor::visitStmt_class_def(PinlangParser::Stmt_class_defContext* ctx) {
+	std::string					  class_name = ctx->Identifier().at(0)->getText();
+	std::vector<ParserClassField> class_field_list;
+	{
+		auto ids   = ctx->Identifier();
+		auto types = ctx->type();
+		assert(ids.size() == types.size() + 1);
+		for (size_t i = 0; i < types.size(); i++) {
+			ParserClassField field{
+				.name = ids.at(i+1)->getText(),
+				.type = std::any_cast<AstNodeType*>(types.at(i)->accept(this)),
+			};
+			class_field_list.push_back(field);
+		}
+	}
+
+	std::vector<AstNodeComplexFnDef*> class_fn_list;
+	for (auto iter : ctx->stmt_fndef()) {
+		AstNode*			 astnode = std::any_cast<AstNode*>(iter->accept(this));
+		AstNodeComplexFnDef* n		 = dynamic_cast<AstNodeComplexFnDef*>(astnode);
+		assert(n != nullptr);
+		class_fn_list.push_back(n);
+	}
+
+	std::vector<AstNode*> class_subclass_def_list;
+	for (auto iter : ctx->stmt_class_def()) {
+		class_subclass_def_list.push_back(std::any_cast<AstNode*>(iter->accept(this)));
+	}
+
+	return (AstNode*)new AstNodeClassDef(class_name, class_field_list, class_fn_list, class_subclass_def_list);
+}
+std::any Visitor::visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) {
+	if (ctx->stmt_simple_fndef() != nullptr) {
+		return ctx->stmt_simple_fndef()->accept(this);
+	} else if (ctx->stmt_generic_fndef() != nullptr) {
+		return ctx->stmt_generic_fndef()->accept(this);
+	} else if (ctx->stmt_complex_fndef() != nullptr) {
+		return ctx->stmt_complex_fndef()->accept(this);
+	} else {
+		panicf("bug");
+	}
 }

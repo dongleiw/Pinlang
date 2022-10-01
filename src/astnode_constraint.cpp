@@ -26,9 +26,9 @@ VerifyContextResult AstNodeConstraint::Verify(VerifyContext& ctx, VerifyContextP
 Variable* AstNodeConstraint::Execute(ExecuteContext& ctx) {
 	return nullptr;
 }
-TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params) const {
+TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params) {
 	//assert(HasGenericParam());
-	if(concrete_params.size()!=m_generic_params.size()){
+	if (concrete_params.size() != m_generic_params.size()) {
 		panicf("wrong number of generic_params");
 	}
 
@@ -70,24 +70,33 @@ TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> co
 	}
 	uniq_constraint_name += "]";
 
-	Variable* constraint_v = ctx.GetCurStack()->GetVariableOrNull(uniq_constraint_name);
-	if (constraint_v != nullptr) {
-		log_debug("generic constraint[%s] instance_name=%s already instantiated with typeid=%d", m_name.c_str(), uniq_constraint_name.c_str(), constraint_v->GetTypeId());
-		return constraint_v->GetTypeId();
+	auto found = m_instances.find(uniq_constraint_name);
+	if (found == m_instances.end()) {
+		TypeInfoConstraint* constraint_ti  = new TypeInfoConstraint(uniq_constraint_name, concrete_rules);
+		TypeId				constraint_tid = g_typemgr.GetOrAddTypeConstraint(constraint_ti);
+		m_instances[uniq_constraint_name] = constraint_tid;
+		log_debug("instantiate constraint[%s]: name=%s typeid=%d", m_name.c_str(), uniq_constraint_name.c_str(), constraint_tid);
+		return constraint_tid;
+	} else {
+		log_debug("generic constraint[%s] instance_name=%s already instantiated with typeid=%d", m_name.c_str(), uniq_constraint_name.c_str(), found->second);
+		return found->second;
 	}
+	//Variable* constraint_v = ctx.GetCurStack()->GetVariableOrNull(uniq_constraint_name);
+	//if (constraint_v != nullptr) {
+	//	return constraint_v->GetTypeId();
+	//}
 
-	TypeInfoConstraint* constraint_ti  = new TypeInfoConstraint(uniq_constraint_name, concrete_rules);
-	TypeId				constraint_tid = g_typemgr.GetOrAddTypeConstraint(constraint_ti);
-	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(uniq_constraint_name, new Variable(constraint_tid));
-	log_debug("instantiate constraint[%s]: name=%s typeid=%d", m_name.c_str(), uniq_constraint_name.c_str(), constraint_tid);
-	return constraint_tid;
+	//TypeInfoConstraint* constraint_ti  = new TypeInfoConstraint(uniq_constraint_name, concrete_rules);
+	//TypeId				constraint_tid = g_typemgr.GetOrAddTypeConstraint(constraint_ti);
+	//ctx.GetCurStack()->GetCurVariableTable()->AddVariable(uniq_constraint_name, new Variable(constraint_tid));
+	//return constraint_tid;
 }
-AstNodeConstraint* AstNodeConstraint::DeepCloneT(){
+AstNodeConstraint* AstNodeConstraint::DeepCloneT() {
 	AstNodeConstraint* newone = new AstNodeConstraint();
 
-	newone->m_name = m_name;
+	newone->m_name			 = m_name;
 	newone->m_generic_params = m_generic_params;
-	for(auto iter:m_rules){
+	for (auto iter : m_rules) {
 		newone->m_rules.push_back(iter.DeepClone());
 	}
 

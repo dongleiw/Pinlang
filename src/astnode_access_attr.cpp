@@ -22,8 +22,8 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 	TypeInfo*			ti		= g_typemgr.GetTypeInfo(obj_tid);
 	if (ti->HasField(m_attr_name)) {
 		// 是字段
-		panicf("not implemented");
-		m_is_field = true;
+		m_is_field		= true;
+		m_result_typeid = ti->GetFieldType(m_attr_name);
 	} else {
 		m_is_field = false;
 		// 是方法
@@ -31,7 +31,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			// 父节点传递过来了函数调用的参数类型
 			// 这说明该变量是函数
 			// 根据参数类型和结果类型来选择
-			MethodIndex method_idx = ti->GetMethodIdx(m_attr_name, vparam.GetFnCallArgs());
+			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name, vparam.GetFnCallArgs(), vparam.GetResultTid());
 			if (!method_idx.IsValid()) {
 				panicf("type[%d:%s] doesn't have method[%s] with args[%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), g_typemgr.GetTypeName(vparam.GetFnCallArgs()).c_str());
 			}
@@ -40,7 +40,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 		} else if (vparam.GetResultTid() != TYPE_ID_INFER) {
 			// 父节点传递过来了期望的结果类型
 			// 使用该类型来选择合适的函数重载
-			MethodIndex method_idx = ti->GetMethodIdx(m_attr_name, vparam.GetResultTid());
+			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name, vparam.GetResultTid());
 			if (!method_idx.IsValid()) {
 				panicf("type[%d:%s] doesn't have method[%s] of type[%d:%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), vparam.GetResultTid(), GET_TYPENAME_C(vparam.GetResultTid()));
 			}
@@ -48,7 +48,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			m_result_typeid = ti->GetMethodByIdx(method_idx)->GetTypeId();
 		} else {
 			// 上下文不足无法推断. 最后尝试下只用方法名查找, 如果有多个重名方法, 则失败
-			MethodIndex method_idx = ti->GetMethodIdx(m_attr_name);
+			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name);
 			if (!method_idx.IsValid()) {
 				panicf("type[%d:%s] doesn't have method[%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str());
 			}
@@ -61,7 +61,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
 	Variable* v = m_obj_expr->Execute(ctx);
 	if (m_is_field) {
-		panicf("not implemented");
+		return v->GetFieldValue(m_attr_name);
 	} else {
 		return v->GetMethodValue(m_method_idx);
 	}

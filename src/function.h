@@ -13,15 +13,17 @@ class Variable;
  */
 class Function {
 public:
-	Function(TypeId tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body) {
+	Function(TypeId tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body) {
 		m_typeid		   = tid;
+		m_obj_tid		   = obj_tid;
 		m_builtin_callback = nullptr;
 		m_gparams		   = gparams;
 		m_params_name	   = params_name;
 		m_body			   = body;
 	}
-	Function(TypeId tid, std::vector<ConcreteGParam> gparams, BuiltinFnCallback builtin_callback) {
+	Function(TypeId tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, BuiltinFnCallback builtin_callback) {
 		m_typeid		   = tid;
+		m_obj_tid		   = obj_tid;
 		m_gparams		   = gparams;
 		m_builtin_callback = builtin_callback;
 		m_body			   = nullptr;
@@ -37,8 +39,11 @@ public:
 	bool   VerifyArgsType(std::vector<TypeId> args_type) const;
 	TypeId GetReturnTypeId() const;
 
+	void SetObjTypeId(TypeId obj_tid) { m_obj_tid = obj_tid; }
+
 private:
 	TypeId						m_typeid;
+	TypeId						m_obj_tid; // 如果是方法, 则为对象的类型. 否则是TYPE_ID_NONE
 	BuiltinFnCallback			m_builtin_callback;
 	std::vector<ConcreteGParam> m_gparams;
 	std::vector<std::string>	m_params_name;

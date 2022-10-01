@@ -4,6 +4,7 @@
 #include "type_mgr.h"
 #include "variable.h"
 #include "verify_context.h"
+#include "astnode_complex_fndef.h"
 
 #include <cassert>
 
@@ -21,16 +22,30 @@ TypeInfoBool::TypeInfoBool() {
 	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
 }
 void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
-	// 实现constraint ToString
+	ctx.PushStack();
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
+	// 手动实现ToString约束
 	{
-		AstNodeConstraint*				 constraint		= ctx.GetCurStack()->GetVariable("ToString")->GetValueConstraint();
-		TypeId							 constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
-		std::map<std::string, Function*> methods;
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("str");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
 
-		TypeId	  tid		= g_typemgr.GetOrAddTypeFn(std::vector<TypeId>{}, TYPE_ID_STR);
-		Function* f			= new Function(tid, std::vector<ConcreteGParam>(), builtin_fn_tostring);
-		methods["tostring"] = f;
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("ToString")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
+		AddConstraint(constraint_tid, fns);
 
-		AddConstraint(constraint_tid, methods);
+		GetConcreteMethod(ctx, "tostring", std::vector<TypeId>(), TYPE_ID_STR);
 	}
+	ctx.PopSTack();
 }

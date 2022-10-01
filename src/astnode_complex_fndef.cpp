@@ -3,6 +3,7 @@
 #include "define.h"
 #include "function.h"
 #include "log.h"
+#include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "variable.h"
@@ -10,6 +11,7 @@
 AstNodeComplexFnDef::AstNodeComplexFnDef(std::string fn_name, std::vector<Implement> implements) {
 	m_fnname	 = fn_name;
 	m_implements = implements;
+	m_obj_tid	 = TYPE_ID_NONE;
 }
 AstNodeComplexFnDef* AstNodeComplexFnDef::DeepCloneT() {
 	AstNodeComplexFnDef* newone = new AstNodeComplexFnDef();
@@ -324,16 +326,19 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 
 	std::vector<ConcreteGParam> concrete_gparams;
 	for (size_t i = 0; i < instance.gparams_tid.size(); i++) {
-		concrete_gparams.push_back(ConcreteGParam{.gparam_name = instance.implement->m_generic_params.at(i).type_name, .gparam_tid = instance.gparams_tid.at(i)});
+		concrete_gparams.push_back(ConcreteGParam{
+			.gparam_name = instance.implement->m_generic_params.at(i).type_name,
+			.gparam_tid	 = instance.gparams_tid.at(i),
+		});
 	}
 
-	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instance.gparams_tid, instance.params_tid);
+	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instance.gparams_tid, instance.params_tid, instance.return_tid);
 	TypeId	  fn_tid	   = g_typemgr.GetOrAddTypeFn(instance.params_tid, instance.return_tid);
 	Function* fn		   = nullptr;
 	if (instance.implement->m_body != nullptr) {
-		fn = new Function(fn_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT());
+		fn = new Function(fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT());
 	} else {
-		fn = new Function(fn_tid, concrete_gparams, instance.implement->m_builtin_callback);
+		fn = new Function(fn_tid, m_obj_tid, concrete_gparams, instance.implement->m_builtin_callback);
 	}
 	instance.fnobj = FunctionObj(nullptr, fn);
 
@@ -341,8 +346,14 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 
 	m_instances.push_back(instance);
 	add_instance_to_vt(ctx, instance.instance_name, instance.fnobj);
+
+	log_debug("instantiate fn: name[%s] instance_name[%s]", m_fnname.c_str(), instance.instance_name.c_str());
 }
 void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string name, FunctionObj fnobj) const {
+	if(m_obj_tid!=TYPE_ID_NONE){
+		// 如果是方法, 则跳过. 由TypeInfo来完成instance的保存
+		return;
+	}
 	VariableTable* vt = ctx.GetCurStack()->GetVariableTableByVarName(m_fnname);
 	if (vt == nullptr) {
 		panicf("generic_fn[%s] not found", m_fnname.c_str());
@@ -355,4 +366,20 @@ std::vector<std::string> AstNodeComplexFnDef::Implement::GetGParamsName() const 
 		gparams_name.push_back(iter.type_name);
 	}
 	return gparams_name;
+}
+AstNodeComplexFnDef::Instance AstNodeComplexFnDef::Instantiate(VerifyContext& ctx) {
+	if (m_implements.size() > 1) {
+		panicf("multiple implement");
+	}
+	if (m_implements.at(0).is_generic()) {
+		panicf("is generic");
+	}
+	const Implement* implement = &m_implements.at(0);
+	Instance		 instance{
+		.implement	= implement,
+		.params_tid = implement->m_params_tid,
+		.return_tid = implement->m_return_tid,
+	};
+	instantiate(ctx, instance);
+	return instance;
 }

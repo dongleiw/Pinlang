@@ -1,13 +1,16 @@
-var a =1+1;
-printf("a={}\n",a);
+class Foo{
+	id int;
+	name str;
 
-fn foo[T ToString](a T){
-	printf("T={}\n", T);
-	if(T == int){
-		printf("T==int: a={}\n", a);
-	}else{
-		printf("T!=int: a={}\n", a);
+	fn GetId() int{
+		return this.id+99;
+	}
+	fn Print(){
+		var i = this.GetId()+100;
+		printf("id={} name={}\n", i, this.name);
 	}
 }
-foo(true);
-foo(1);
+
+var f Foo;
+var q = f.Print;
+q();

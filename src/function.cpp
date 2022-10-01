@@ -12,13 +12,19 @@ VerifyContextResult Function::Verify(VerifyContext& ctx) {
 	if (m_body != nullptr) {
 		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_typeid));
 
-		// 构造参数block(包括泛参)
+		// 构造block
 		VariableTable* params_vt = new VariableTable();
+		// 将泛参定义到block中
 		for (auto iter : m_gparams) {
 			params_vt->AddVariable(iter.gparam_name, Variable::CreateTypeVariable(iter.gparam_tid));
 		}
+		// 将参数定义到block中
 		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
 			params_vt->AddVariable(m_params_name.at(i), new Variable(tifn->GetParamType(i)));
+		}
+		// 如果是方法, 将this定义到block中
+		if (m_obj_tid != TYPE_ID_NONE) {
+			params_vt->AddVariable("this", new Variable(m_obj_tid));
 		}
 
 		ctx.PushStack();
@@ -47,13 +53,18 @@ Variable* Function::Call(ExecuteContext& ctx, Variable* obj, std::vector<Variabl
 		ctx.PopStack();
 		return result;
 	} else if (m_body != nullptr) {
-		// 构造参数block(包括泛参)
+		// 构造block
 		VariableTable* vt_args = new VariableTable();
+		// 将泛参定义到block中
 		for (auto iter : m_gparams) {
 			vt_args->AddVariable(iter.gparam_name, Variable::CreateTypeVariable(iter.gparam_tid));
 		}
+		// 将参数定义到block中
 		for (size_t i = 0; i < args.size(); i++) {
 			vt_args->AddVariable(m_params_name.at(i), args.at(i));
+		}
+		if(obj!=nullptr){
+			vt_args->AddVariable("this", obj);
 		}
 
 		ctx.PushStack();

@@ -1,0 +1,85 @@
+class: 自定义的组合类型
+类型信息:
+	用户定义字段列表
+	用户定义方法列表
+
+语法:
+	class Foo{
+		class SubFoo{
+		}
+
+		name str;
+		id int;
+		sf SubFoo;
+
+		fn SetName(pname str){
+			name = pname;
+		}
+		fn GetId() int { 
+			return id;
+		}
+		fn [T ToString]SetSet(a T){
+			name = a.tostring();
+		}
+		fn Set{
+			(pid int){
+				id = pid;
+			}
+			(pname str){
+				name = pname;
+			}
+		}
+	}
+
+支持特性:
+	- 支持泛型方法
+	- 支持泛型类
+	- 方法和字段的可见性
+	- 字段默认值
+	- 字段分类:
+		- 静态字段
+		- 非静态字段
+	- 方法分类:
+		- 静态只读方法
+			const static fn Test(a int) {}
+		- 静态可写方法
+			static fn Test(a int) {}
+		- 非静态只读方法
+			const fn Test(a int) {}
+		- 非静态可写方法
+			fn Test(a int) {}
+	- 构造函数
+	- 析构函数
+
+构造函数: (目前还没有stack和heap的概念, 先不实现构造函数)
+	方案1: 名称可变的构造函数 
+		设计:
+			1. 构造函数的名字不必和类型相同. 可以使用自定义名字, 需要使用`construct`修饰
+				构造函数和类型名相同的话, 多个构造函数只能通过重载参数进行区分, 比较受限而且不易理解
+			2. 构造函数可以返回任意类型.
+				解决构造函数不方便处理异常的问题
+
+		例子:
+			class Person{
+				construct CreateWithId(id int){}
+				construct CreateWithName(name str) int{}
+				CreateWithIdOnHeap(id int) (Person*,int){}
+			}
+			var p = Person.CreateWithId(1);
+			var p,errno = Person.CreateWithName("Vigoss");
+
+
+		实现: 
+			有如下代码:
+				var p,errno = Person.CreateWithId(1);
+			编译器发现CreateWithId是construct修饰的函数. 做如下调整
+				var p Person;
+				var errno = p.CreateWithId(1);
+	方案2: 强制初始化函数
+		构造函数不方便处理异常情况. 舍弃构造函数又会导致缺乏强制初始化的手段. 这个feature可以解决
+		例子:
+			class Person{
+				initial InitWithId(id int){}
+				initial InitWithName(name int){}
+			}
+			不太好强制调用

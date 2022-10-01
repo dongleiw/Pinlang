@@ -8,7 +8,24 @@
 #include <cassert>
 
 Variable::Variable(TypeId tid) {
-	m_tid = tid;
+	m_tid			   = tid;
+	const TypeInfo* ti = g_typemgr.GetTypeInfo(tid);
+	for (auto iter : ti->GetField()) {
+		m_fields[iter.name] = new Variable(iter.tid);
+	}
+	switch (m_tid) {
+	case TYPE_ID_INT:
+		m_value_int = 0;
+		break;
+	case TYPE_ID_FLOAT:
+		m_value_float = 0.0;
+		break;
+	case TYPE_ID_BOOL:
+		m_value_bool = false;
+		break;
+	default:
+		break;
+	}
 }
 Variable::Variable(int value) {
 	m_tid		= TYPE_ID_INT;
@@ -129,4 +146,12 @@ Variable* Variable::GetMethodValue(MethodIndex method_idx) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
 	Function* fn = ti->GetMethodByIdx(method_idx);
 	return new Variable(FunctionObj(this, fn));
+}
+Variable* Variable::GetFieldValue(std::string field_name) {
+	auto found = m_fields.find(field_name);
+	if (found == m_fields.end()) {
+		panicf("field[%s] not exists", field_name.c_str());
+	} else {
+		return found->second;
+	}
 }

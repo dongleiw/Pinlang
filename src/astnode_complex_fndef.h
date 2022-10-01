@@ -29,6 +29,20 @@ public:
 			m_builtin_callback = builtin_callback;
 			m_return_tid	   = TYPE_ID_NONE;
 		}
+
+		void					 Verify(VerifyContext& ctx);
+		Implement				 DeepClone();
+		bool					 is_generic_param(std::string name) const;
+		std::vector<TypeId>		 infer_gparams_by_param_return(std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid) const;
+		bool					 satisfy_constraint(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
+		TypeId					 infer_return_type_by_gparams(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
+		std::vector<std::string> GetGParamsName() const;
+		bool					 is_generic() const { return !m_generic_params.empty(); };
+
+	private:
+		Implement() {}
+
+	public:
 		std::vector<ParserGenericParam> m_generic_params;
 		std::vector<ParserParameter>	m_params;
 		AstNodeType*					m_return_type;
@@ -38,17 +52,6 @@ public:
 		// 如果该实现不是泛型(也就是参数类型和返回值类型是固定的), 则根据上下文推导出以下两个信息
 		std::vector<TypeId> m_params_tid;
 		TypeId				m_return_tid;
-
-		void					 Verify(VerifyContext& ctx);
-		Implement				 DeepClone();
-		bool					 is_generic_param(std::string name) const;
-		std::vector<TypeId>		 infer_gparams_by_param_return(std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid) const;
-		bool					 satisfy_constraint(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
-		TypeId					 infer_return_type_by_gparams(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
-		std::vector<std::string> GetGParamsName() const;
-
-	private:
-		Implement() {}
 	};
 	// 函数的一个实例
 	struct Instance {
@@ -68,6 +71,9 @@ public:
 
 	virtual AstNode*	 DeepClone() override { return DeepCloneT(); }
 	AstNodeComplexFnDef* DeepCloneT();
+
+	std::string GetName() const { return m_fnname; }
+	void		SetObjTypeId(TypeId obj_tid) { m_obj_tid = obj_tid; }
 
 	/*
 	 * 实例化
@@ -89,6 +95,11 @@ public:
 	 * {泛参实际类型, 函数类型} => 推导出泛型参数, 校验泛参是否满足约束, 实例化
 	 */
 	Instance Instantiate_gparam_type(VerifyContext& ctx, std::vector<TypeId> gparams_tid, TypeId fn_tid);
+	/*
+	 * 实例化
+	 * 由于没有提供参数,返回值等信息, 无法进行类型推导. 如果有多个implement, 或者有一个泛型implement时, 会panic
+	 */
+	Instance Instantiate(VerifyContext& ctx);
 
 private:
 	AstNodeComplexFnDef() {}
@@ -108,5 +119,6 @@ private:
 	std::string			   m_fnname;
 	std::vector<Implement> m_implements;
 
+	TypeId				  m_obj_tid;
 	std::vector<Instance> m_instances;
 };

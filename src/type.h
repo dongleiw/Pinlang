@@ -3,24 +3,36 @@
 #include <map>
 #include <string>
 
-#include "attr.h"
 #include "define.h"
 
 class Function;
 class VerifyContext;
+class AstNodeComplexFnDef;
 
 /*
  * 类型信息
  */
 class TypeInfo {
 public:
+	// 类型的方法
 	struct Method {
+		std::string			 method_name;
+		AstNodeComplexFnDef* method_node;
+	};
+	// 类型的方法的一个具体实例
+	struct MethodInstance{
 		std::string method_name; // 方法名
 		Function*	fn;			 // 方法的实现
 	};
 	struct Constraint {
-		TypeId				constraint_tid;
-		std::vector<Method> methods;
+		TypeId						constraint_tid;
+		std::vector<Method>			methods;
+		std::vector<MethodInstance> concrete_methods;
+		MethodIndex AddConcreteMethod(std::string method_name, Function* fn);
+	};
+	struct Field {
+		std::string name;
+		TypeId		tid;
 	};
 
 public:
@@ -33,21 +45,17 @@ public:
 	void		SetName(std::string name) { m_name = name; }
 
 	/*
-	 * 根据方法名和参数类型查找函数, 如果出现多个匹配的情况则panic
+	 * 根据方法名和参数类型查找函数. 如果需要则实例化
 	 */
-	MethodIndex GetMethodIdx(std::string method_name, std::vector<TypeId> args_tid) const;
+	MethodIndex GetConcreteMethod(VerifyContext& ctx, std::string method_name, std::vector<TypeId> args_tid, TypeId return_tid);
 	/*
-	 * 根据方法名和参数类型查找函数, 如果出现多个匹配的情况则panic
+	 * 根据方法名和函数类型查找函数. 如果需要则实例化
 	 */
-	MethodIndex GetMethodIdx(std::string method_name, TypeId tid) const;
+	MethodIndex GetConcreteMethod(VerifyContext& ctx, std::string method_name, TypeId tid);
 	/*
-	 * 根据参数类型查找属于某个constraint的某个方法
+	 * 仅仅根据方法名查找函数. 如果需要则实例化
 	 */
-	MethodIndex GetMethodIdx(TypeId constraint_tid, std::string method_name, std::vector<TypeId> args_tid) const;
-	/*
-	 * 根据类型查找属于某个constraint的某个方法
-	 */
-	MethodIndex GetMethodIdx(TypeId constraint_tid, std::string method_name, TypeId tid) const;
+	MethodIndex GetConcreteMethod(VerifyContext& ctx, std::string method_name);
 	/*
 	 * 只根据函数名查找. 找到多个会panic
 	 */
@@ -55,14 +63,8 @@ public:
 
 	Function* GetMethodByIdx(MethodIndex method_idx);
 
-	void		 AddConstraint(TypeId constraint_tid, std::map<std::string, Function*> methods);
+	void		 AddConstraint(TypeId constraint_tid, std::vector<AstNodeComplexFnDef*> methods);
 	virtual void InitBuiltinMethods(VerifyContext& ctx) {}
-	/*
-	 * 创建新类型, 将类型中的泛型id替换为实际类型id
-	 * 如果本身不是泛型, 返回nullptr
-	 * 如果对应关系不全, 则panic
-	 */
-	virtual TypeInfo* ToConcreteType(std::map<TypeId, TypeId> gtid_2_ctid) const { return nullptr; }
 
 	void SetTypeGroupId(TypeGroupId tgid) { m_typegroup_id = tgid; }
 
@@ -75,7 +77,10 @@ public:
 
 	bool MatchConstraint(TypeId tid) const;
 
-	bool HasField(std::string attr_name) const;
+	bool			   HasField(std::string field_name) const;
+	void			   AddField(std::string field_name, TypeId tid);
+	TypeId			   GetFieldType(std::string field_name) const;
+	std::vector<Field> GetField() const { return m_field_list; }
 
 protected:
 	TypeId		m_typeid;
@@ -86,4 +91,6 @@ protected:
 	 * 该类型实现的约束列表. 
 	 */
 	std::vector<Constraint> m_constraints;
+
+	std::vector<Field> m_field_list;
 };

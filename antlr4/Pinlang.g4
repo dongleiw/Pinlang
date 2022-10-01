@@ -15,14 +15,9 @@ type_list
 
 
 
-///////////////// expr init array ////////////////
-/*
-	var a = []int{1,2,3};
-*/
 expr_init_array
 	: type_array L_CURLY expr_list ','? R_CURLY
 	;
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 
@@ -65,10 +60,14 @@ parameter_list
 	;
 
 
-
-/////////// function definition /////////////
-// 简单函数定义
 stmt_fndef
+	: stmt_simple_fndef
+	| stmt_generic_fndef
+	| stmt_complex_fndef
+	;
+
+////// 简单函数定义
+stmt_simple_fndef
 	: FN Identifier L_PAREN parameter_list R_PAREN type? stmt_block
 	;
 generic_param_constraint
@@ -76,18 +75,19 @@ generic_param_constraint
 	| Identifier L_BRACKET type (',' type)* R_BRACKET
 	;
 generic_param: Identifier generic_param_constraint;
-// 泛型函数定义
+
+////// 泛型函数定义
 stmt_generic_fndef
 	: FN Identifier L_BRACKET generic_param (',' generic_param)* R_BRACKET L_PAREN parameter_list R_PAREN type? stmt_block
 	;
-// 复杂函数定义
+
+////// 复杂函数定义
 stmt_complex_fndef_implement
 	: (L_BRACKET generic_param (',' generic_param)* R_BRACKET)? L_PAREN parameter_list R_PAREN type? stmt_block
 	;
 stmt_complex_fndef
 	: FN Identifier L_CURLY stmt_complex_fndef_implement+ R_CURLY
 	;
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 stmt_return
 	: RETURN expr? ';'
@@ -110,16 +110,20 @@ stmt_if
 	: IF expr stmt_block (ELSE IF expr stmt_block)* (ELSE stmt_block)?
 	;
 
+///// 类定义
+stmt_class_def
+	: CLASS Identifier L_CURLY (Identifier type ';' | stmt_fndef | stmt_class_def)* R_CURLY
+	;
+
 statement
 	: expr ';'
 	| stmt_vardef
 	| stmt_fndef
-	| stmt_generic_fndef
 	| stmt_block
 	| stmt_return
 	| stmt_constraint_def
 	| stmt_if
-	| stmt_complex_fndef
+	| stmt_class_def
     ;
 
 literal

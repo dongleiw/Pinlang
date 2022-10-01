@@ -39,7 +39,7 @@ public:
 	AstNodeConstraint* DeepCloneT();
 
 	bool   HasGenericParam() const { return !m_generic_params.empty(); }
-	TypeId Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params) const;
+	TypeId Instantiate(VerifyContext& ctx, std::vector<TypeId> concrete_params);
 
 private:
 	AstNodeConstraint(){}
@@ -47,4 +47,6 @@ private:
 	std::string					 m_name;
 	std::vector<std::string>	 m_generic_params;
 	std::vector<ParserFnDeclare> m_rules;
+
+	std::map<std::string, TypeId> m_instances;
 };

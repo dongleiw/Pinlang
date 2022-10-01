@@ -1,8 +1,10 @@
 #include "type_array.h"
+#include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "define.h"
 #include "function.h"
 #include "type_mgr.h"
+#include "variable_table.h"
 
 #include <assert.h>
 #include <vector>
@@ -17,7 +19,7 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std
 		Variable* element = elements.at(i);
 		// 调用tostring方法来转换为str
 		// TODO 目前得先获取MethodIndex然后调用
-		MethodIndex method_index = ti_element->GetMethodIdx("tostring");
+		MethodIndex method_index = ti_element->GetMethodIdx("tostring[]()str");
 		Variable*	str_e		 = element->CallMethod(ctx, method_index, std::vector<Variable*>());
 		s += str_e->GetValueStr();
 		if (i + 1 < elements.size()) {
@@ -34,25 +36,35 @@ TypeInfoArray::TypeInfoArray(TypeId element_tid) {
 	m_typegroup_id = TYPE_GROUP_ID_ARRAY;
 }
 void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
-	// 实现constraint ToString
+	ctx.PushStack();
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
 	{
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("ToString")->GetValueConstraint();
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
-
-		TypeInfo* array_ti = g_typemgr.GetTypeInfo(GetTypeId());
+		TypeInfo*		   array_ti		  = g_typemgr.GetTypeInfo(GetTypeId());
 		if (!array_ti->MatchConstraint(constraint_tid)) {
-			// 已经实现过了. TODO 不应该在这里过滤
 			TypeInfo* element_ti = g_typemgr.GetTypeInfo(m_element_tid);
 			if (element_ti->MatchConstraint(constraint_tid)) {
-				// 只有在数组元素类型实现了ToString约束时, 才自动给数组实现ToString约束
-				std::map<std::string, Function*> methods;
+				std::vector<AstNodeComplexFnDef*> fns;
+				{
+					std::vector<AstNodeComplexFnDef::Implement> implements;
+					{
+						std::vector<ParserGenericParam> gparams;
+						std::vector<ParserParameter>	params;
+						AstNodeType*					return_type = new AstNodeType();
+						return_type->InitWithIdentifier("str");
+						implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
+					}
+					AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
+					astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+					fns.push_back(astnode_complex_fndef);
+				}
 
-				TypeId	  tid		= g_typemgr.GetOrAddTypeFn(std::vector<TypeId>{}, TYPE_ID_STR);
-				Function* f			= new Function(tid, std::vector<ConcreteGParam>(), builtin_fn_tostring);
-				methods["tostring"] = f;
+				AddConstraint(constraint_tid, fns);
 
-				AddConstraint(constraint_tid, methods);
+				GetConcreteMethod(ctx, "tostring", std::vector<TypeId>(), TYPE_ID_STR);
 			}
 		}
 	}
+	ctx.PopSTack();
 }

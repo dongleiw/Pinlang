@@ -41,19 +41,23 @@ public:
 	virtual std::any visitStmt_vardef(PinlangParser::Stmt_vardefContext* ctx) override;
 	virtual std::any visitParameter(PinlangParser::ParameterContext* context) override;
 	virtual std::any visitParameter_list(PinlangParser::Parameter_listContext* context) override;
-	virtual std::any visitStmt_fndef(PinlangParser::Stmt_fndefContext* context) override;
 	virtual std::any visitStmt_block(PinlangParser::Stmt_blockContext* context) override;
 	virtual std::any visitStmt_return(PinlangParser::Stmt_returnContext* context) override;
 	virtual std::any visitExpr_list(PinlangParser::Expr_listContext* ctx) override;
 	virtual std::any visitStmt_fn_declare(PinlangParser::Stmt_fn_declareContext* ctx) override;
 	virtual std::any visitStmt_if(PinlangParser::Stmt_ifContext* ctx) override;
+
+	virtual std::any visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) override;
+	virtual std::any visitStmt_simple_fndef(PinlangParser::Stmt_simple_fndefContext* ctx) override;
+	virtual std::any visitStmt_generic_fndef(PinlangParser::Stmt_generic_fndefContext* ctx) override;
 	virtual std::any visitStmt_complex_fndef_implement(PinlangParser::Stmt_complex_fndef_implementContext* ctx) override;
 	virtual std::any visitStmt_complex_fndef(PinlangParser::Stmt_complex_fndefContext* ctx) override;
+
+	virtual std::any visitStmt_class_def(PinlangParser::Stmt_class_defContext* ctx) override;
 
 	virtual std::any visitConstraint_generic_params(PinlangParser::Constraint_generic_paramsContext* ctx) override;
 	virtual std::any visitStmt_constraint_def(PinlangParser::Stmt_constraint_defContext* ctx) override;
 
-	virtual std::any visitStmt_generic_fndef(PinlangParser::Stmt_generic_fndefContext* ctx) override;
 	virtual std::any visitGeneric_param(PinlangParser::Generic_paramContext* ctx) override;
 	virtual std::any visitGeneric_param_constraint(PinlangParser::Generic_param_constraintContext* ctx) override;
 	virtual std::any visitIdentifier_list(PinlangParser::Identifier_listContext* ctx) override;

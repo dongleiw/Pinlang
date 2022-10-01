@@ -39,6 +39,8 @@ enum TypeId {
 	TYPE_ID_COMPLEX_FN		   = 8, // 复杂函数
 };
 
+#define CONSTRAINT_ID_NONE ((TypeId)0)
+
 class ExecuteContext;
 class Variable;
 
@@ -54,6 +56,15 @@ struct ParserParameter {
 	AstNodeType* type; // 参数类型
 
 	ParserParameter DeepClone();
+};
+/*
+ * parse得到的函数参数名和类型信息
+ */
+struct ParserClassField{
+	std::string	 name; // 参数名. 为空代表未指定
+	AstNodeType* type; // 参数类型
+
+	ParserClassField DeepClone();
 };
 /*
  * parse得到的函数声明

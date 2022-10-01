@@ -14,15 +14,11 @@ struct Parameter {
 class TypeInfoFn : public TypeInfo {
 public:
 	/* 
-	 * 函数有重载时, fnname不唯一, 该函数根据函数参数类型生成后缀, 与fnname拼接得到唯一name
-	 * uniq_fnname = fnname + uniq_fnname_suffix
-	 *
-	 * 1. 为何不加上函数返回类型?
-	 *		不同的返回类型不构成重载, 因此这里不能加返回类型
-	 *		如果将返回类型也纳入到重载的参数中, 会出现什么情况?
+	 * 函数名可以对应多个实现. 该函数用于给每一个实现生成唯一名字
+	 *	= fnname + 泛参信息 + 参数类型信息 + 返回类型信息
 	*/
-	static std::string GetUniqFnName(std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid);
-	static std::string GetUniqFnName(std::string fnname, std::vector<TypeId> params_tid);
+	static std::string GetUniqFnName(std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid, TypeId return_tid);
+	static std::string GetUniqFnName(std::string fnname, std::vector<TypeId> params_tid, TypeId return_tid);
 
 public:
 	TypeInfoFn(std::vector<TypeId> params, TypeId return_tid);
@@ -40,10 +36,8 @@ public:
 
 private:
 	void set_name();
-	//void set_uniq_fn_name_suffix();
 
 private:
 	std::vector<TypeId> m_params;
 	TypeId				m_return_tid;
-	std::string			m_uniq_fnname_suffix;
 };

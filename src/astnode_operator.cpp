@@ -42,10 +42,9 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 	TypeInfo*	ti = g_typemgr.GetTypeInfo(tid_left);
 	MethodIndex method_idx;
 	if (m_constraint_name.empty()) {
-		method_idx = ti->GetMethodIdx(m_op, args_tid);
+		method_idx = ti->GetConcreteMethod(ctx, m_op, args_tid, TYPE_ID_INFER);
 	} else {
-		TypeId constraint_tid = ctx.GetCurStack()->GetVariableType(m_constraint_name);
-		method_idx			  = ti->GetMethodIdx(constraint_tid, m_op, args_tid);
+		panicf("not implemented");
 	}
 
 	// 检查左表达式的operator对应方法

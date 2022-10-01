@@ -65,12 +65,14 @@ void TypeMgr::InitTypes() {
 	{
 		TypeInfo* ti = new TypeInfo();
 		ti->SetTypeId(allocate_typeid());
+		ti->SetName("constraint");
 		m_typeinfos.push_back(ti);
 		assert(TYPE_ID_GENERIC_CONSTRAINT == ti->GetTypeId());
 	}
 	{
 		TypeInfo* ti = new TypeInfo();
 		ti->SetTypeId(allocate_typeid());
+		ti->SetName("complexfn");
 		m_typeinfos.push_back(ti);
 		assert(TYPE_ID_COMPLEX_FN == ti->GetTypeId());
 	}

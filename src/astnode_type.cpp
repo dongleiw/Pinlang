@@ -27,6 +27,10 @@ void AstNodeType::InitWithArray(AstNodeType* element_type) {
 	m_type_kind	   = TYPE_KIND_ARRAY;
 	m_element_type = element_type;
 }
+void AstNodeType::InitWithTargetTypeId(TypeId tid) {
+	m_type_kind	 = TYPE_KIND_TARGET_TYPE_ID;
+	m_target_tid = tid;
+}
 
 /*
  * 调用函数
@@ -68,6 +72,11 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam v
 		ti->InitBuiltinMethods(ctx);
 
 		vr.SetResultTypeId(array_tid);
+		break;
+	}
+	case TYPE_KIND_TARGET_TYPE_ID:
+	{
+		vr.SetResultTypeId(m_target_tid);
 		break;
 	}
 	default:

@@ -23,7 +23,11 @@ public:
 	AstNodeVarDef*	 DeepCloneT();
 
 private:
-	AstNodeVarDef() {}
+	AstNodeVarDef() {
+		m_declared_type = nullptr;
+		m_init_expr		= nullptr;
+		m_is_const		= false;
+	}
 
 private:
 	std::string m_varname;

@@ -10,8 +10,8 @@ IntegerLiteral
     | '0'
     ;
 StringLiteral
-    :   '"' ~["]* '"'
-    |  '"' EscapeCharacter+ '"'
+    : '"' (~["] | EscapeCharacter )* '"'
+    //| '"' EscapeCharacter+ '"'
     ;
 
 BoolLiteral

@@ -29,6 +29,5 @@ private:
 	std::string m_attr_name;
 
 	bool		m_is_field;
-	int			m_field_idx;
 	MethodIndex m_method_idx;
 };

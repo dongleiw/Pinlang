@@ -3,6 +3,7 @@
 #include "define.h"
 #include "function_obj.h"
 #include "type.h"
+#include <map>
 #include <vector>
 
 class ExecuteContext;
@@ -49,10 +50,12 @@ public:
 	std::string ToString() const;
 
 	Variable* GetMethodValue(MethodIndex method_idx);
+	Variable* GetFieldValue(std::string field_name);
 
 protected:
-	TypeId				   m_tid;
-	bool				   m_is_const;
+	TypeId m_tid;
+	bool   m_is_const;
+
 	TypeId				   m_value_tid;
 	int					   m_value_int;
 	float				   m_value_float;
@@ -62,4 +65,6 @@ protected:
 	AstNodeConstraint*	   m_value_constraint;
 	AstNodeComplexFnDef*   m_value_complex_fn;
 	std::vector<Variable*> m_value_array;
+
+	std::map<std::string, Variable*> m_fields;
 };
