@@ -115,6 +115,11 @@ stmt_class_def
 	: CLASS Identifier L_CURLY (Identifier type ';' | stmt_fndef | stmt_class_def)* R_CURLY
 	;
 
+//// 赋值
+stmt_assignment
+	: expr ASSIGN expr ';'
+	;
+
 statement
 	: expr ';'
 	| stmt_vardef
@@ -124,6 +129,7 @@ statement
 	| stmt_constraint_def
 	| stmt_if
 	| stmt_class_def
+	| stmt_assignment
     ;
 
 literal

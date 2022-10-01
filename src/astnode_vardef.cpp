@@ -61,6 +61,7 @@ Variable* AstNodeVarDef::Execute(ExecuteContext& ctx) {
 	} else {
 		v = new Variable(m_result_typeid);
 	}
+	v->SetTmp(false);
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_varname, v);
 	return nullptr;
 }

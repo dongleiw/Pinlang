@@ -21,7 +21,7 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 	}
 
 	m_result_typeid = ti_array->GetElementType();
-	return VerifyContextResult(m_result_typeid);
+	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
 Variable* AstNodeAccessArrayElement::Execute(ExecuteContext& ctx) {
 	Variable* v_array = m_array_expr->Execute(ctx);

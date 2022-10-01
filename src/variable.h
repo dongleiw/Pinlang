@@ -42,6 +42,9 @@ public:
 
 	bool IsConst() const { return m_is_const; }
 
+	bool IsTmp() const { return m_is_tmp; }
+	void SetTmp(bool tmp) { m_is_tmp = tmp; }
+
 	/*
 	 * 找不到method, panic
 	 */
@@ -52,9 +55,11 @@ public:
 	Variable* GetMethodValue(MethodIndex method_idx);
 	Variable* GetFieldValue(std::string field_name);
 
+	void Assign(Variable* tmp);
 protected:
 	TypeId m_tid;
 	bool   m_is_const;
+	bool   m_is_tmp; // 是否是临时变量.
 
 	TypeId				   m_value_tid;
 	int					   m_value_int;

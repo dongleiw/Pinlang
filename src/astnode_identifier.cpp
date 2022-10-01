@@ -45,7 +45,7 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 		panicf("unknown id[%s]", m_id.c_str());
 	}
 
-	return VerifyContextResult(m_result_typeid);
+	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
 Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 	return ctx.GetCurStack()->GetVariable(m_id);

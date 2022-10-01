@@ -29,7 +29,9 @@ VerifyContextResult AstNodeInitArray::Verify(VerifyContext& ctx, VerifyContextPa
 Variable* AstNodeInitArray::Execute(ExecuteContext& ctx) {
 	std::vector<Variable*> elements;
 	for (auto iter : m_init_values) {
-		elements.push_back(iter->Execute(ctx));
+		Variable* v = iter->Execute(ctx);
+		v->SetTmp(false);
+		elements.push_back(v);
 	}
 	return new Variable(m_result_typeid, elements);
 }

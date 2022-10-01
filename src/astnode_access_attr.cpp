@@ -56,7 +56,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			m_result_typeid = ti->GetMethodByIdx(method_idx)->GetTypeId();
 		}
 	}
-	return VerifyContextResult(m_result_typeid);
+	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
 Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
 	Variable* v = m_obj_expr->Execute(ctx);

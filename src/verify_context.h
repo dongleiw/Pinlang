@@ -51,14 +51,17 @@ public:
 	VerifyContextResult() {
 		m_result_tid   = TYPE_ID_NONE;
 		m_const_result = nullptr;
+		m_is_tmp	   = true;
 	}
 	VerifyContextResult(TypeId result_tid) {
 		m_result_tid   = result_tid;
 		m_const_result = nullptr;
+		m_is_tmp	   = true;
 	}
 	VerifyContextResult(TypeId result_tid, Variable* const_result) {
 		m_result_tid   = result_tid;
 		m_const_result = const_result;
+		m_is_tmp	   = true;
 	}
 
 	TypeId GetResultTypeId() const { return m_result_tid; }
@@ -68,8 +71,15 @@ public:
 	void	  SetConstResult(Variable* const_result) { m_const_result = const_result; }
 	Variable* GetConstResult() { return m_const_result; }
 
+	VerifyContextResult& SetTmp(bool tmp) {
+		m_is_tmp = tmp;
+		return *this;
+	}
+	bool IsTmp() const { return m_is_tmp; }
+
 private:
 	TypeId	  m_result_tid;
+	bool	  m_is_tmp;
 	Variable* m_const_result; // 如果是编译期常量, 放到这里
 };
 

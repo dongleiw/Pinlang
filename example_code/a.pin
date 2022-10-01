@@ -1,16 +1,22 @@
-class Foo{
-	id int;
-	name str;
-
-	fn GetId() int{
-		return this.id+99;
-	}
-	fn Print(){
-		var i = this.GetId()+100;
-		printf("id={} name={}\n", i, this.name);
-	}
+{
+	var a=1;
+	printf("{}\n", a);
+	a=2;
+	printf("{}\n", a);
 }
 
-var f Foo;
-var q = f.Print;
-q();
+{
+	var b=3.3;
+	printf("{}\n", b);
+	b=2.9;
+	printf("{}\n", b);
+}
+
+{
+	var c=[]int{1,2,3};
+	printf("{}\n", c);
+	c[0]=100;
+	printf("{}\n", c);
+	c[1]=c[0]+c[1];
+	printf("{}\n", c);
+}

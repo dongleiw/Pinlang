@@ -11,7 +11,9 @@ Variable::Variable(TypeId tid) {
 	m_tid			   = tid;
 	const TypeInfo* ti = g_typemgr.GetTypeInfo(tid);
 	for (auto iter : ti->GetField()) {
-		m_fields[iter.name] = new Variable(iter.tid);
+		Variable* v = new Variable(iter.tid);
+		v->SetTmp(false);
+		m_fields[iter.name] = v;
 	}
 	switch (m_tid) {
 	case TYPE_ID_INT:
@@ -26,34 +28,42 @@ Variable::Variable(TypeId tid) {
 	default:
 		break;
 	}
+	m_is_tmp = true;
 }
 Variable::Variable(int value) {
 	m_tid		= TYPE_ID_INT;
 	m_value_int = value;
+	m_is_tmp	= true;
 }
 Variable::Variable(float value) {
 	m_tid		  = TYPE_ID_FLOAT;
 	m_value_float = value;
+	m_is_tmp	  = true;
 }
 Variable::Variable(bool value) {
 	m_tid		 = TYPE_ID_BOOL;
 	m_value_bool = value;
+	m_is_tmp	 = true;
 }
 Variable::Variable(std::string value) {
 	m_tid		= TYPE_ID_STR;
 	m_value_str = value;
+	m_is_tmp	= true;
 }
 Variable::Variable(FunctionObj fnobj) {
 	m_tid		  = fnobj.GetFunction()->GetTypeId();
 	m_value_fnobj = fnobj;
+	m_is_tmp	  = true;
 }
 Variable::Variable(AstNodeConstraint* astnode) {
 	m_tid			   = TYPE_ID_GENERIC_CONSTRAINT;
 	m_value_constraint = astnode;
+	m_is_tmp		   = true;
 }
 Variable::Variable(AstNodeComplexFnDef* astnode) {
 	m_tid			   = TYPE_ID_COMPLEX_FN;
 	m_value_complex_fn = astnode;
+	m_is_tmp		   = true;
 }
 Variable::Variable(TypeId array_tid, std::vector<Variable*> array) {
 	const TypeInfoArray* tiarray	 = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(array_tid));
@@ -66,10 +76,12 @@ Variable::Variable(TypeId array_tid, std::vector<Variable*> array) {
 
 	m_tid		  = array_tid;
 	m_value_array = array;
+	m_is_tmp	  = true;
 }
 Variable* Variable::CreateTypeVariable(TypeId tid) {
 	Variable* v	   = new Variable(TYPE_ID_TYPE);
 	v->m_value_tid = tid;
+	v->m_is_tmp	   = true;
 	return v;
 }
 Variable* Variable::CallMethod(ExecuteContext& ctx, MethodIndex method_idx, std::vector<Variable*> args) {
@@ -145,7 +157,9 @@ const std::vector<Variable*> Variable::GetValueArray() const {
 Variable* Variable::GetMethodValue(MethodIndex method_idx) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
 	Function* fn = ti->GetMethodByIdx(method_idx);
-	return new Variable(FunctionObj(this, fn));
+	Variable* v	 = new Variable(FunctionObj(this, fn));
+	v->SetTmp(false);
+	return v;
 }
 Variable* Variable::GetFieldValue(std::string field_name) {
 	auto found = m_fields.find(field_name);
@@ -154,4 +168,11 @@ Variable* Variable::GetFieldValue(std::string field_name) {
 	} else {
 		return found->second;
 	}
+}
+void Variable::Assign(Variable* tmp){
+	assert(!IsTmp());
+
+	TypeId tmp_tid = m_tid ;
+	*this = *tmp;
+	m_tid = tmp_tid;
 }

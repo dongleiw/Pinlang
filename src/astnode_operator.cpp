@@ -69,10 +69,10 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 
 	// 处理编译期常量表达式
 	// 必须是基本类型. 否则是operator overloading. 目前没法确认是否是纯方法. 如果不是纯方法, `left op right`也不是编译期常量表达式
-	if(vr_left.IsConst()){
+	if (vr_left.IsConst()) {
 		m_left_expr = new AstNodeCompileConst(vr_left.GetConstResult());
 	}
-	if(vr_right.IsConst()){
+	if (vr_right.IsConst()) {
 		m_right_expr = new AstNodeCompileConst(vr_right.GetConstResult());
 	}
 	if (ti->IsPrimaryType() && vr_left.IsConst() && vr_right.IsConst()) {

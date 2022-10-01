@@ -3,6 +3,7 @@
 #include "astnode.h"
 #include "astnode_access_array_element.h"
 #include "astnode_access_attr.h"
+#include "astnode_assignment.h"
 #include "astnode_blockstmt.h"
 #include "astnode_class_def.h"
 #include "astnode_complex_fndef.h"
@@ -175,6 +176,8 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_if()->accept(this);
 	} else if (ctx->stmt_class_def() != nullptr) {
 		return ctx->stmt_class_def()->accept(this);
+	} else if (ctx->stmt_assignment() != nullptr) {
+		return ctx->stmt_assignment()->accept(this);
 	} else {
 		panicf("bug");
 	}
@@ -450,7 +453,7 @@ std::any Visitor::visitStmt_class_def(PinlangParser::Stmt_class_defContext* ctx)
 		assert(ids.size() == types.size() + 1);
 		for (size_t i = 0; i < types.size(); i++) {
 			ParserClassField field{
-				.name = ids.at(i+1)->getText(),
+				.name = ids.at(i + 1)->getText(),
 				.type = std::any_cast<AstNodeType*>(types.at(i)->accept(this)),
 			};
 			class_field_list.push_back(field);
@@ -482,4 +485,10 @@ std::any Visitor::visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) {
 	} else {
 		panicf("bug");
 	}
+}
+std::any Visitor::visitStmt_assignment(PinlangParser::Stmt_assignmentContext* ctx) {
+	AstNode* left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
+	AstNode* right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
+
+	return (AstNode*)new AstNodeAssignment(left, right);
 }
