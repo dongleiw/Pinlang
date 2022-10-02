@@ -12,7 +12,7 @@
 #include "astnode_generic_instantiate.h"
 #include "astnode_identifier.h"
 #include "astnode_if.h"
-#include "astnode_init_array.h"
+#include "astnode_init.h"
 #include "astnode_literal.h"
 #include "astnode_operator.h"
 #include "astnode_return.h"
@@ -151,8 +151,8 @@ std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 std::any Visitor::visitExpr_primary_expr(PinlangParser::Expr_primary_exprContext* ctx) {
 	return ctx->expr_primary()->accept(this);
 }
-std::any Visitor::visitExpr_primary_init_array(PinlangParser::Expr_primary_init_arrayContext* ctx) {
-	return ctx->expr_init_array()->accept(this);
+std::any Visitor::visitExpr_primary_init(PinlangParser::Expr_primary_initContext* ctx) {
+	return ctx->expr_init()->accept(this);
 }
 /*
  * 解析一个statement, 返回AstNode*
@@ -256,7 +256,7 @@ std::any Visitor::visitStmt_simple_fndef(PinlangParser::Stmt_simple_fndefContext
 
 	return (AstNode*)new AstNodeComplexFnDef(fn_name, implements);
 
-	//return (AstNode*)new AstNodeFnDef(fn_name, params, return_type, body);
+	// return (AstNode*)new AstNodeFnDef(fn_name, params, return_type, body);
 }
 std::any Visitor::visitStmt_block(PinlangParser::Stmt_blockContext* ctx) {
 	std::vector<AstNode*> stmts;
@@ -371,7 +371,7 @@ std::any Visitor::visitStmt_generic_fndef(PinlangParser::Stmt_generic_fndefConte
 	std::vector<AstNodeComplexFnDef::Implement> implements;
 	implements.push_back(implement);
 	return (AstNode*)new AstNodeComplexFnDef(fn_name, implements);
-	//return (AstNode*)new AstNodeGenericFnDef(fn_name, generic_params, params, return_type, body);
+	// return (AstNode*)new AstNodeGenericFnDef(fn_name, generic_params, params, return_type, body);
 }
 // return std::vector<std::string>
 std::any Visitor::visitIdentifier_list(PinlangParser::Identifier_listContext* ctx) {
@@ -381,11 +381,11 @@ std::any Visitor::visitIdentifier_list(PinlangParser::Identifier_listContext* ct
 	}
 	return ids;
 }
-//std::any Visitor::visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) {
+// std::any Visitor::visitExpr_primary_gparam(PinlangParser::Expr_primary_gparamContext* ctx) {
 //	std::string				  id		= ctx->Identifier()->getText();
 //	std::vector<AstNodeType*> type_list = std::any_cast<std::vector<AstNodeType*>>(ctx->type_list()->accept(this));
 //	return (AstNode*)new AstNodeGenericInstantiate(id, type_list);
-//}
+// }
 std::any Visitor::visitExpr_primary_access_attr(PinlangParser::Expr_primary_access_attrContext* ctx) {
 	AstNode*	expr	  = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
 	std::string attr_name = ctx->Identifier()->getText();
@@ -432,11 +432,6 @@ std::any Visitor::visitStmt_complex_fndef(PinlangParser::Stmt_complex_fndefConte
 		implements.push_back(implement);
 	}
 	return (AstNode*)new AstNodeComplexFnDef(fn_name, implements);
-}
-std::any Visitor::visitExpr_init_array(PinlangParser::Expr_init_arrayContext* ctx) {
-	AstNodeType*		  astnode_type = std::any_cast<AstNodeType*>(ctx->type_array()->accept(this));
-	std::vector<AstNode*> list		   = std::any_cast<std::vector<AstNode*>>(ctx->expr_list()->accept(this));
-	return (AstNode*)new AstNodeInitArray(astnode_type, list);
 }
 std::any Visitor::visitExpr_primary_access_array_element(PinlangParser::Expr_primary_access_array_elementContext* ctx) {
 	AstNode* array_expr = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
@@ -491,4 +486,43 @@ std::any Visitor::visitStmt_assignment(PinlangParser::Stmt_assignmentContext* ct
 	AstNode* right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
 
 	return (AstNode*)new AstNodeAssignment(left, right);
+}
+/*
+ * return ParserInitElement
+ */
+std::any Visitor::visitExpr_init_element(PinlangParser::Expr_init_elementContext* ctx) {
+	ParserInitElement element;
+
+	if (ctx->expr_init_body() != nullptr) {
+		element.attr_value = std::any_cast<AstNodeInit*>(ctx->expr_init_body()->accept(this));
+	} else if (ctx->expr() != nullptr) {
+		element.attr_value = std::any_cast<AstNode*>(ctx->expr()->accept(this));
+		if (ctx->Identifier() != nullptr) {
+			element.attr_name = ctx->Identifier()->getText();
+		}
+	} else {
+		panicf("bug");
+	}
+
+	return element;
+}
+/*
+ * return AstNodeInit*
+ */
+std::any Visitor::visitExpr_init_body(PinlangParser::Expr_init_bodyContext* ctx) {
+	std::vector<ParserInitElement> elements;
+	for (auto iter : ctx->expr_init_element()) {
+		elements.push_back(std::any_cast<ParserInitElement>(iter->accept(this)));
+	}
+
+	return new AstNodeInit(elements);
+}
+/*
+ * return AstNodeInit*
+ */
+std::any Visitor::visitExpr_init(PinlangParser::Expr_initContext* ctx) {
+	AstNodeInit* astnode_init = std::any_cast<AstNodeInit*>(ctx->expr_init_body()->accept(this));
+	AstNodeType* astnode_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	astnode_init->SetType(astnode_type);
+	return (AstNode*)astnode_init;
 }

@@ -15,11 +15,15 @@ type_list
 
 
 
-expr_init_array
-	: type_array L_CURLY expr_list ','? R_CURLY
-	;
-
-
+expr_init_element
+    : expr_init_body
+    | ( Identifier ':' )? expr
+    ;
+expr_init_body
+    : L_CURLY expr_init_element (',' expr_init_element)* ','? R_CURLY
+    | L_CURLY R_CURLY
+    ;
+expr_init : type expr_init_body ;
 
 expr_primary
     : literal                                           # expr_primary_literal
@@ -29,7 +33,7 @@ expr_primary
 	//| Identifier L_BRACKET type_list R_BRACKET          # expr_primary_gparam       // 提供泛参将泛型函数实例化. 由于仅仅通过泛参无法实例化, 这个先搁置了
 	| expr_primary L_BRACKET expr R_BRACKET             # expr_primary_access_array_element // 数组下标访问
 	| expr_primary '.' Identifier                       # expr_primary_access_attr  // 访问属性
-	| expr_init_array                                   # expr_primary_init_array   // 数组初始化
+	| expr_init                                         # expr_primary_init   // 初始化
 	;
 
 expr

@@ -109,7 +109,7 @@ std::string Variable::ToString() const {
 		snprintf(buf, sizeof(buf) - 1, "float(%f)", m_value_float);
 		s += buf;
 		break;
-	//case TYPE_ID_BOOL:
+	// case TYPE_ID_BOOL:
 	//	break;
 	default:
 		snprintf(buf, sizeof(buf) - 1, "unknown");
@@ -169,10 +169,13 @@ Variable* Variable::GetFieldValue(std::string field_name) {
 		return found->second;
 	}
 }
-void Variable::Assign(Variable* tmp){
+void Variable::Assign(Variable* tmp) {
 	assert(!IsTmp());
 
-	TypeId tmp_tid = m_tid ;
-	*this = *tmp;
-	m_tid = tmp_tid;
+	TypeId tmp_tid = m_tid;
+	*this		   = *tmp;
+	m_tid		   = tmp_tid;
+}
+void Variable::InitField(std::map<std::string, Variable*> fields) {
+	m_fields = fields;
 }

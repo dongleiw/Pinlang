@@ -1,3 +1,8 @@
+function
+	如果给函数增加一个编译期可以访问的用户自定义标签怎么样?
+		#[userattr(AAA)]
+		fn foo(){
+		}
 支持控制流for switch
 支持变长参数
 变量赋值
@@ -13,16 +18,6 @@ immutable
 结构体/类
 	属性
 	构造函数(一些语言中构造函数名和类名相同, 这在有多种初始化方式的需求情况下, 会含义不够清晰. 而且只能通过函数重载不够灵活. 考虑构造函数名称可自定义)
-		class Foo{
-			Foo();
-			# [construct]
-			InitWithId(id int);
-			# [construct]
-			InitWithAge(age int);
-		}
-
-		var f = Foo.InitWithId(1);
-		var f = new Foo.InitWithAge(1);
 元组
 闭包
 异步

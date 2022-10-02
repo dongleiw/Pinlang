@@ -74,6 +74,7 @@ public:
 	bool IsConstraint() const { return m_typegroup_id == TYPE_GROUP_ID_CONSTRAINT; }
 	bool IsGenericType() const { return m_typegroup_id == TYPE_GROUP_ID_VIRTUAL_GTYPE; }
 	bool IsPrimaryType() const { return m_typegroup_id == TYPE_GROUP_ID_PRIMARY; }
+	bool IsClass() const { return m_typegroup_id == TYPE_GROUP_ID_CLASS; }
 
 	bool MatchConstraint(TypeId tid) const;
 

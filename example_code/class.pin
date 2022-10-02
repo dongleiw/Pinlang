@@ -1,8 +1,14 @@
 class Foo{
 	id int;
+	name str;
+	records []int;
 
 	fn GetId() int{
 		return this.id+3;
+	}
+	fn Print(){
+		var i = this.GetId()+100;
+		printf("id={} i={} name={} records={}\n", this.id, i, this.name, this.records);
 	}
 
 	fn Get{
@@ -12,24 +18,21 @@ class Foo{
 	}
 }
 
-class Bar{
-	id int;
-	name str;
-	foo Foo;
-
-	fn GetId() int{
-		return this.id + this.foo.GetId();
-	}
-	fn Print(){
-		var i = this.GetId()+100;
-		printf("id={} name={}\n", i, this.name);
-	}
+{
+	var foo Foo;
+	printf("foo.Get(1)={}\n", foo.Get(1));
+	printf("foo.Get(\"hes\")={}\n", foo.Get("hes"));
+	var q = foo.Print;
+	q();
 }
 
-var foo Foo;
-printf("foo.Get(1)={}\n", foo.Get(1));
-printf("foo.Get(\"hes\")={}\n", foo.Get("hes"));
 
-var bar Bar;
-var q = bar.Print;
-q();
+// 初始化表达式
+{
+	var foo = Foo{
+		id:333,
+		name:"dl",
+		records: []int{1,2,3}
+	};
+	foo.Print();
+}

@@ -56,6 +56,7 @@ public:
 	Variable* GetFieldValue(std::string field_name);
 
 	void Assign(Variable* tmp);
+	void InitField(std::map<std::string, Variable*> fields);
 protected:
 	TypeId m_tid;
 	bool   m_is_const;

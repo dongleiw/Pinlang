@@ -43,6 +43,7 @@ enum TypeId {
 
 class ExecuteContext;
 class Variable;
+class AstNode;
 
 // 指向内置函数的指针
 typedef Variable* (*BuiltinFnCallback)(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);
@@ -60,7 +61,7 @@ struct ParserParameter {
 /*
  * parse得到的函数参数名和类型信息
  */
-struct ParserClassField{
+struct ParserClassField {
 	std::string	 name; // 参数名. 为空代表未指定
 	AstNodeType* type; // 参数类型
 
@@ -110,5 +111,13 @@ bool is_vec_typeid_equal(const std::vector<TypeId>& a, const std::vector<TypeId>
 // 泛参的实际类型
 struct ConcreteGParam {
 	std::string gparam_name;
-	TypeId gparam_tid;
+	TypeId		gparam_tid;
+};
+
+// 初始化表达式中的一个元素
+struct ParserInitElement {
+	std::string attr_name; // 为空则表示没有指明属性名
+	AstNode*	attr_value;
+
+	ParserInitElement DeepClone();
 };

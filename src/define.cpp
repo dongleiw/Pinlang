@@ -50,3 +50,11 @@ bool is_vec_typeid_equal(const std::vector<TypeId>& a, const std::vector<TypeId>
 	}
 	return true;
 }
+ParserInitElement ParserInitElement::DeepClone(){
+	ParserInitElement newone;
+	
+	newone.attr_name=attr_name;
+	newone.attr_value = attr_value->DeepClone();
+
+	return newone;
+}

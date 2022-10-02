@@ -20,3 +20,15 @@
 	c[1]=c[0]+c[1];
 	printf("{}\n", c);
 }
+
+{
+	class Person{
+		name str;
+		id int;
+	}
+	var p Person;
+	printf("person: name={} id={}\n", p.name, p.id);
+	p.name="dl";
+	p.id=333;
+	printf("person: name={} id={}\n", p.name, p.id);
+}
