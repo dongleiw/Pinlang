@@ -1,29 +1,24 @@
 #include <any>
 #include <iostream>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "PinlangLexer.h"
 #include "PinlangParser.h"
 #include "antlr4-runtime.h"
 #include "astnode_blockstmt.h"
 #include "execute_context.h"
+#include "predefine.h"
 #include "type_mgr.h"
 #include "verify_context.h"
 #include "visitor.h"
-#include "predefine.h"
 
 #include "log.h"
 
 using namespace antlr4;
 
-int main(int argc, char* argv[]) {
-	// const char *filename=argv[1];
-	const char* filename = "../example_code/a.pin";
-	if (argc >= 2) {
-		filename = argv[1];
-	}
-	init_log("./run.log");
-	log_info("filename[%s]", filename);
+void execute(std::string filepath) {
+	log_info("execute filename[%s]", filepath.c_str());
 
 	g_typemgr.InitTypes();
 	VariableTable::GetGlobal().InitAsGlobal();
@@ -47,7 +42,7 @@ int main(int argc, char* argv[]) {
 		register_predefine(*predefine_block_stmts);
 	}
 
-	std::ifstream	 infile(filename);
+	std::ifstream	 infile(filepath);
 	ANTLRInputStream input;
 	input.load(infile);
 	PinlangLexer	  lexer(&input);
@@ -76,5 +71,30 @@ int main(int argc, char* argv[]) {
 	log_info("execute end");
 
 	printf("execute end. succ\n");
+}
+
+int main(int argc, char* argv[]) {
+	const std::string default_filepath = "../example_code/a.pin";
+	init_log("./run.log");
+
+	std::string filepath;
+
+	int opt;
+	while ((opt = getopt(argc, argv, "f:")) != -1) {
+		switch (opt) {
+		case 'f':
+			filepath = std::string(optarg);
+			break;
+		default:
+			fprintf(stderr, "unknown opt[%c]", opt);
+			exit(1);
+			break;
+		}
+	}
+
+	if (filepath.empty()) {
+		filepath = default_filepath;
+	}
+	execute(filepath);
 	return 0;
 }
