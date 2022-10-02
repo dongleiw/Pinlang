@@ -20,39 +20,7 @@
 
 
 ## 语法
-```
-// 定义变量
-const PersonId = int; 
-// 定义变量 支持+-*/%
-var i = (3+5-4)*3/2; 
-// 定义函数
-fn sum(a int, b int) int{
-    return a+b;
-}
-fn sum(a int) int{
-    return a;
-}
-// 调用函数
-var r1=sum(1,2); // call sum(int,int)int
-var r2=sum(3);   // call sum(int)int
-
-// 预定义的约束(没错,类似于Rust的trait)
-// int/float/str实现了该约束
-restriction Add[AnotherT,ReturnT]{
-    fn add(another AnotherT) ReturnT;
-}
-
-// 定义泛型函数. 没有使用<>, 而是用的[]. 避免语法歧义
-// 泛型参数T需要满足约束: Add[T,T]
-fn gsum[T Add[T,T]](a T, b T) T{
-    return a+b;
-}
-// 调用泛型函数
-var gri = gsum(1, 2);
-var grf = gsum(1.0, 2.9);
-var grs = gsum("hello", "world");
-
-```
+查看/example_code/下的代码
 
 ## 想法
 1. ASCII的符号不够用, 也许可以考虑选择一些unicode符号? 不过输入有点复杂
