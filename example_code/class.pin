@@ -1,14 +1,15 @@
 class Foo{
 	id int;
 	name str;
-	records []int;
+	records [][]int;
+	skills []str;
 
 	fn GetId() int{
 		return this.id+3;
 	}
 	fn Print(){
 		var i = this.GetId()+100;
-		printf("id={} i={} name={} records={}\n", this.id, i, this.name, this.records);
+		printf("id={} i={} name={} records={}\n", this.id, i, this.name, this.skills);
 	}
 
 	fn Get{
@@ -30,9 +31,13 @@ class Foo{
 // 初始化表达式
 {
 	var foo = Foo{
-		id:333,
-		name:"dl",
-		records: []int{1,2,3}
-	};
+        id: 33,
+        name: "dl",
+        skills: []str{"sleep", "eat"},
+        records: [][]int{ 
+            []int{1,2,3},
+            {4,5,6}
+        }
+    };
 	foo.Print();
 }
