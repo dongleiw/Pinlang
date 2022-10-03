@@ -1,22 +1,64 @@
-{
-	var a=1;
-	printf("{}\n", a);
-	a=2;
-	printf("{}\n", a);
+class Foo{
+	id int;
+	name str;
+	records [][]int;
+	skills []str;
+
+	fn GetId() int{
+		return this.id+3;
+	}
+	fn Print(){
+		var i = this.GetId()+100;
+		printf("id={} i={} name={} records={}\n", this.id, i, this.name, this.skills);
+	}
+
+	fn Get{
+		[T ToString](a T) str {
+			return a.tostring();
+		}
+	}
+
+	impl constraint ToString{
+		fn tostring() str{
+			return "id=" + this.id.tostring() + " name=" + this.name;
+		}
+	}
 }
 
 {
-	var b=3.3;
-	printf("{}\n", b);
-	b=2.9;
-	printf("{}\n", b);
+	var foo Foo;
+	printf("foo.Get(1)={}\n", foo.Get(1));
+	printf("foo.Get(\"hes\")={}\n", foo.Get("hes"));
+	var q = foo.Print;
+	q();
 }
 
+
+// 初始化表达式
 {
-	var c=[]int{1,2,3};
-	printf("{}\n", c);
-	c[0]=100;
-	printf("{}\n", c);
-	c[1]=c[0]+c[1];
-	printf("{}\n", c);
+	var foo = Foo{
+        id: 33,
+        name: "dl",
+        skills: []str{"sleep", "eat"},
+        records: [][]int{ 
+            []int{1,2,3},
+            {4,5,6}
+        }
+    };
+	foo.Print();
+}
+
+// 约束
+{
+	var foo = Foo{
+        id: 99,
+        name: "yes",
+    };
+	printf("tostring: {}\n", foo.tostring());
+
+	fn print[T ToString](a T){
+		printf("generic function print: T[{}] a[{}]\n", T, a);
+	}
+	print(1);
+	print(foo);
 }

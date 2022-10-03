@@ -13,11 +13,14 @@
  */
 class AstNodeClassDef : public AstNode {
 public:
-	AstNodeClassDef(std::string class_name, std::vector<ParserClassField> field_list, std::vector<AstNodeComplexFnDef*> method_list, std::vector<AstNode*> subclass_list) {
-		m_class_name	= class_name;
-		m_field_list	= field_list;
-		m_method_list	= method_list;
-		m_subclass_list = subclass_list;
+	AstNodeClassDef(std::string class_name, std::vector<ParserClassField> field_list,
+					std::vector<AstNodeComplexFnDef*> method_list, std::vector<AstNode*> subclass_list,
+					std::vector<ParserClassImplConstraint> impl_constraint_list) {
+		m_class_name		   = class_name;
+		m_field_list		   = field_list;
+		m_method_list		   = method_list;
+		m_subclass_list		   = subclass_list;
+		m_impl_constraint_list = impl_constraint_list;
 	}
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
@@ -30,8 +33,9 @@ private:
 	AstNodeClassDef() {}
 
 private:
-	std::string						  m_class_name;
-	std::vector<ParserClassField>	  m_field_list;
-	std::vector<AstNodeComplexFnDef*> m_method_list;
-	std::vector<AstNode*>			  m_subclass_list; // 目前忽略掉
+	std::string							   m_class_name;
+	std::vector<ParserClassField>		   m_field_list;
+	std::vector<AstNodeComplexFnDef*>	   m_method_list;
+	std::vector<AstNode*>				   m_subclass_list; // 目前忽略掉
+	std::vector<ParserClassImplConstraint> m_impl_constraint_list;
 };

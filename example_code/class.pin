@@ -17,6 +17,12 @@ class Foo{
 			return a.tostring();
 		}
 	}
+
+	impl constraint ToString{
+		fn tostring() str{
+			return "id=" + this.id.tostring() + " name=" + this.name;
+		}
+	}
 }
 
 {
@@ -40,4 +46,19 @@ class Foo{
         }
     };
 	foo.Print();
+}
+
+// 约束
+{
+	var foo = Foo{
+        id: 99,
+        name: "yes",
+    };
+	printf("tostring: {}\n", foo.tostring());
+
+	fn print[T ToString](a T){
+		printf("generic function print: T[{}] a[{}]\n", T, a);
+	}
+	print(1);
+	print(foo);
 }

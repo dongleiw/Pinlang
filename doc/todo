@@ -1,3 +1,5 @@
+类型
+	增加方法: GetName(), GetTypeId()
 function
 	如果给函数增加一个编译期可以访问的用户自定义标签怎么样?
 		#[userattr(AAA)]
@@ -24,6 +26,7 @@ immutable
 管道
 namespace
 module
+inline function/method
 调用c库
 标准库
 debug

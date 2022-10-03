@@ -44,6 +44,7 @@ enum TypeId {
 class ExecuteContext;
 class Variable;
 class AstNode;
+class AstNodeComplexFnDef;
 
 // 指向内置函数的指针
 typedef Variable* (*BuiltinFnCallback)(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);
@@ -120,4 +121,11 @@ struct ParserInitElement {
 	AstNode*	attr_value;
 
 	ParserInitElement DeepClone();
+};
+
+// class实现的constraint信息
+struct ParserClassImplConstraint {
+	std::string						  constraint_name;
+	std::vector<AstNodeType*>		  constraint_gparams;
+	std::vector<AstNodeComplexFnDef*> constraint_fns;
 };

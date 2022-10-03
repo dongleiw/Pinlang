@@ -56,6 +56,7 @@ public:
 	virtual std::any visitStmt_complex_fndef_implement(PinlangParser::Stmt_complex_fndef_implementContext* ctx) override;
 	virtual std::any visitStmt_complex_fndef(PinlangParser::Stmt_complex_fndefContext* ctx) override;
 
+	virtual std::any visitStmt_class_def_impl_constraint(PinlangParser::Stmt_class_def_impl_constraintContext* ctx) override;
 	virtual std::any visitStmt_class_def(PinlangParser::Stmt_class_defContext* ctx) override;
 
 	virtual std::any visitConstraint_generic_params(PinlangParser::Constraint_generic_paramsContext* ctx) override;

@@ -115,3 +115,35 @@
 		[T Stringify](a T){} 
 		[T Printable](a T, b T){} // 没有歧义, 参数个数不同, 可以区分. (如果支持缺省参数, 那就有歧义了)
 	}
+
+5. 泛型函数特化/偏特化 (specialization, partial specialization)
+	有时候会有这样的需求: 某一类type可以用相同的实现, 但其中某个具体类型需要提供不同的实现. 这时候需要特化/偏特化.
+	例子:
+		// 特定类型做特殊处理, 但依然遵循泛型参数的约束
+		fn foo{
+			[T ToString](a T){
+				var s = a.tostring();
+				if(T==int){
+					s = s + "integer";
+					var i int = a; // 类型不匹配: a类型为T, 不是int
+				}
+				printf("a={}\n", s);
+			}
+		}
+		// 增强泛参类型的约束.
+		fn foo{
+			[T ToString](a T){
+				var s = a.tostring();
+				if(__generic_param_specialize__(T,int)){ // 将T的类型限定为int, 此后T类型需要同时满足两个约束: 满足ToString并且满足T==int
+					s = (a/2).tostring();
+				}
+				printf("a={}\n", s);
+			}
+		}
+
+	__generic_param_specialize__(泛参, 实际类型)
+		作用是将泛参强化为实际类型(必须满足约束限定)
+		只能用在if的条件表达式内
+			为什么要有这个限定?
+			有了这个限定后, 只要类型满足约束, 调用该函数就是类型安全的. 
+			假如没有这个限定, 就必须在函数调用时再进行

@@ -115,8 +115,11 @@ stmt_if
 	;
 
 ///// 类定义
+stmt_class_def_impl_constraint
+	: 'impl' CONSTRAINT Identifier (L_BRACKET identifier_list R_BRACKET)? L_CURLY stmt_simple_fndef* R_CURLY
+	;
 stmt_class_def
-	: CLASS Identifier L_CURLY (Identifier type ';' | stmt_fndef | stmt_class_def)* R_CURLY
+	: CLASS Identifier L_CURLY (Identifier type ';' | stmt_fndef | stmt_class_def | stmt_class_def_impl_constraint)* R_CURLY
 	;
 
 //// 赋值

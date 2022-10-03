@@ -239,7 +239,7 @@ std::any Visitor::visitParameter_list(PinlangParser::Parameter_listContext* ctx)
 }
 /*
  * 解析一个函数定义
- * @return
+ * @return AstNode* (实际是AstNodeComplexFnDef*)
  */
 std::any Visitor::visitStmt_simple_fndef(PinlangParser::Stmt_simple_fndefContext* ctx) {
 	std::string					 fn_name	 = ctx->Identifier()->getText();
@@ -468,7 +468,12 @@ std::any Visitor::visitStmt_class_def(PinlangParser::Stmt_class_defContext* ctx)
 		class_subclass_def_list.push_back(std::any_cast<AstNode*>(iter->accept(this)));
 	}
 
-	return (AstNode*)new AstNodeClassDef(class_name, class_field_list, class_fn_list, class_subclass_def_list);
+	std::vector<ParserClassImplConstraint> class_impl_constraint_list;
+	for (auto iter : ctx->stmt_class_def_impl_constraint()) {
+		class_impl_constraint_list.push_back(std::any_cast<ParserClassImplConstraint>(iter->accept(this)));
+	}
+
+	return (AstNode*)new AstNodeClassDef(class_name, class_field_list, class_fn_list, class_subclass_def_list, class_impl_constraint_list);
 }
 std::any Visitor::visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) {
 	if (ctx->stmt_simple_fndef() != nullptr) {
@@ -525,4 +530,27 @@ std::any Visitor::visitExpr_init(PinlangParser::Expr_initContext* ctx) {
 	AstNodeType* astnode_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 	astnode_init->SetType(astnode_type);
 	return (AstNode*)astnode_init;
+}
+/*
+ * return ParserClassImplConstraint
+ */
+std::any Visitor::visitStmt_class_def_impl_constraint(PinlangParser::Stmt_class_def_impl_constraintContext* ctx) {
+	ParserClassImplConstraint impl;
+
+	impl.constraint_name = ctx->Identifier()->getText();
+	if (ctx->identifier_list() != nullptr) {
+		std::vector<std::string> gparam_ids = std::any_cast<std::vector<std::string>>(ctx->identifier_list()->accept(this));
+		for (auto id : gparam_ids) {
+			AstNodeType* type = new AstNodeType();
+			type->InitWithIdentifier(id);
+			impl.constraint_gparams.push_back(type);
+		}
+	}
+
+	for (auto iter : ctx->stmt_simple_fndef()) {
+		AstNodeComplexFnDef* fn = dynamic_cast<AstNodeComplexFnDef*>(std::any_cast<AstNode*>(iter->accept(this)));
+		impl.constraint_fns.push_back(fn);
+	}
+
+	return impl;
 }

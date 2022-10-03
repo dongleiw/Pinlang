@@ -5,9 +5,6 @@ class: 自定义的组合类型
 
 语法:
 	class Foo{
-		class SubFoo{
-		}
-
 		name str;
 		id int;
 		sf SubFoo;
@@ -29,12 +26,30 @@ class: 自定义的组合类型
 				name = pname;
 			}
 		}
+
+		impl constraint ToString{
+			fn tostring()str{
+				return "name: " + this.name + ", id: " + this.id;
+			}
+		}
+		impl constraint Add[Foo,Foo]{
+			fn add(another Foo)Foo{
+				this.id = this.id + another.id;
+				return this;
+			}
+		}
+
 	}
 
 支持特性:
 	- 支持泛型方法
+
+	- 实现约束
 	- 支持泛型类
 	- 方法和字段的可见性
+		public
+		private
+		public immutable
 	- 字段默认值
 	- 字段分类:
 		- 静态字段
@@ -50,6 +65,8 @@ class: 自定义的组合类型
 			fn Test(a int) {}
 	- 构造函数
 	- 析构函数
+	- 定义子类
+	- 继承? 多态?
 
 构造函数: (目前还没有stack和heap的概念, 先不实现构造函数)
 	方案1: 名称可变的构造函数 

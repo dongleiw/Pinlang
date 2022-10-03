@@ -7,7 +7,7 @@
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "variable.h"
-
+#include "astnode_constraint.h"
 #include "log.h"
 #include "variable_table.h"
 #include "verify_context.h"
@@ -19,7 +19,7 @@ VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextPar
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
 
 	TypeInfoClass* ti = new TypeInfoClass(m_class_name);
-	m_result_typeid = g_typemgr.AddTypeInfo(ti);
+	m_result_typeid	  = g_typemgr.AddTypeInfo(ti);
 
 	// 检查类的字段
 	for (auto iter : m_field_list) {
@@ -30,11 +30,27 @@ VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextPar
 		ti->AddField(iter.name, field_tid);
 	}
 
-	// 检查类的方法
-	for(auto iter:m_method_list){
+	// 检查类的普通(非约束)方法
+	for (auto iter : m_method_list) {
 		iter->Verify(ctx, VerifyContextParam());
 	}
 	ti->AddConstraint(CONSTRAINT_ID_NONE, m_method_list);
+
+	// 检查实现的约束
+	// TODO 检查实现的函数是否和constraint声明的一致, 是否有遗漏
+	for (auto impl : m_impl_constraint_list) {
+		std::vector<TypeId> gparam_tids;
+		for (auto gparam_type : impl.constraint_gparams) {
+			gparam_tids.push_back(gparam_type->Verify(ctx, VerifyContextParam()).GetResultTypeId());
+		}
+		AstNodeConstraint* astnode_constraint = ctx.GetCurStack()->GetVariable(impl.constraint_name)->GetValueConstraint();
+		TypeId constraint_instance_tid = astnode_constraint->Instantiate(ctx, gparam_tids);
+
+		for(auto fn : impl.constraint_fns){
+			fn->Verify(ctx, VerifyContextParam());
+		}
+		ti->AddConstraint(constraint_instance_tid, impl.constraint_fns);
+	}
 
 	ctx.GetCurStack()->LeaveBlock();
 
