@@ -1,10 +1,10 @@
 #include "type_type.h"
+#include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "define.h"
 #include "function.h"
 #include "type_mgr.h"
 #include "verify_context.h"
-#include "astnode_complex_fndef.h"
 
 static Variable* builtin_fn_equal(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_TYPE);
@@ -13,6 +13,14 @@ static Variable* builtin_fn_equal(ExecuteContext& ctx, Variable* thisobj, std::v
 static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
 	return new Variable(GET_TYPENAME(thisobj->GetValueTid()));
+}
+static Variable* builtin_fn_getTypeName(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
+	return new Variable(GET_TYPENAME(thisobj->GetValueTid()));
+}
+static Variable* builtin_fn_getTypeId(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
+	return new Variable(int(thisobj->GetValueTid()));
 }
 
 TypeInfoType::TypeInfoType() {
@@ -29,7 +37,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 			{
 				std::vector<ParserGenericParam> gparams;
 				std::vector<ParserParameter>	params;
-				AstNodeType* return_type = new AstNodeType();
+				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
 				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
 			}
@@ -42,7 +50,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
 		AddConstraint(constraint_tid, fns);
 
-		GetConcreteMethod(ctx, "tostring", std::vector<TypeId>(), TYPE_ID_STR);
+		GetConstraintMethod(ctx, "ToString", "tostring", std::vector<TypeId>()); // 触发tostring函数的实例化
 	}
 	// 手动实现Equal约束
 	{
@@ -72,6 +80,39 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Equal")->GetValueConstraint();
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_TYPE});
 		AddConstraint(constraint_tid, fns);
+	}
+	// 增加内置方法
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		// 增加GetTypeName()str
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				AstNodeType*					return_type = new AstNodeType();
+				return_type->InitWithIdentifier("str");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_getTypeName));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("GetTypeName", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+		// 增加GetTypeId()int
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				AstNodeType*					return_type = new AstNodeType();
+				return_type->InitWithIdentifier("int");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_getTypeId));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("GetTypeId", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+		AddConstraint(CONSTRAINT_ID_NONE, fns);
 	}
 	ctx.PopSTack();
 }

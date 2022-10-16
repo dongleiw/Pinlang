@@ -1,9 +1,11 @@
 #include "type.h"
 #include "astnode_complex_fndef.h"
+#include "astnode_constraint.h"
 #include "define.h"
 #include "function.h"
 #include "function_obj.h"
 #include "log.h"
+#include "type_constraint.h"
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "verify_context.h"
@@ -157,4 +159,25 @@ MethodIndex TypeInfo::Constraint::AddConcreteMethod(std::string method_name, Fun
 	});
 
 	return MethodIndex(constraint_tid, concrete_methods.size() - 1);
+}
+std::vector<MethodIndex> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, std::vector<TypeId> method_params_tid) {
+	std::vector<MethodIndex> method_indexs;
+	for (auto& constraint : m_constraints) {
+		if (constraint.constraint_tid == CONSTRAINT_ID_NONE) {
+			// TODO 处理非约束的方法
+			continue;
+		}
+		TypeInfoConstraint* ti_constraint = dynamic_cast<TypeInfoConstraint*>(g_typemgr.GetTypeInfo(constraint.constraint_tid));
+		if (ti_constraint->GetConstraintName() == constraint_name) {
+			for (size_t i = 0; i < constraint.methods.size(); i++) {
+				const Method& method = constraint.methods.at(i);
+				if (method.method_name == method_name) {
+					AstNodeComplexFnDef::Instance method_instance = method.method_node->Instantiate_param_return(ctx, method_params_tid, TYPE_ID_INFER);
+					MethodIndex					  method_index	  = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fnobj.GetFunction());
+					method_indexs.push_back(method_index);
+				}
+			}
+		}
+	}
+	return method_indexs;
 }

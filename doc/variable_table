@@ -1,0 +1,28 @@
+vt链的处理
+	1. 为了保持统一, 处理全局block时, 也PushStack
+		PushStackEnterBlock, 进入global vt
+		然后处理, 遇到block则再EnterBlock, 遇到函数则PushStack+EnterGlobalBlock
+	2. 函数内的vt链的头是global-vt. 这样所有函数都可以访问全局定义的变量
+	2. 
+
+
+PushStack
+	EnterBlock // enter global vt	
+
+		EnterBlock
+		LeaveBlock
+		
+		EnterBlock // fn block
+
+	LeaveBlock // leave global vt
+PopStack
+
+var a=1; // global vt
+
+{
+	var b=2; // not global vt
+}
+
+fn foo(){
+	var c=3; // function vt
+}

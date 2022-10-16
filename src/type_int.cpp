@@ -17,12 +17,14 @@
 #include "variable_table.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_add_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_add(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
 	int result = thisobj->GetValueInt() + args.at(0)->GetValueInt();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_sub_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_sub(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
 	int result = thisobj->GetValueInt() - args.at(0)->GetValueInt();
 	return new Variable(result);
 }
@@ -30,6 +32,27 @@ static Variable* builtin_fn_sub_int(ExecuteContext& ctx, Variable* thisobj, std:
 static Variable* builtin_fn_mul_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	int result = thisobj->GetValueInt() * args.at(0)->GetValueInt();
 	return new Variable(result);
+}
+
+static Variable* builtin_fn_less(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
+	bool v = thisobj->GetValueInt() < args.at(0)->GetValueInt();
+	return new Variable(v);
+}
+static Variable* builtin_fn_lessEqual(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
+	bool v = thisobj->GetValueInt() <= args.at(0)->GetValueInt();
+	return new Variable(v);
+}
+static Variable* builtin_fn_greater(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
+	bool v = thisobj->GetValueInt() > args.at(0)->GetValueInt();
+	return new Variable(v);
+}
+static Variable* builtin_fn_greaterEqual(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
+	bool v = thisobj->GetValueInt() >= args.at(0)->GetValueInt();
+	return new Variable(v);
 }
 
 static Variable* builtin_fn_div_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
@@ -63,7 +86,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 			{
 				std::vector<ParserGenericParam> gparams;
 				std::vector<ParserParameter>	params;
-				AstNodeType* return_type = new AstNodeType();
+				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
 				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
 			}
@@ -76,7 +99,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
 		AddConstraint(constraint_tid, fns);
 
-		GetConcreteMethod(ctx, "tostring", std::vector<TypeId>(), TYPE_ID_STR);
+		GetConstraintMethod(ctx, "ToString", "tostring", std::vector<TypeId>()); // 触发tostring函数的实例化
 	}
 	// 手动实现Add约束
 	{
@@ -96,7 +119,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("int");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_add_int));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_add));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -104,6 +127,151 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 		}
 
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Add")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT, TYPE_ID_INT});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 手动实现Less约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				{
+					AstNodeType* another_value_type = new AstNodeType();
+					another_value_type->InitWithIdentifier("int");
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = another_value_type,
+					}});
+				}
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("bool");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_less));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("less", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Less")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 手动实现LessEqual约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				{
+					AstNodeType* another_value_type = new AstNodeType();
+					another_value_type->InitWithIdentifier("int");
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = another_value_type,
+					}});
+				}
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("bool");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_lessEqual));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("lessEqual", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("LessEqual")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 手动实现Greater约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				{
+					AstNodeType* another_value_type = new AstNodeType();
+					another_value_type->InitWithIdentifier("int");
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = another_value_type,
+					}});
+				}
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("bool");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_greater));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greater", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Greater")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 手动实现GreaterEqual约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				{
+					AstNodeType* another_value_type = new AstNodeType();
+					another_value_type->InitWithIdentifier("int");
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = another_value_type,
+					}});
+				}
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("bool");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_greaterEqual));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterEqual", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("GreaterEqual")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 手动实现Sub约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				{
+					AstNodeType* another_value_type = new AstNodeType();
+					another_value_type->InitWithIdentifier("int");
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = another_value_type,
+					}});
+				}
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("int");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_sub));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("sub", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Sub")->GetValueConstraint();
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT, TYPE_ID_INT});
 		AddConstraint(constraint_tid, fns);
 	}

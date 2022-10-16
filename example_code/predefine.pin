@@ -1,9 +1,28 @@
+// 编译器内置的预定义的类型
 constraint Add[AnotherT,ReturnT]{
 	fn add(another AnotherT) ReturnT;
+}
+constraint Sub[AnotherT,ReturnT]{
+	fn sub(another AnotherT) ReturnT;
 }
 constraint Equal[AnotherT]{
 	fn equal(another AnotherT) bool;
 }
+constraint Less[AnotherT]{
+	fn less(another AnotherT) bool;
+}
+constraint LessEqual[AnotherT]{
+	fn lessEqual(another AnotherT) bool;
+}
+constraint Greater[AnotherT]{
+	fn greater(another AnotherT) bool;
+}
+constraint GreaterEqual[AnotherT]{
+	fn greaterEqual(another AnotherT) bool;
+}
 constraint ToString{
 	fn tostring() str;
+}
+constraint Index[ReturnT]{
+	fn index(idx int) ReturnT;
 }

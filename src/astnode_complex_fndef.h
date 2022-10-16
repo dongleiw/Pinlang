@@ -14,7 +14,7 @@
 /*
  * 函数的复杂定义
  * 规则:
- *		如果有多个参数个数相同的定义, 这些定义必须都是非泛型定义.
+ *		1. 如果有多个参数个数相同的实现, 这些实现必须都不是泛型.
  */
 class AstNodeComplexFnDef : public AstNode {
 public:
@@ -78,6 +78,7 @@ public:
 	/*
 	 * 实例化
 	 * {参数, 返回值} => 推导出泛型参数, 校验泛参是否满足约束, 实例化
+	 * concrete_return_tid 函数实际返回类型, 可以为TYPE_ID_INFER
 	 */
 	Instance Instantiate_param_return(VerifyContext& ctx, std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid);
 	/*

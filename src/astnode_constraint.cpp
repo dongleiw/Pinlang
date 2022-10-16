@@ -72,7 +72,7 @@ TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> co
 
 	auto found = m_instances.find(uniq_constraint_name);
 	if (found == m_instances.end()) {
-		TypeInfoConstraint* constraint_ti  = new TypeInfoConstraint(uniq_constraint_name, concrete_rules);
+		TypeInfoConstraint* constraint_ti  = new TypeInfoConstraint(m_name, uniq_constraint_name, concrete_rules);
 		TypeId				constraint_tid = g_typemgr.GetOrAddTypeConstraint(constraint_ti);
 		m_instances[uniq_constraint_name] = constraint_tid;
 		log_debug("instantiate constraint[%s]: name=%s typeid=%d", m_name.c_str(), uniq_constraint_name.c_str(), constraint_tid);

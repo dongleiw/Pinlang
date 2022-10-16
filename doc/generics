@@ -147,3 +147,93 @@
 			为什么要有这个限定?
 			有了这个限定后, 只要类型满足约束, 调用该函数就是类型安全的. 
 			假如没有这个限定, 就必须在函数调用时再进行
+
+6. 仅有一条规则的复杂函数的缺陷
+	问题1
+		fn foo[T ToString](){
+			printf("typename={} typeid={}\n", T.GetTypeName(), T.GetTypeId());
+		}
+		该函数必须显式提供T的类型
+	问题2
+		fn bar{
+			[T ToString](a T){} // implementA
+			[T ToString](a T, b T){} // implementB
+		}
+		仅提供T的类型, 无法确定具体实现
+	
+	
+	
+	解决
+		1. 类型转换
+			var f = ( fn[int]() ) foo; // T类型为int
+			var b = ( fn[int](int) ) bar; // T类型为int, 参数个数为1个. 选中implementA
+	
+		2. generic type annotation
+			var f = foo[int]; // T类型显式指明为int
+			var b = bar[int]; // T类型显式指明为int. 但是由于bar[int]有两个实现, 因此编译器无法选择
+			
+			行不通
+	
+		3. generic type annotation + parameter number
+			var f = foo[int;0]; // T类型显式指明为int
+			var b = bar[int;1]; // T类型显式指明为int. 参数个数为1个. 选择implementA
+			var b = bar[int;2]; // T类型显式指明为int. 参数个数为2个. 选择implementB
+	
+		4. 增加规则
+			之前只有规则1: 
+				如果参数个数相同的实现有多个, 必须都是非泛型实现. 也就是只要知道参数的个数和类型就可以选中某一个具体实现
+			再增加规则2: 
+				相同泛参个数最多只能有一个实现. 只要知道泛参的个数和具体类型就可以选中某一个具体实现
+			这两个规则的目标:
+				1. 简单直观, 避免设置优先级类的复杂规则.
+					比如以下代码, 如果没有规则1则是合法的. 调用`bar(1)`两个实现都可以满足, 需要设置优先级规则来进一步选择
+					fn bar{
+						(a int){} 
+						[T ToString](a T){}
+					}
+				2. 只通过泛参个数和具体类型信息, 可以唯一确定一个实例
+					如果没有规则2, 以下代码是合法的. `bar[int]`是无法唯一确定实现, 不得不增加新的语法来提供更详细的信息.
+					fn bar{
+						[T ToString](a T){}
+						[T ToString](a T, b T){}
+					}
+					fn bar{
+						[T ToString](a T){}
+						[T Printable](a T, b T){}
+					}
+	
+			例子:
+				不合法:
+					// 违反规则1. `bar(1)`对应了两个实现
+					fn bar{
+						[T ToString](a T){}
+						[T ToString, F ToString](a T){}
+					}
+					// 违反规则2. `bar[int]`对应了两个实现
+					fn bar{
+						[T ToString](a T){}
+						[T ToString](a T, b T){}
+					}
+				合法:
+					// bar() -> A
+					// bar(1) -> B
+					// bar(1.9) -> C
+					// bar(1, 2) -> D
+					// bar[int] -> D
+					// bar(1, 2, 3) -> E
+					// bar[int,float] -> E
+					fn bar{
+						(){} // A
+						(a int){} // B
+						(a float){} // C
+						[T ToString](a T, b T){} // D
+						[T ToString, F ToString](a T, b F, c F){} // E
+					}
+					
+			那么如何支持泛型函数的不定参数那?
+				fn bar{
+					[T ToString](a T, args... T){}
+				}
+				fn bar{
+					[T ToString](a T, args... T){}
+				}

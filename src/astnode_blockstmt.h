@@ -26,7 +26,10 @@ public:
 	virtual AstNode*  DeepClone() override { return DeepCloneT(); }
 	AstNodeBlockStmt* DeepCloneT();
 
+	void SetGlobalBlock(bool b) { m_global_block = b; }
+
 private:
 	std::vector<AstNode*> m_predefine_stmts;
 	std::vector<AstNode*> m_stmts;
+	bool				  m_global_block;
 };

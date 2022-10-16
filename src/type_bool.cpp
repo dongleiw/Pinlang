@@ -32,7 +32,7 @@ void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
 			{
 				std::vector<ParserGenericParam> gparams;
 				std::vector<ParserParameter>	params;
-				AstNodeType* return_type = new AstNodeType();
+				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
 				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
 			}
@@ -45,7 +45,7 @@ void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
 		AddConstraint(constraint_tid, fns);
 
-		GetConcreteMethod(ctx, "tostring", std::vector<TypeId>(), TYPE_ID_STR);
+		GetConstraintMethod(ctx, "ToString", "tostring", std::vector<TypeId>()); // 触发tostring函数的实例化
 	}
 	ctx.PopSTack();
 }

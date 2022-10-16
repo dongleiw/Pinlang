@@ -7,7 +7,6 @@
 #include <assert.h>
 
 Stack::Stack(Stack* next) : m_next(next) {
-	m_vt_list.push_back(new VariableTable());
 }
 
 void Stack::EnterBlock(VariableTable* vt) {

@@ -35,6 +35,9 @@ CONST       : 'const';
 CONSTRAINT  : 'constraint';
 IF          : 'if';
 ELSE        : 'else';
+FOR         : 'for';
+WHILE       : 'while';
+BREAK       : 'break';
 
 // Relation operators
 EQUALS                 : '==';

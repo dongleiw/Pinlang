@@ -11,6 +11,7 @@
 #include "type_int.h"
 #include "type_mgr.h"
 #include "type_str.h"
+#include "type_tuple.h"
 #include "type_type.h"
 #include "verify_context.h"
 
@@ -143,7 +144,8 @@ TypeId TypeMgr::GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid) {
 	}
 	return add_type(new TypeInfoFn(params, return_tid));
 }
-TypeId TypeMgr::GetOrAddTypeArray(TypeId element_tid) {
+TypeId TypeMgr::GetOrAddTypeArray(TypeId element_tid, bool& added) {
+	added = false;
 	for (const auto ti : m_typeinfos) {
 		if (ti->IsArray()) {
 			const TypeInfoArray* tiarray = dynamic_cast<TypeInfoArray*>(ti);
@@ -152,5 +154,24 @@ TypeId TypeMgr::GetOrAddTypeArray(TypeId element_tid) {
 			}
 		}
 	}
+	added = true;
 	return add_type(new TypeInfoArray(element_tid));
+}
+bool TypeMgr::IsTypeExist(TypeId tid) const {
+	return 0 < tid && tid < m_typeinfos.size();
+}
+TypeId TypeMgr::GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> element_tids, bool& added) {
+	added = false;
+	for (const auto ti : m_typeinfos) {
+		if (ti->IsTuple()) {
+			const TypeInfoTuple* ti_tuple = dynamic_cast<TypeInfoTuple*>(ti);
+			if (is_vec_typeid_equal(ti_tuple->GetElementTids(), element_tids)) {
+				return ti->GetTypeId();
+			}
+		}
+	}
+	added			  = true;
+	TypeInfoTuple* ti = new TypeInfoTuple(element_tids);
+	ti->InitBuiltinMethods(ctx);
+	return add_type(ti);
 }

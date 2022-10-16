@@ -9,6 +9,7 @@
 #include "astnode_blockstmt.h"
 #include "execute_context.h"
 #include "predefine.h"
+#include "support/Declarations.h"
 #include "type_mgr.h"
 #include "verify_context.h"
 #include "visitor.h"
@@ -21,15 +22,14 @@ void execute(std::string filepath) {
 	log_info("execute filename[%s]", filepath.c_str());
 
 	g_typemgr.InitTypes();
-	VariableTable::GetGlobal().InitAsGlobal();
 
 	// 加载predefine
 	AstNodeBlockStmt* predefine_block_stmts;
 	{
 		const std::string predefine_filename = "../example_code/predefine.pin";
-		std::ifstream	  infile(predefine_filename);
-		ANTLRInputStream  input;
-		input.load(infile);
+		ANTLRFileStream	  input;
+		input.loadFromFile(predefine_filename);
+		std::string		  ss = input.getSourceName();
 		PinlangLexer	  lexer(&input);
 		CommonTokenStream tokens(&lexer);
 
@@ -42,9 +42,9 @@ void execute(std::string filepath) {
 		register_predefine(*predefine_block_stmts);
 	}
 
-	std::ifstream	 infile(filepath);
-	ANTLRInputStream input;
-	input.load(infile);
+	std::ifstream	infile(filepath);
+	ANTLRFileStream input;
+	input.loadFromFile(filepath);
 	PinlangLexer	  lexer(&input);
 	CommonTokenStream tokens(&lexer);
 
@@ -55,6 +55,7 @@ void execute(std::string filepath) {
 	Visitor			  visitor;
 	AstNodeBlockStmt* block_stmt = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
 	block_stmt->AddPreDefine(*predefine_block_stmts);
+	block_stmt->SetGlobalBlock(true);
 
 	{
 		VerifyContext vctx;

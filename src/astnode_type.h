@@ -16,15 +16,17 @@
 class AstNodeType : public AstNode {
 public:
 	enum TypeKind {
+		TYPE_KIND_NONE,
 		TYPE_KIND_TYPE,
 		TYPE_KIND_IDENTIFIER,
 		TYPE_KIND_FN,
 		TYPE_KIND_ARRAY,
+		TYPE_KIND_TUPLE,
 		TYPE_KIND_TARGET_TYPE_ID,
 	};
 
 public:
-	AstNodeType() {}
+	AstNodeType() : m_type_kind(TYPE_KIND_NONE) {}
 	void InitWithType();
 	void InitWithIdentifier(std::string id);
 	void InitWithFn(std::vector<ParserParameter> params, AstNodeType* return_type);
@@ -32,6 +34,7 @@ public:
 	// 固定解析为特定类型id
 	// 目前只是为了手动构造AstNodeComplexFnDef
 	void InitWithTargetTypeId(TypeId tid);
+	void InitWithTuple(std::vector<AstNodeType*> tuple_element_types);
 
 	// 生成类型id
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
@@ -57,4 +60,7 @@ private:
 	AstNodeType*				 m_fn_return_type;
 	AstNodeType*				 m_element_type;
 	TypeId						 m_target_tid;
+
+	// tuple
+	std::vector<AstNodeType*> m_tuple_element_types;
 };

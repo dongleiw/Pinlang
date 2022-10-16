@@ -20,15 +20,19 @@ public:
 	};
 
 public:
-	TypeInfoConstraint(std::string name, std::vector<Rule> rules) {
-		m_name		   = name;
-		m_rules		   = rules;
-		m_typegroup_id = TYPE_GROUP_ID_CONSTRAINT;
+	TypeInfoConstraint(std::string constraint_name, std::string constraint_instance_name, std::vector<Rule> rules) {
+		m_constraint_name = constraint_name;
+		m_name			  = constraint_instance_name;
+		m_rules			  = rules;
+		m_typegroup_id	  = TYPE_GROUP_ID_CONSTRAINT;
 	}
 
 	// 生成一个虚拟的泛型类型, 满足该约束
 	void FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGType& ti) const;
 
+	std::string GetConstraintName() const { return m_constraint_name; }
+
 private:
+	std::string		  m_constraint_name;
 	std::vector<Rule> m_rules;
 };

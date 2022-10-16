@@ -4,8 +4,7 @@
 
 #include <assert.h>
 
-ExecuteContext::ExecuteContext() : m_top_stack(NULL) {
-	//init_global_vt();
+ExecuteContext::ExecuteContext() : m_top_stack(nullptr) {
 	m_global_vt.InitAsGlobal();
 }
 void ExecuteContext::PushStack() {
@@ -14,7 +13,7 @@ void ExecuteContext::PushStack() {
 	m_top_stack = new_stack;
 }
 void ExecuteContext::PopStack() {
-	assert(m_top_stack != NULL);
+	assert(m_top_stack != nullptr);
 	m_top_stack = m_top_stack->GetNextStack();
 }
 void ExecuteContext::init_global_vt(){

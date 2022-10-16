@@ -6,6 +6,7 @@
 #include "type_array.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "type_tuple.h"
 #include "variable.h"
 #include "verify_context.h"
 #include <array>
@@ -26,6 +27,10 @@ void AstNodeType::InitWithFn(std::vector<ParserParameter> params, AstNodeType* r
 void AstNodeType::InitWithArray(AstNodeType* element_type) {
 	m_type_kind	   = TYPE_KIND_ARRAY;
 	m_element_type = element_type;
+}
+void AstNodeType::InitWithTuple(std::vector<AstNodeType*> tuple_element_types) {
+	m_type_kind			  = TYPE_KIND_TUPLE;
+	m_tuple_element_types = tuple_element_types;
 }
 void AstNodeType::InitWithTargetTypeId(TypeId tid) {
 	m_type_kind	 = TYPE_KIND_TARGET_TYPE_ID;
@@ -67,11 +72,25 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam v
 	case TYPE_KIND_ARRAY:
 	{
 		TypeId		   element_tid = m_element_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
-		TypeId		   array_tid   = g_typemgr.GetOrAddTypeArray(element_tid);
+		bool		   added	   = false;
+		TypeId		   array_tid   = g_typemgr.GetOrAddTypeArray(element_tid, added);
 		TypeInfoArray* ti		   = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(array_tid));
-		ti->InitBuiltinMethods(ctx);
+		if (added) {
+			ti->InitBuiltinMethods(ctx);
+		}
 
 		vr.SetResultTypeId(array_tid);
+		break;
+	}
+	case TYPE_KIND_TUPLE:
+	{
+		std::vector<TypeId> tuple_element_tids;
+		for (auto iter : m_tuple_element_types) {
+			tuple_element_tids.push_back(iter->Verify(ctx, VerifyContextParam()).GetResultTypeId());
+		}
+		bool   added	 = false;
+		TypeId tuple_tid = g_typemgr.GetOrAddTypeTuple(ctx, tuple_element_tids, added);
+		vr.SetResultTypeId(tuple_tid);
 		break;
 	}
 	case TYPE_KIND_TARGET_TYPE_ID:
@@ -125,6 +144,21 @@ std::map<std::string, TypeId> AstNodeType::InferType(TypeId target_tid) const {
 		merge_infer_result(result, m_element_type->InferType(element_target_tid));
 		break;
 	}
+	case TYPE_KIND_TUPLE:
+	{
+		// 已知tuple(T1,T2,...)类型id为target_tid. 推导T1,T2,...
+		TypeInfoTuple*		ti				   = dynamic_cast<TypeInfoTuple*>(g_typemgr.GetTypeInfo(target_tid));
+		std::vector<TypeId> tuple_element_tids = ti->GetElementTids();
+		if (tuple_element_tids.size() != m_tuple_element_types.size()) {
+			panicf("element number of tuple is not equal. failed to infer");
+		}
+		for (size_t i = 0; i < tuple_element_tids.size(); i++) {
+			TypeId		 tuple_element_tid	= tuple_element_tids.at(i);
+			AstNodeType* tuple_element_type = m_tuple_element_types.at(i);
+			merge_infer_result(result, tuple_element_type->InferType(tuple_element_tid));
+		}
+		break;
+	}
 	default:
 		panicf("unknown type_kind[%d]", m_type_kind);
 		break;
@@ -135,13 +169,35 @@ AstNodeType* AstNodeType::DeepCloneT() {
 	AstNodeType* newone = new AstNodeType();
 
 	newone->m_type_kind = m_type_kind;
-	newone->m_id		= m_id;
-
-	for (auto iter : m_fn_params) {
-		newone->m_fn_params.push_back(iter.DeepClone());
-	}
-	if (m_fn_return_type) {
-		newone->m_fn_return_type = m_fn_return_type->DeepCloneT();
+	switch (m_type_kind) {
+	case TYPE_KIND_TYPE:
+		newone->m_id = m_id;
+		break;
+	case TYPE_KIND_IDENTIFIER:
+		newone->m_id = m_id;
+		break;
+	case TYPE_KIND_FN:
+		for (auto iter : m_fn_params) {
+			newone->m_fn_params.push_back(iter.DeepClone());
+		}
+		if (m_fn_return_type) {
+			newone->m_fn_return_type = m_fn_return_type->DeepCloneT();
+		}
+		break;
+	case TYPE_KIND_ARRAY:
+		newone->m_element_type = m_element_type->DeepCloneT();
+		break;
+	case TYPE_KIND_TUPLE:
+		for (auto iter : m_tuple_element_types) {
+			newone->m_tuple_element_types.push_back(iter->DeepCloneT());
+		}
+		break;
+	case TYPE_KIND_TARGET_TYPE_ID:
+		newone->m_target_tid = m_target_tid;
+		break;
+	default:
+		panicf("unknown type_kind[%d]", m_type_kind);
+		break;
 	}
 
 	return newone;

@@ -1,0 +1,22 @@
+
+// 冒泡排序
+{
+	fn sort(array []int){
+		for var i=array.Size(); i>0; i=i-1{
+			for var j=1; j<i; j=j+1{
+				if array[j-1] > array[j]{
+					//printf("array[{}]={} <==> array[{}]={}\n", j-1, array[j-1], j, array[j]);
+					var tmp = array[j-1];
+					array[j-1] = array[j];
+					array[j] = tmp;
+				}
+			}
+			printf("i={} array={}\n", i, array);
+		}
+	}
+	
+	var array = []int{9,2,5,2,3,1,6};
+	printf("before sort={}\n", array);
+	sort(array);
+	printf("after sort={}\n", array);
+}

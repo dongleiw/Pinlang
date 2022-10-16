@@ -3,6 +3,7 @@
 #include <string>
 
 #include "astnode.h"
+#include "define.h"
 #include "execute_context.h"
 #include "type.h"
 #include "variable.h"
@@ -25,8 +26,11 @@ public:
 	AstNodeAccessArrayElement* DeepCloneT();
 
 private:
-	AstNodeAccessArrayElement(){}
+	AstNodeAccessArrayElement() {}
+
 private:
 	AstNode* m_array_expr;
 	AstNode* m_index_expr;
+
+	MethodIndex m_method_index;
 };

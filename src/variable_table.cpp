@@ -9,8 +9,6 @@
 #include <type_traits>
 #include <vector>
 
-VariableTable VariableTable::m_global;
-
 Variable* VariableTable::GetVariable(std::string name) {
 	auto ret = m_table.find(name);
 	if (ret == m_table.end()) {

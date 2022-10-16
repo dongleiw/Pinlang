@@ -4,6 +4,7 @@
 #include "define.h"
 #include "function.h"
 #include "type_mgr.h"
+#include "variable.h"
 #include "variable_table.h"
 
 #include <assert.h>
@@ -11,10 +12,10 @@
 
 static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj != nullptr && args.size() == 0);
-	std::string			   s		  = "{";
-	TypeInfoArray*		   ti_array	  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(thisobj->GetTypeId()));
-	TypeInfo*			   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
-	std::vector<Variable*> elements	  = thisobj->GetValueArray();
+	std::string					  s			 = "{";
+	TypeInfoArray*				  ti_array	 = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(thisobj->GetTypeId()));
+	TypeInfo*					  ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
+	const std::vector<Variable*>& elements	 = thisobj->GetValueArray();
 	for (size_t i = 0; i < elements.size(); i++) {
 		Variable* element = elements.at(i);
 		// 调用tostring方法来转换为str
@@ -29,6 +30,18 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std
 	s += "}";
 	return new Variable(s);
 }
+static Variable* builtin_fn_size(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj != nullptr && args.size() == 0);
+	return new Variable(int(thisobj->GetValueArray().size()));
+}
+
+static Variable* builtin_fn_index(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj != nullptr && g_typemgr.GetTypeInfo(thisobj->GetTypeId())->IsArray() && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
+
+	std::vector<Variable*> elements = thisobj->GetValueArray();
+	int					   index	= args.at(0)->GetValueInt();
+	return elements.at(index);
+}
 
 TypeInfoArray::TypeInfoArray(TypeId element_tid) {
 	m_element_tid  = element_tid;
@@ -38,33 +51,80 @@ TypeInfoArray::TypeInfoArray(TypeId element_tid) {
 void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
+	// 手动实现ToString约束
 	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				AstNodeType*					return_type = new AstNodeType();
+				return_type->InitWithIdentifier("str");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("ToString")->GetValueConstraint();
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
-		TypeInfo*		   array_ti		  = g_typemgr.GetTypeInfo(GetTypeId());
-		if (!array_ti->MatchConstraint(constraint_tid)) {
-			TypeInfo* element_ti = g_typemgr.GetTypeInfo(m_element_tid);
-			if (element_ti->MatchConstraint(constraint_tid)) {
-				std::vector<AstNodeComplexFnDef*> fns;
+		AddConstraint(constraint_tid, fns);
+
+		GetConstraintMethod(ctx, "ToString", "tostring", std::vector<TypeId>()); // 触发tostring函数的实例化
+	}
+	// 手动实现Index约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
 				{
-					std::vector<AstNodeComplexFnDef::Implement> implements;
-					{
-						std::vector<ParserGenericParam> gparams;
-						std::vector<ParserParameter>	params;
-						AstNodeType*					return_type = new AstNodeType();
-						return_type->InitWithIdentifier("str");
-						implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
-					}
-					AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
-					astnode_complex_fndef->Verify(ctx, VerifyContextParam());
-					fns.push_back(astnode_complex_fndef);
+					AstNodeType* index_type = new AstNodeType();
+					index_type->InitWithIdentifier("int");
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = index_type,
+					}});
 				}
 
-				AddConstraint(constraint_tid, fns);
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithTargetTypeId(m_element_tid);
 
-				GetConcreteMethod(ctx, "tostring", std::vector<TypeId>(), TYPE_ID_STR);
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_index));
 			}
+
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("index", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+
+			fns.push_back(astnode_complex_fndef);
 		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Index")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{m_element_tid});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 增加内置方法
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		// 增加Size()int
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				AstNodeType*					return_type = new AstNodeType();
+				return_type->InitWithIdentifier("int");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_size));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("Size", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+		AddConstraint(CONSTRAINT_ID_NONE, fns);
 	}
 	ctx.PopSTack();
 }

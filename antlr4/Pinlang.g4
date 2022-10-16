@@ -2,11 +2,13 @@ grammar Pinlang;
 import Pinlang_lex;
 
 type_array: L_BRACKET R_BRACKET type ;
+type_tuple: L_PAREN type_list R_PAREN ;
 type
     : TYPE
 	| Identifier
 	| FN L_PAREN parameter_list R_PAREN type?
 	| type_array
+	| type_tuple
 	;
 
 type_list
@@ -28,9 +30,9 @@ expr_init : type expr_init_body ;
 expr_primary
     : literal                                           # expr_primary_literal
     | Identifier                                        # expr_primary_identifier
-    | L_PAREN expr R_PAREN                              # expr_primary_parens
-	| expr_primary L_PAREN expr_list R_PAREN            # expr_primary_fncall
-	//| Identifier L_BRACKET type_list R_BRACKET          # expr_primary_gparam       // 提供泛参将泛型函数实例化. 由于仅仅通过泛参无法实例化, 这个先搁置了
+    | L_PAREN expr_list R_PAREN                         # expr_primary_parens  // 如果有多个expr, 则是tuple
+	| expr_primary L_PAREN expr_list_optional R_PAREN   # expr_primary_fncall
+	// | Identifier '::<' type_list GREATER                # expr_primary_gparam       // 提供泛参将泛型函数实例化. 由于仅仅通过泛参无法实例化, 这个先搁置了
 	| expr_primary L_BRACKET expr R_BRACKET             # expr_primary_access_array_element // 数组下标访问
 	| expr_primary '.' Identifier                       # expr_primary_access_attr  // 访问属性
 	| expr_init                                         # expr_primary_init   // 初始化
@@ -44,15 +46,16 @@ expr
     | expr op=(LOGICAL_OR| LOGICAL_AND) expr											# expr_logical
     ;
 
-expr_list
+expr_list_optional
 	:
 	| expr (',' expr)*
 	;
+expr_list: expr (',' expr)* ;
 
 stmt_vardef
-	: VAR Identifier type ';'
-	| VAR Identifier type? ASSIGN expr ';'
-	| CONST Identifier type? ASSIGN expr ';'
+	: VAR Identifier type
+	| VAR Identifier type? ASSIGN expr
+	| CONST Identifier type? ASSIGN expr
 	;
 
 stmt_block: L_CURLY statement* R_CURLY;
@@ -114,6 +117,31 @@ stmt_if
 	: IF expr stmt_block (ELSE IF expr stmt_block)* (ELSE stmt_block)?
 	;
 
+///// for statement
+stmt_for_init
+	: expr
+	| stmt_vardef
+	| stmt_assignment
+	|
+	;
+stmt_for_cond
+	: expr
+	|
+	;
+stmt_for_loop
+	: expr
+	| stmt_assignment
+	|
+	;
+stmt_for
+	: FOR stmt_for_init ';' stmt_for_cond ';' stmt_for_loop stmt_block
+	;
+
+///// while statement
+stmt_while
+	: WHILE stmt_for_cond stmt_block                      
+	;
+
 ///// 类定义
 stmt_class_def_impl_constraint
 	: 'impl' CONSTRAINT Identifier (L_BRACKET identifier_list R_BRACKET)? L_CURLY stmt_simple_fndef* R_CURLY
@@ -124,19 +152,21 @@ stmt_class_def
 
 //// 赋值
 stmt_assignment
-	: expr ASSIGN expr ';'
+	: expr ASSIGN expr
 	;
 
 statement
 	: expr ';'
-	| stmt_vardef
+	| stmt_vardef ';'
 	| stmt_fndef
 	| stmt_block
 	| stmt_return
 	| stmt_constraint_def
 	| stmt_if
+	| stmt_for
+	| stmt_while
 	| stmt_class_def
-	| stmt_assignment
+	| stmt_assignment ';'
     ;
 
 literal

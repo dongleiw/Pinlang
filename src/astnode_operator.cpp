@@ -36,21 +36,25 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 	TypeId tid_left	 = vr_left.GetResultTypeId();
 	TypeId tid_right = vr_right.GetResultTypeId();
 
-	std::vector<TypeId> args_tid;
-	args_tid.push_back(tid_right);
+	TypeInfo* ti = g_typemgr.GetTypeInfo(tid_left);
 
-	TypeInfo*	ti = g_typemgr.GetTypeInfo(tid_left);
-	MethodIndex method_idx;
-	if (m_constraint_name.empty()) {
-		method_idx = ti->GetConcreteMethod(ctx, m_op, args_tid, TYPE_ID_INFER);
-	} else {
-		panicf("not implemented");
+	std::vector<TypeId> args_tid({tid_right});
+	// 获取左侧类型实现的操作符对应的某个约束下的某个方法
+	std::vector<MethodIndex> method_indexs = ti->GetConstraintMethod(ctx, m_constraint_name, m_op, args_tid);
+	if (method_indexs.size() > 1) {
+		panicf("multiple candidate");
 	}
+	if (method_indexs.empty()) {
+		panicfi(m_si_op, "type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left,
+				ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
+	}
+	MethodIndex method_idx = method_indexs.at(0);
 
 	// 检查左表达式的operator对应方法
 	{
 		if (!method_idx.IsValid()) {
-			panicf("type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left, ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
+			panicfi(m_si_op, "type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left,
+					ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
 		}
 		Function* f = ti->GetMethodByIdx(method_idx);
 

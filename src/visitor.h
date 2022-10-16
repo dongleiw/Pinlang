@@ -8,6 +8,7 @@ public:
 	 * 解析数组类型
 	 */
 	virtual std::any visitType_array(PinlangParser::Type_arrayContext* ctx) override;
+	virtual std::any visitType_tuple(PinlangParser::Type_tupleContext* ctx) override;
 	/*
 	 * 解析类型. 返回AstNodeType*
 	 */
@@ -46,9 +47,16 @@ public:
 	virtual std::any visitStmt_block(PinlangParser::Stmt_blockContext* context) override;
 	virtual std::any visitStmt_return(PinlangParser::Stmt_returnContext* context) override;
 	virtual std::any visitExpr_list(PinlangParser::Expr_listContext* ctx) override;
+	virtual std::any visitExpr_list_optional(PinlangParser::Expr_list_optionalContext* ctx) override;
 	virtual std::any visitStmt_fn_declare(PinlangParser::Stmt_fn_declareContext* ctx) override;
 	virtual std::any visitStmt_if(PinlangParser::Stmt_ifContext* ctx) override;
 	virtual std::any visitStmt_assignment(PinlangParser::Stmt_assignmentContext* ctx) override;
+
+	virtual std::any visitStmt_for_init(PinlangParser::Stmt_for_initContext* ctx) override;
+	virtual std::any visitStmt_for_cond(PinlangParser::Stmt_for_condContext* ctx) override;
+	virtual std::any visitStmt_for_loop(PinlangParser::Stmt_for_loopContext* ctx) override;
+	virtual std::any visitStmt_for(PinlangParser::Stmt_forContext* ctx) override;
+	virtual std::any visitStmt_while(PinlangParser::Stmt_whileContext* ctx) override;
 
 	virtual std::any visitStmt_fndef(PinlangParser::Stmt_fndefContext* ctx) override;
 	virtual std::any visitStmt_simple_fndef(PinlangParser::Stmt_simple_fndefContext* ctx) override;

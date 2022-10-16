@@ -11,9 +11,6 @@
  */
 class VariableTable {
 public:
-	static VariableTable& GetGlobal() { return m_global; }
-
-public:
 	VariableTable() {}
 
 	// 如果找不到, panic
@@ -28,7 +25,5 @@ public:
 	void InitAsGlobal();
 
 private:
-	static VariableTable m_global;
-
 	std::map<std::string, Variable*> m_table;
 };

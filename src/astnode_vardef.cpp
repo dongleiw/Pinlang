@@ -55,13 +55,11 @@ VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx, VerifyContextParam
 	return VerifyContextResult();
 }
 Variable* AstNodeVarDef::Execute(ExecuteContext& ctx) {
-	Variable* v;
-	if (m_init_expr != nullptr) {
-		v = m_init_expr->Execute(ctx);
-	} else {
-		v = new Variable(m_result_typeid);
-	}
+	Variable* v = new Variable(m_result_typeid);
 	v->SetTmp(false);
+	if (m_init_expr != nullptr) {
+		v->Assign(m_init_expr->Execute(ctx));
+	}
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_varname, v);
 	return nullptr;
 }

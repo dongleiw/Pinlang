@@ -24,21 +24,22 @@ public:
 	Variable(FunctionObj fnobj);
 	Variable(AstNodeConstraint* astnode);
 	Variable(AstNodeComplexFnDef* astnode);
-	Variable(TypeId array_tid, std::vector<Variable*> array);
+	Variable(TypeId array_tid, std::vector<Variable*> array); // array
 
 	static Variable* CreateTypeVariable(TypeId tid);
+	static Variable* CreateTypeTuple(TypeId tuple_tid, std::vector<Variable*> elements);
 
 	TypeId GetTypeId() const { return m_tid; }
 
-	TypeId						 GetValueTid() const;
-	int							 GetValueInt() const;
-	float						 GetValueFloat() const;
-	bool						 GetValueBool() const;
-	std::string					 GetValueStr() const;
-	FunctionObj					 GetValueFunctionObj() const;
-	AstNodeConstraint*			 GetValueConstraint() const;
-	AstNodeComplexFnDef*		 GetValueComplexFn() const;
-	const std::vector<Variable*> GetValueArray() const;
+	TypeId						  GetValueTid() const;
+	int							  GetValueInt() const;
+	float						  GetValueFloat() const;
+	bool						  GetValueBool() const;
+	std::string					  GetValueStr() const;
+	FunctionObj*				  GetValueFunctionObj() const;
+	AstNodeConstraint*			  GetValueConstraint() const;
+	AstNodeComplexFnDef*		  GetValueComplexFn() const;
+	const std::vector<Variable*>& GetValueArray() const;
 
 	bool IsConst() const { return m_is_const; }
 
@@ -57,20 +58,27 @@ public:
 
 	void Assign(Variable* tmp);
 	void InitField(std::map<std::string, Variable*> fields);
-protected:
+
+private:
+	void set_default_value();
+private:
 	TypeId m_tid;
 	bool   m_is_const;
 	bool   m_is_tmp; // 是否是临时变量.
 
-	TypeId				   m_value_tid;
-	int					   m_value_int;
-	float				   m_value_float;
-	bool				   m_value_bool;
-	std::string			   m_value_str;
-	FunctionObj			   m_value_fnobj;
-	AstNodeConstraint*	   m_value_constraint;
-	AstNodeComplexFnDef*   m_value_complex_fn;
-	std::vector<Variable*> m_value_array;
+	// value type
+	TypeId		m_value_tid;
+	int			m_value_int;   // int
+	float		m_value_float; // float
+	bool		m_value_bool;  // bool
+	std::string m_value_str;   // str
 
-	std::map<std::string, Variable*> m_fields;
+	// reference type
+	FunctionObj*					  m_value_fnobj; // function
+	std::vector<Variable*>*			  m_value_array; // array
+	std::map<std::string, Variable*>* m_fields;		 // class|tuple
+
+	// 编译阶段使用
+	AstNodeConstraint*	 m_value_constraint;
+	AstNodeComplexFnDef* m_value_complex_fn;
 };

@@ -5,6 +5,7 @@
 #include "astnode.h"
 #include "define.h"
 #include "execute_context.h"
+#include "source_info.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -23,13 +24,14 @@ public:
 	AstNodeOperator* DeepCloneT();
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 
+	void SetSourceInfo_op(SourceInfo si) { m_si_op = si; }
+
 private:
 	AstNode*	m_left_expr;
 	std::string m_constraint_name;
 	std::string m_op;
 	AstNode*	m_right_expr;
+	SourceInfo	m_si_op;
 
 	MethodIndex m_method_idx;
-
-	Variable* m_const_result; // 如果是编译期常量表达式, 这里存结果
 };

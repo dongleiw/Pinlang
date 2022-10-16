@@ -22,6 +22,8 @@
  *		restriciton Add{
  * 		 	fn add(another []int) int;
  * 		}
+ *
+ * 	如果是泛型约束, 需要进行实例化
  */
 class AstNodeConstraint : public AstNode {
 public:

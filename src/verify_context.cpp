@@ -4,7 +4,6 @@
 #include <assert.h>
 
 VerifyContext::VerifyContext(){
-	//init_global_vt();
 	m_global_vt.InitAsGlobal();
 }
 

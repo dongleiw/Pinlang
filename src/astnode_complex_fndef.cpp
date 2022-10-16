@@ -40,24 +40,26 @@ AstNodeComplexFnDef::Implement AstNodeComplexFnDef::Implement::DeepClone() {
 	return implement;
 }
 VerifyContextResult AstNodeComplexFnDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
-	std::map<int, std::vector<const Implement*>> map_param_num_2_list;
-	for (const Implement& iter : m_implements) {
-		auto found = map_param_num_2_list.find(iter.m_params.size());
-		if (found == map_param_num_2_list.end()) {
-			std::vector<const Implement*> vec;
-			vec.push_back(&iter);
-			map_param_num_2_list[iter.m_params.size()] = vec;
-		} else {
-			found->second.push_back(&iter);
+	// 检查规则1: 如果有多个参数个数相同的定义, 这些定义必须都是非泛型定义
+	{
+		std::map<int, std::vector<const Implement*>> map_param_num_2_list;
+		for (const Implement& iter : m_implements) {
+			auto found = map_param_num_2_list.find(iter.m_params.size());
+			if (found == map_param_num_2_list.end()) {
+				std::vector<const Implement*> vec;
+				vec.push_back(&iter);
+				map_param_num_2_list[iter.m_params.size()] = vec;
+			} else {
+				found->second.push_back(&iter);
+			}
 		}
-	}
 
-	//检查: 如果有多个参数个数相同的定义, 这些定义必须都是非泛型定义
-	for (auto list : map_param_num_2_list) {
-		if (list.second.size() > 1) {
-			for (auto implement : list.second) {
-				if (!implement->m_generic_params.empty()) {
-					panicf("rule is not satisfied");
+		for (auto list : map_param_num_2_list) {
+			if (list.second.size() > 1) {
+				for (auto implement : list.second) {
+					if (!implement->m_generic_params.empty()) {
+						panicf("rule1 is not satisfied");
+					}
 				}
 			}
 		}
@@ -350,7 +352,7 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 	log_debug("instantiate fn: name[%s] instance_name[%s]", m_fnname.c_str(), instance.instance_name.c_str());
 }
 void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string name, FunctionObj fnobj) const {
-	if(m_obj_tid!=TYPE_ID_NONE){
+	if (m_obj_tid != TYPE_ID_NONE) {
 		// 如果是方法, 则跳过. 由TypeInfo来完成instance的保存
 		return;
 	}

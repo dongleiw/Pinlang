@@ -1,0 +1,34 @@
+if for while switch
+
+
+for:
+	// 初始化 + 条件 + 自增
+	for init; cond; loop{
+	}
+
+	// for in
+	// expr必须是一个迭代器, 或者可以隐式转换为迭代器的值
+	// []int{1,2,3}
+	// iter.next()
+	for var_id in expr{
+	}
+
+	例子:
+		for var i=0; i<100; i++{
+		}
+
+		for e in []int{1,2,3}{
+		}
+
+while:
+	// 条件循环
+	while cond_expr{
+	}
+
+	例子:
+		for true{
+		}
+		for i<3{
+			i=i+1;
+		}
+

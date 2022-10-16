@@ -1,3 +1,19 @@
 变量
 
+变量的值的类型:
+	假如有赋值语句: src = dst;
 
+	值类型
+		type,int,float,bool,str类型的变量是值类型.
+		值类型在赋值时, src会得到dst的值的一份拷贝
+	引用类型
+		fn,array,class,tuple类型的变量是引用类型.
+		引用类型在赋值时, src将指向dst指向的值
+
+各类型的默认值:
+	type	none
+	int		0
+	float	0.0
+	bool	false
+	str		""
+	[]T		[]T{}

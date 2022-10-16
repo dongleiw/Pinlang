@@ -16,10 +16,15 @@
 VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify class def[%s]", m_class_name.c_str());
 
-	ctx.GetCurStack()->EnterBlock(new VariableTable());
+	if(ctx.GetCurStack()->IsVariableExist(m_class_name)){
+		panicf("conflict class name[%s]", m_class_name.c_str());
+	}
 
 	TypeInfoClass* ti = new TypeInfoClass(m_class_name);
 	m_result_typeid	  = g_typemgr.AddTypeInfo(ti);
+	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_class_name, Variable::CreateTypeVariable(m_result_typeid));
+
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
 
 	// 检查类的字段
 	for (auto iter : m_field_list) {
@@ -47,14 +52,15 @@ VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextPar
 		TypeId constraint_instance_tid = astnode_constraint->Instantiate(ctx, gparam_tids);
 
 		for(auto fn : impl.constraint_fns){
+			ctx.GetCurStack()->EnterBlock(new VariableTable());
 			fn->Verify(ctx, VerifyContextParam());
+			ctx.GetCurStack()->LeaveBlock();
 		}
 		ti->AddConstraint(constraint_instance_tid, impl.constraint_fns);
 	}
 
 	ctx.GetCurStack()->LeaveBlock();
 
-	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_class_name, Variable::CreateTypeVariable(m_result_typeid));
 
 	return VerifyContextResult(m_result_typeid);
 }

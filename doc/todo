@@ -1,18 +1,22 @@
-类型
-	增加方法: GetName(), GetTypeId()
+支持控制流
+	foreach
+	switch
+	break
+	continue
 function
 	如果给函数增加一个编译期可以访问的用户自定义标签怎么样?
 		#[userattr(AAA)]
 		fn foo(){
 		}
-支持控制流for switch
 支持变长参数
 immutable
-编译期表达式
+编译期常量表达式
+编译期常量分支
+	false分支会被优化掉, 是否检查语法?
+		1. 如果不检查语法, 直接删除false分支. 这个可以做泛型特化
 约束
 	约束继承
 	约束的接口名重复的处理规则
-	类型实现泛型
 泛型
 	泛型结构体/类
 	泛型特化
@@ -20,15 +24,21 @@ immutable
 	属性
 	构造函数(一些语言中构造函数名和类名相同, 这在有多种初始化方式的需求情况下, 会含义不够清晰. 而且只能通过函数重载不够灵活. 考虑构造函数名称可自定义)
 	泛型
-元组
 闭包
 异步
 管道
 namespace
 module
+utf8
 inline function/method
 调用c库
+type cast
 标准库
+	algrithom random math crypto encoding network file log io console
+便捷计算:
+	++ --
+	+= -= *= /= %=
+标识符的保留内容: 前缀为'__'的标识符全部保留
 debug
 lsp
 丰富的编译配置: 

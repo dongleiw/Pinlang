@@ -10,6 +10,7 @@ AstNodeBlockStmt::AstNodeBlockStmt(const std::vector<AstNode*>& stmts) {
 	for (auto iter : m_stmts) {
 		iter->SetParent(this);
 	}
+	m_global_block = false;
 }
 VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	VerifyContextResult vr(m_result_typeid);
@@ -24,7 +25,11 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextPa
 		g_typemgr.InitBuiltinMethods(ctx);
 	}
 
-	ctx.GetCurStack()->EnterBlock(new VariableTable());
+	if (m_global_block) {
+		ctx.GetCurStack()->EnterBlock(ctx.GetGlobalVt());
+	} else {
+		ctx.GetCurStack()->EnterBlock(new VariableTable());
+	}
 	for (auto n : m_stmts) {
 		AstNodeReturn* astnode_return = dynamic_cast<AstNodeReturn*>(n);
 		if (astnode_return != nullptr) {
@@ -45,7 +50,11 @@ Variable* AstNodeBlockStmt::Execute(ExecuteContext& ctx) {
 		}
 	}
 
-	ctx.GetCurStack()->EnterBlock(new VariableTable());
+	if (m_global_block) {
+		ctx.GetCurStack()->EnterBlock(ctx.GetGlobalVt());
+	} else {
+		ctx.GetCurStack()->EnterBlock(new VariableTable());
+	}
 
 	for (auto n : m_stmts) {
 		n->Execute(ctx);
@@ -69,6 +78,6 @@ AstNodeBlockStmt* AstNodeBlockStmt::DeepCloneT() {
 
 	return newone;
 }
-void AstNodeBlockStmt::AddChildStmt(AstNode* node){
+void AstNodeBlockStmt::AddChildStmt(AstNode* node) {
 	m_stmts.push_back(node);
 }

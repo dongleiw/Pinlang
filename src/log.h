@@ -27,3 +27,10 @@ extern FILE *g_log_file;
 		fflush(g_log_file); \
 		abort(); \
 	} while (0);
+
+#define panicfi(source_info, fmts, ...)                   \
+	do {                                    \
+		_log("FATAL", "si=%s " fmts, source_info.ToString().c_str(), ##__VA_ARGS__); \
+		fflush(g_log_file); \
+		abort(); \
+	} while (0);

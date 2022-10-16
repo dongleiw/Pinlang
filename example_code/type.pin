@@ -1,0 +1,14 @@
+{
+	var t=int;
+	printf("typename={} typeid={}\n", t.GetTypeName(), t.GetTypeId());
+}
+
+{
+	fn foo[T ToString](a T){
+		printf("typename={} typeid={}\n", T.GetTypeName(), T.GetTypeId());
+	}
+	foo(1);
+	foo(1.1);
+	foo(true);
+	foo("3");
+}

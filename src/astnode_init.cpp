@@ -62,8 +62,6 @@ VerifyContextResult AstNodeInit::Verify(VerifyContext& ctx, VerifyContextParam v
 	return VerifyContextResult(m_result_typeid);
 }
 Variable* AstNodeInit::Execute(ExecuteContext& ctx) {
-	log_debug("verify init");
-
 	// 获取类型
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
 
@@ -76,13 +74,25 @@ Variable* AstNodeInit::Execute(ExecuteContext& ctx) {
 		}
 		return new Variable(m_result_typeid, array_elements);
 	} else if (ti->IsClass()) {
+		Variable* class_obj = new Variable(m_result_typeid);
+
+		// 注意: 由于允许缺省, 可能存在一些字段没有显式提供初始值
 		std::map<std::string, Variable*> fields;
+
+		// 处理显式指定的字段
 		for (auto& iter : m_elements) {
 			Variable* v = iter.attr_value->Execute(ctx);
 			v->SetTmp(false);
 			fields[iter.attr_name] = v;
 		}
-		Variable* class_obj = new Variable(m_result_typeid);
+
+		// 处理缺省的字段
+		for (auto& iter : ti->GetField()) {
+			if (fields.find(iter.name) == fields.end()) {
+				fields[iter.name] = new Variable(iter.tid);
+			}
+		}
+
 		class_obj->InitField(fields);
 		return class_obj;
 	} else {
@@ -91,7 +101,7 @@ Variable* AstNodeInit::Execute(ExecuteContext& ctx) {
 }
 AstNodeInit* AstNodeInit::DeepCloneT() {
 	AstNodeInit* newone = new AstNodeInit();
-	newone->m_type		= m_type->DeepCloneT();
+	newone->m_type		= m_type == nullptr ? nullptr : m_type->DeepCloneT();
 	for (auto iter : m_elements) {
 		newone->m_elements.push_back(iter.DeepClone());
 	}

@@ -20,7 +20,7 @@ public:
 		AstNodeComplexFnDef* method_node;
 	};
 	// 类型的方法的一个具体实例
-	struct MethodInstance{
+	struct MethodInstance {
 		std::string method_name; // 方法名
 		Function*	fn;			 // 方法的实现
 	};
@@ -28,7 +28,7 @@ public:
 		TypeId						constraint_tid;
 		std::vector<Method>			methods;
 		std::vector<MethodInstance> concrete_methods;
-		MethodIndex AddConcreteMethod(std::string method_name, Function* fn);
+		MethodIndex					AddConcreteMethod(std::string method_name, Function* fn);
 	};
 	struct Field {
 		std::string name;
@@ -63,7 +63,6 @@ public:
 
 	Function* GetMethodByIdx(MethodIndex method_idx);
 
-	void		 AddConstraint(TypeId constraint_tid, std::vector<AstNodeComplexFnDef*> methods);
 	virtual void InitBuiltinMethods(VerifyContext& ctx) {}
 
 	void SetTypeGroupId(TypeGroupId tgid) { m_typegroup_id = tgid; }
@@ -75,8 +74,14 @@ public:
 	bool IsGenericType() const { return m_typegroup_id == TYPE_GROUP_ID_VIRTUAL_GTYPE; }
 	bool IsPrimaryType() const { return m_typegroup_id == TYPE_GROUP_ID_PRIMARY; }
 	bool IsClass() const { return m_typegroup_id == TYPE_GROUP_ID_CLASS; }
+	bool IsTuple() const { return m_typegroup_id == TYPE_GROUP_ID_TUPLE; }
 
+	void AddConstraint(TypeId constraint_tid, std::vector<AstNodeComplexFnDef*> methods);
 	bool MatchConstraint(TypeId tid) const;
+	/*
+	 * 根据constraint的名字 + 方法名字 + 方法参数信息搜索方法. 返回所有匹配的函数位置信息
+	 */
+	std::vector<MethodIndex> GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, std::vector<TypeId> method_params_tid) ;
 
 	bool			   HasField(std::string field_name) const;
 	void			   AddField(std::string field_name, TypeId tid);

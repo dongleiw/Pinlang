@@ -1,0 +1,39 @@
+tuple(元组)是一个可以存放多个类型不同的元素的结构. 
+比如(1, 1.2, "hello") 类型为(int,float,str)
+
+
+
+tuple必须是immutable的吗?
+	并不是
+	Python的tuple是immutable的, 这样设计的原因未知
+	Rust的tuple不是immutable的
+
+为什么tuple不能动态的索引?
+	var t = (1, 1.2, "hello");
+	t[0] // ok
+	t[i] // i如果不是编译期常量表达式, 就无法在编译期确定该表达式类型. 所以tuple不能动态索引
+
+	所以在静态类型语言中, tuple无法动态索引
+
+索引方法
+	var t = (1, 1.2, "hello");
+	t[compile_const_expr] // 类似数组的下标访问. 下标的值必须是编译期常量表达式
+	t.f0, t.f1, t.f2 // 属性值访问
+
+	由于object的属性名必须是identifier, 因此不能使用纯数字来标识. 前面加前缀'f'(field的首字母)
+
+给每个位置的值命名?
+	fn foo() (int,str){
+		return (1, "dl");
+	}
+	var result = foo();
+	result.0  // 不够直观
+	
+	可以考虑增加命名语法, 比如:
+		fn foo() (id int,name float){
+			return (1, 3.3);
+		}
+		var result = foo();
+		result.0     // 错误, 只能使用名字访问
+		result.id    // 正确
+		result.name  // 正确

@@ -19,6 +19,7 @@ public:
 	 * 如果不存在, panic
 	 */
 	TypeInfo* GetTypeInfo(TypeId tid) const;
+	bool IsTypeExist(TypeId tid)const;
 
 	std::string GetTypeName(std::vector<TypeId> vec_tid) const;
 	std::string GetTypeName(TypeId tid) const;
@@ -29,7 +30,8 @@ public:
 	 */
 	TypeId GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid);
 
-	TypeId GetOrAddTypeArray(TypeId element_tid);
+	TypeId GetOrAddTypeArray(TypeId element_tid, bool& added);
+	TypeId GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> element_tids, bool& added);
 
 	TypeId AddTypeInfo(TypeInfo* ti);
 	TypeId GetOrAddTypeConstraint(TypeInfoConstraint* ti);

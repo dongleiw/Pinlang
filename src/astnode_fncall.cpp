@@ -46,12 +46,12 @@ VerifyContextResult AstNodeFnCall::Verify(VerifyContext& ctx, VerifyContextParam
 Variable* AstNodeFnCall::Execute(ExecuteContext& ctx) {
 	log_debug("fncall");
 	Variable*			   fn_var = m_fn_expr->Execute(ctx);
-	FunctionObj			   fnobj  = fn_var->GetValueFunctionObj();
+	FunctionObj*		   fnobj  = fn_var->GetValueFunctionObj();
 	std::vector<Variable*> args;
 	for (auto iter : m_args) {
 		args.push_back(iter->Execute(ctx));
 	}
-	return fnobj.Call(ctx, args);
+	return fnobj->Call(ctx, args);
 }
 AstNodeFnCall* AstNodeFnCall::DeepCloneT() {
 	AstNodeFnCall* newone = new AstNodeFnCall();

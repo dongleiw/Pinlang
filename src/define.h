@@ -21,6 +21,7 @@ enum TypeGroupId {
 	 */
 	TYPE_GROUP_ID_CONSTRAINT	= 5,
 	TYPE_GROUP_ID_VIRTUAL_GTYPE = 6,
+	TYPE_GROUP_ID_TUPLE			= 7, // 元组
 };
 
 /*
