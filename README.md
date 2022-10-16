@@ -72,3 +72,4 @@
     };
     ```
 * 2022-10-03 class可以实现constraint了
+* 2022-10-16 增加了tuple类型. 增加了for init;cond;loop{}. 增加了while cond {}. 增加了Index约束, 用于实现下标索引操作符. 实现了冒泡排序😎
