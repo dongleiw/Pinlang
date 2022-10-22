@@ -16,7 +16,7 @@ VerifyContextResult AstNodeAssignment::Verify(VerifyContext& ctx, VerifyContextP
 	if (vr_left.GetResultTypeId() == TYPE_ID_NONE) {
 		panicf("type of left expr in assignment is none");
 	}
-	if(vr_left.IsTmp()){
+	if (vr_left.IsTmp()) {
 		panicf("result of left expr in assignment is tmp");
 	}
 
@@ -29,7 +29,7 @@ VerifyContextResult AstNodeAssignment::Verify(VerifyContext& ctx, VerifyContextP
 	return VerifyContextResult(m_result_typeid);
 }
 Variable* AstNodeAssignment::Execute(ExecuteContext& ctx) {
-	Variable* v_right= m_right->Execute(ctx);
+	Variable* v_right = m_right->Execute(ctx);
 	ctx.SetAssignValue(v_right);
 	m_left->Execute(ctx);
 	ctx.SetAssignValue(nullptr);

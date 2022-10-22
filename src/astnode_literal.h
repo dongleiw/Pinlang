@@ -8,7 +8,8 @@
 
 class AstNodeLiteral : public AstNode {
 public:
-	AstNodeLiteral(int value);
+	AstNodeLiteral(int32_t value);
+	AstNodeLiteral(int64_t value);
 	AstNodeLiteral(float value);
 	AstNodeLiteral(bool value);
 	AstNodeLiteral(std::string value);
@@ -19,11 +20,12 @@ public:
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeLiteral*	 DeepCloneT();
 
+	void CastToInt64();
 private:
 	AstNodeLiteral() {}
 
 private:
-	int			m_value_int;
+	uint64_t	m_value_int;
 	float		m_value_float;
 	bool		m_value_bool;
 	std::string m_value_str;

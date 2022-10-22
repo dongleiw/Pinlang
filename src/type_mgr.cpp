@@ -97,6 +97,7 @@ void TypeMgr::InitTypes() {
 void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_INT32)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_INT64)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_FLOAT)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_BOOL)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods(ctx);

@@ -167,9 +167,9 @@ bool Variable::GetValueBool() const {
 	assert(m_tid == TYPE_ID_BOOL);
 	return m_value.value_bool;
 }
-const char* Variable::GetValueStr() const {
+char* Variable::GetValueStr() {
 	assert(m_tid == TYPE_ID_STR);
-	return (const char*)m_value.value_str->data;
+	return (char*)m_value.value_str->data;
 }
 int Variable::GetValueStrSize() const {
 	assert(m_tid == TYPE_ID_STR);
@@ -206,7 +206,7 @@ void Variable::SetValueArrayElement(int idx, Variable* element) {
 
 	TypeInfoArray* ti_array	  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(m_tid));
 	TypeInfo*	   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
-	memcpy((void*)(m_value.value_array->data + idx * ti_array->GetMemSize()), (const void*)&element->m_value, ti_array->GetMemSize());
+	memcpy((void*)(m_value.value_array->data + idx * ti_element->GetMemSize()), (const void*)&element->m_value, ti_element->GetMemSize());
 }
 Variable* Variable::GetMethodValue(MethodIndex method_idx) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
@@ -236,7 +236,7 @@ void Variable::SetFieldValue(std::string field_name, Variable* v) {
 
 	for (auto field : ti->GetField()) {
 		if (field.name == field_name) {
-			TypeInfo* ti_field	  = g_typemgr.GetTypeInfo(field.tid);
+			TypeInfo* ti_field = g_typemgr.GetTypeInfo(field.tid);
 			memcpy((void*)(m_value.value_fields + field.mem_offset), (void*)&v->m_value, ti_field->GetMemSize());
 			return;
 		}
@@ -245,6 +245,7 @@ void Variable::SetFieldValue(std::string field_name, Variable* v) {
 }
 void Variable::Assign(Variable* tmp) {
 	assert(!IsTmp());
+	assert(m_tid == tmp->GetTypeId());
 
 	TypeId tmp_tid = m_tid;
 
@@ -288,6 +289,9 @@ void Variable::set_default_value() {
 			break;
 		case TYPE_ID_INT32:
 			m_value.value_int32 = 0;
+			break;
+		case TYPE_ID_INT64:
+			m_value.value_int64 = 0;
 			break;
 		case TYPE_ID_FLOAT:
 			m_value.value_float = 0.0;

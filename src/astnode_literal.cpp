@@ -5,9 +5,13 @@
 #include "variable.h"
 #include "verify_context.h"
 
-AstNodeLiteral::AstNodeLiteral(int value) {
+AstNodeLiteral::AstNodeLiteral(int32_t value) {
 	m_value_int		= value;
 	m_result_typeid = TYPE_ID_INT32;
+}
+AstNodeLiteral::AstNodeLiteral(int64_t value) {
+	m_value_int		= value;
+	m_result_typeid = TYPE_ID_INT64;
 }
 AstNodeLiteral::AstNodeLiteral(float value) {
 	m_value_float	= value;
@@ -24,7 +28,19 @@ AstNodeLiteral::AstNodeLiteral(std::string value) {
 VerifyContextResult AstNodeLiteral::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	switch (m_result_typeid) {
 	case TYPE_ID_INT32:
-		return VerifyContextResult(m_result_typeid, new Variable(m_value_int));
+	{
+		if (TYPE_ID_INT32 == vparam.GetResultTid() || TYPE_ID_INFER == vparam.GetResultTid()) {
+			return VerifyContextResult(m_result_typeid, new Variable(int32_t(m_value_int)));
+		} else if (TYPE_ID_INT64 == vparam.GetResultTid()) {
+			m_result_typeid = TYPE_ID_INT64;
+			return VerifyContextResult(m_result_typeid, new Variable(int64_t(m_value_int)));
+		} else {
+			panicf("wrong type");
+		}
+		break;
+	}
+	case TYPE_ID_INT64:
+		return VerifyContextResult(m_result_typeid, new Variable(int64_t(m_value_int)));
 		break;
 	case TYPE_ID_FLOAT:
 		return VerifyContextResult(m_result_typeid, new Variable(m_value_float));
@@ -43,7 +59,10 @@ VerifyContextResult AstNodeLiteral::Verify(VerifyContext& ctx, VerifyContextPara
 Variable* AstNodeLiteral::Execute(ExecuteContext& ctx) {
 	switch (m_result_typeid) {
 	case TYPE_ID_INT32:
-		return new Variable(this->m_value_int);
+		return new Variable(int32_t(this->m_value_int));
+		break;
+	case TYPE_ID_INT64:
+		return new Variable(int64_t(this->m_value_int));
 		break;
 	case TYPE_ID_FLOAT:
 		return new Variable(this->m_value_float);
@@ -65,4 +84,8 @@ AstNodeLiteral* AstNodeLiteral::DeepCloneT() {
 	*newone = *this;
 
 	return newone;
+}
+void AstNodeLiteral::CastToInt64() {
+	assert(m_result_typeid == TYPE_ID_INT32);
+	m_result_typeid = TYPE_ID_INT64;
 }

@@ -94,6 +94,21 @@ static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_int_ret_int(Exe
 	int32_t ret = ((FnType)dynlib_fn)(args.at(0)->GetValueStr(), args.at(1)->GetValueInt32(), args.at(2)->GetValueInt32());
 	return new Variable(ret);
 }
+// 调用动态库加载得到的函数. fn(i32,str,i64) i64
+static Variable* builtin_fn_call_dynlib_fn_args_i32_str_i64_ret_i64(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj == nullptr && fn->GetDynLibFn() != nullptr && args.size() == 3);
+	assert(args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	assert(args.at(1)->GetTypeId() == TYPE_ID_STR);
+	assert(args.at(2)->GetTypeId() == TYPE_ID_INT64);
+
+	void* dynlib_fn = fn->GetDynLibFn();
+	if (!ctx.GetDynamicLoading().FnExist(fn->GetDynLibInstanceId(), dynlib_fn)) {
+		panicf("dynlib_fn not exist. dynlib already closed?");
+	}
+	typedef int64_t (*FnType)(int32_t, const char*, int64_t);
+	int64_t ret = ((FnType)dynlib_fn)(args.at(0)->GetValueInt32(), args.at(1)->GetValueStr(), args.at(2)->GetValueInt64());
+	return new Variable(ret);
+}
 
 static Variable* builtin_fn_dl_getFn(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj == nullptr && args.size() == 2 && args.at(0)->GetTypeId() == TYPE_ID_INT32 && args.at(1)->GetTypeId() == TYPE_ID_STR);
@@ -248,10 +263,10 @@ bool DynamicLoading::FnExist(int dynlib_instance_id, void* fn) const {
 }
 bool DynamicLoading::SupportType(TypeId tid) const {
 	// 目前只支持这三个类型
-	return (tid == TYPE_ID_INT32 || tid == TYPE_ID_FLOAT || tid == TYPE_ID_STR);
+	return (tid == TYPE_ID_INT32 || tid == TYPE_ID_FLOAT || tid == TYPE_ID_STR || tid==TYPE_ID_INT64);
 }
 BuiltinFnCallback DynamicLoading::GetBuiltinFnCallback(std::vector<TypeId> params_tid, TypeId return_tid) const {
-	/* 
+	/*
 	 * 枚举每一种函数签名, 生成对应处理函数.
 	 * 先把libc的几个io函数签名搞了.
 	 *		int open(const char *pathname, int flags);
@@ -259,8 +274,8 @@ BuiltinFnCallback DynamicLoading::GetBuiltinFnCallback(std::vector<TypeId> param
 	 *		ssize_t read(int fd, void *buf, size_t count);
 	 *		ssize_t write(int fd, const void *buf, size_t count);
 	 *		int close(int fd);
-	 * TODO 这简直无穷无尽了.... 有空研究下libffi 
-	*/
+	 * TODO 这简直无穷无尽了.... 有空研究下libffi
+	 */
 	if (params_tid.size() == 0) {
 		if (return_tid == TYPE_ID_NONE) {
 			return builtin_fn_call_dynlib_fn_args_void_ret_void; // fn()
@@ -276,8 +291,11 @@ BuiltinFnCallback DynamicLoading::GetBuiltinFnCallback(std::vector<TypeId> param
 			return builtin_fn_call_dynlib_fn_args_constcharptr_int_ret_int; // fn(const char*, int)int
 		}
 	} else if (params_tid.size() == 3) {
-		if (params_tid.at(0) == TYPE_ID_STR && params_tid.at(1) == TYPE_ID_INT32 && params_tid.at(2) == TYPE_ID_INT32 && return_tid == TYPE_ID_INT32) {
+		if (is_vec_typeid_equal(params_tid, std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_INT32, TYPE_ID_INT32}) && return_tid == TYPE_ID_INT32) {
 			return builtin_fn_call_dynlib_fn_args_constcharptr_int_int_ret_int; // fn(const char*, int,int)int
+		} else if (is_vec_typeid_equal(params_tid, std::vector<TypeId>{TYPE_ID_INT32, TYPE_ID_STR, TYPE_ID_INT64}) && return_tid == TYPE_ID_INT64) {
+			// fn(i32, str, i64) i64
+			return builtin_fn_call_dynlib_fn_args_i32_str_i64_ret_i64;
 		}
 	}
 	panicf("not implemented yet");

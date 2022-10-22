@@ -19,7 +19,16 @@
 // libc
 {
 	var dynlib_handler = dl_open("/lib/x86_64-linux-gnu/libc.so.6");
-	var args_str_int_ret_int fn(str,int)int = dl_getFn(dynlib_handler, "open");
-	var ret = args_str_int_ret_int("hello",0);
-	printf("ret={}\n", ret);
+
+	var open fn(str,int)int = dl_getFn(dynlib_handler, "open");
+	var fd = open("text",0);
+	printf("fd={}\n", fd);
+
+	{
+		var read fn(int,str,i64)i64 = dl_getFn(dynlib_handler, "read");
+		var s="123456789";
+		var c i64=8;
+		var read_byte_num = read(fd,s,c);
+		printf("read_byte_num={} str={}\n", read_byte_num, s);
+	}
 }

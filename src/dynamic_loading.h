@@ -15,6 +15,18 @@ class AstNodeComplexFnDef;
  *		2. dl_getFn[T Fn](handler int, fn_name str) T
  *		3. dl_close(handler int);
  *  每个加载的动态库有唯一id
+ *
+ *  与C shared library的类型的对应关系
+ *		参数i32: 对应C中的4byte有符号整数, 比如int
+ *		参数u32: 对应C中的4byte无符号整数, 比如uint32_t
+ *		参数i64: 对应C中的8byte有符号整数, 比如ssize_t
+ *		参数u64: 对应C中的8byte无符号整数, 比如size_t
+ *		参数str:
+ *			对应C中的const char*. 调用函数时, 将str的数据指针传入
+ *		返回值str:
+ *			对应C中, 返回const char*
+ *			函数返回后, 生成str
+ *
  */
 class DynamicLoading {
 public:

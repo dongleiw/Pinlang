@@ -41,7 +41,7 @@ public:
 	int64_t				 GetValueInt64() const;
 	float				 GetValueFloat() const;
 	bool				 GetValueBool() const;
-	const char*			 GetValueStr() const;
+	char*				 GetValueStr();
 	int					 GetValueStrSize() const;
 	FunctionObj*		 GetValueFunctionObj() const;
 	AstNodeConstraint*	 GetValueConstraint() const;
@@ -79,7 +79,7 @@ private:
 	bool   m_is_tmp; // 是否是临时变量.
 
 	// reference type
-	FunctionObj*					  m_value_fnobj; // function
+	FunctionObj* m_value_fnobj; // function
 
 	union Value {
 		// value type
