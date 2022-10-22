@@ -7,6 +7,7 @@
 #include "PinlangParser.h"
 #include "antlr4-runtime.h"
 #include "astnode_blockstmt.h"
+#include "dynamic_loading.h"
 #include "execute_context.h"
 #include "predefine.h"
 #include "support/Declarations.h"
@@ -40,6 +41,7 @@ void execute(std::string filepath) {
 		Visitor visitor;
 		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
 		register_predefine(*predefine_block_stmts);
+		DynamicLoading::RegisterFn(*predefine_block_stmts);
 	}
 
 	std::ifstream	infile(filepath);

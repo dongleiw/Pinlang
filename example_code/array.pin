@@ -26,6 +26,15 @@
 	});
 }
 
+// 数组元素是tuple
+{
+	var a=[](int,str){
+		(1,"hello"),
+		(2,"yes")
+	};
+	printf("a={}\n", a);
+}
+
 // 缺省类型
 {
 	var a = [][]int{

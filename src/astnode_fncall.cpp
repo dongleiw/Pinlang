@@ -30,7 +30,7 @@ VerifyContextResult AstNodeFnCall::Verify(VerifyContext& ctx, VerifyContextParam
 	}
 
 	// 检查函数表达式
-	VerifyContextResult vr_fn_expr = m_fn_expr->Verify(ctx, VerifyContextParam().SetFnCallArgs(args_tid));
+	VerifyContextResult vr_fn_expr = m_fn_expr->Verify(ctx, VerifyContextParam().SetFnCallArgs(args_tid).SetResultTid(vparam.GetResultTid()));
 	TypeId				fn_tid	   = vr_fn_expr.GetResultTypeId();
 	TypeInfoFn*			tifn	   = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
 

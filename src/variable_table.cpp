@@ -42,7 +42,9 @@ void VariableTable::AddVariable(std::string name, Variable* variable) {
 }
 void VariableTable::InitAsGlobal() {
 	AddVariable("type", Variable::CreateTypeVariable(TYPE_ID_TYPE));
-	AddVariable("int", Variable::CreateTypeVariable(TYPE_ID_INT));
+	AddVariable("int", Variable::CreateTypeVariable(TYPE_ID_INT32));
+	AddVariable("i32", Variable::CreateTypeVariable(TYPE_ID_INT32));
+	AddVariable("i64", Variable::CreateTypeVariable(TYPE_ID_INT64));
 	AddVariable("float", Variable::CreateTypeVariable(TYPE_ID_FLOAT));
 	AddVariable("str", Variable::CreateTypeVariable(TYPE_ID_STR));
 	AddVariable("bool", Variable::CreateTypeVariable(TYPE_ID_BOOL));

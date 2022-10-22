@@ -335,12 +335,12 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 	}
 
 	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instance.gparams_tid, instance.params_tid, instance.return_tid);
-	TypeId	  fn_tid	   = g_typemgr.GetOrAddTypeFn(instance.params_tid, instance.return_tid);
+	TypeId	  fn_tid	   = g_typemgr.GetOrAddTypeFn(ctx, instance.params_tid, instance.return_tid);
 	Function* fn		   = nullptr;
 	if (instance.implement->m_body != nullptr) {
 		fn = new Function(fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT());
 	} else {
-		fn = new Function(fn_tid, m_obj_tid, concrete_gparams, instance.implement->m_builtin_callback);
+		fn = new Function(fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_builtin_callback);
 	}
 	instance.fnobj = FunctionObj(nullptr, fn);
 

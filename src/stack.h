@@ -28,9 +28,11 @@ public:
 	Variable* GetVariable(std::string name);
 
 	Variable* GetReturnedValue() const { return m_returned_value; }
+	bool	  HasReturned() const { return m_returned_value != nullptr; }
 	void	  SetReturnedValue(Variable* v) { m_returned_value = v; }
 
 	VariableTable* GetVariableTableByVarName(std::string varname);
+
 private:
 	Stack*					  m_next;	 // 下一层栈
 	std::list<VariableTable*> m_vt_list; // 变量表列表. 后面vt是前面vt的孩子

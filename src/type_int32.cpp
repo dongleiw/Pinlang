@@ -1,4 +1,4 @@
-#include "type_int.h"
+#include "type_int32.h"
 
 #include <assert.h>
 #include <map>
@@ -17,65 +17,72 @@
 #include "variable_table.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_add(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
-	int result = thisobj->GetValueInt() + args.at(0)->GetValueInt();
+static Variable* builtin_fn_add(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	int32_t result = thisobj->GetValueInt32() + args.at(0)->GetValueInt32();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_sub(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
-	int result = thisobj->GetValueInt() - args.at(0)->GetValueInt();
+static Variable* builtin_fn_sub(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	int32_t result = thisobj->GetValueInt32() - args.at(0)->GetValueInt32();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_mul_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	int result = thisobj->GetValueInt() * args.at(0)->GetValueInt();
+static Variable* builtin_fn_mul_int(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	int32_t result = thisobj->GetValueInt32() * args.at(0)->GetValueInt32();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_less(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
-	bool v = thisobj->GetValueInt() < args.at(0)->GetValueInt();
+static Variable* builtin_fn_lessThan(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	bool v = thisobj->GetValueInt32() < args.at(0)->GetValueInt32();
 	return new Variable(v);
 }
-static Variable* builtin_fn_lessEqual(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
-	bool v = thisobj->GetValueInt() <= args.at(0)->GetValueInt();
+static Variable* builtin_fn_lessEqual(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	bool v = thisobj->GetValueInt32() <= args.at(0)->GetValueInt32();
 	return new Variable(v);
 }
-static Variable* builtin_fn_greater(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
-	bool v = thisobj->GetValueInt() > args.at(0)->GetValueInt();
+static Variable* builtin_fn_notEqual(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	bool v = thisobj->GetValueInt32() != args.at(0)->GetValueInt32();
 	return new Variable(v);
 }
-static Variable* builtin_fn_greaterEqual(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_INT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
-	bool v = thisobj->GetValueInt() >= args.at(0)->GetValueInt();
+static Variable* builtin_fn_greaterThan(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	bool v = thisobj->GetValueInt32() > args.at(0)->GetValueInt32();
+	return new Variable(v);
+}
+static Variable* builtin_fn_greaterEqual(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	bool v = thisobj->GetValueInt32() >= args.at(0)->GetValueInt32();
 	return new Variable(v);
 }
 
-static Variable* builtin_fn_div_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	int result = thisobj->GetValueInt() / args.at(0)->GetValueInt();
+static Variable* builtin_fn_div(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	int32_t result = thisobj->GetValueInt32() / args.at(0)->GetValueInt32();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_mod_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	int result = thisobj->GetValueInt() % args.at(0)->GetValueInt();
+static Variable* builtin_fn_mod(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	int32_t result = thisobj->GetValueInt32() % args.at(0)->GetValueInt32();
 	return new Variable(result);
 }
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(args.size() == 0);
+static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_INT32 && args.size() == 0);
 	char buf[16];
-	snprintf(buf, sizeof(buf), "%d", thisobj->GetValueInt());
+	snprintf(buf, sizeof(buf), "%d", thisobj->GetValueInt32());
 	return new Variable(std::string(buf));
 }
 
-TypeInfoInt::TypeInfoInt() {
-	m_name		   = "int";
+TypeInfoInt32::TypeInfoInt32() {
+	m_name		   = "i32";
 	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
 }
-void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
+void TypeInfoInt32::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
 	// 手动实现ToString约束
@@ -111,14 +118,14 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* another_value_type = new AstNodeType();
-					another_value_type->InitWithIdentifier("int");
+					another_value_type->InitWithIdentifier("i32");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = another_value_type,
 					}});
 				}
 				AstNodeType* return_type = new AstNodeType();
-				return_type->InitWithIdentifier("int");
+				return_type->InitWithIdentifier("i32");
 				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_add));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
@@ -127,7 +134,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 		}
 
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Add")->GetValueConstraint();
-		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT, TYPE_ID_INT});
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT32, TYPE_ID_INT32});
 		AddConstraint(constraint_tid, fns);
 	}
 	// 手动实现Less约束
@@ -140,7 +147,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* another_value_type = new AstNodeType();
-					another_value_type->InitWithIdentifier("int");
+					another_value_type->InitWithIdentifier("i32");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = another_value_type,
@@ -148,15 +155,15 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_less));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_lessThan));
 			}
-			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("less", implements);
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("lessThan", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
 			fns.push_back(astnode_complex_fndef);
 		}
 
-		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Less")->GetValueConstraint();
-		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT});
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("LessThan")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT32});
 		AddConstraint(constraint_tid, fns);
 	}
 	// 手动实现LessEqual约束
@@ -169,7 +176,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* another_value_type = new AstNodeType();
-					another_value_type->InitWithIdentifier("int");
+					another_value_type->InitWithIdentifier("i32");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = another_value_type,
@@ -185,10 +192,10 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 		}
 
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("LessEqual")->GetValueConstraint();
-		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT});
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT32});
 		AddConstraint(constraint_tid, fns);
 	}
-	// 手动实现Greater约束
+	// 手动实现NotEqual约束
 	{
 		std::vector<AstNodeComplexFnDef*> fns;
 		{
@@ -198,7 +205,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* another_value_type = new AstNodeType();
-					another_value_type->InitWithIdentifier("int");
+					another_value_type->InitWithIdentifier("i32");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = another_value_type,
@@ -206,15 +213,44 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_greater));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_notEqual));
 			}
-			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greater", implements);
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("notEqual", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
 			fns.push_back(astnode_complex_fndef);
 		}
 
-		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Greater")->GetValueConstraint();
-		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT});
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("NotEqual")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT32});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 手动实现GreaterThan约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				{
+					AstNodeType* another_value_type = new AstNodeType();
+					another_value_type->InitWithIdentifier("i32");
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = another_value_type,
+					}});
+				}
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("bool");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_greaterThan));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterThan", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("GreaterThan")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT32});
 		AddConstraint(constraint_tid, fns);
 	}
 	// 手动实现GreaterEqual约束
@@ -227,7 +263,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* another_value_type = new AstNodeType();
-					another_value_type->InitWithIdentifier("int");
+					another_value_type->InitWithIdentifier("i32");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = another_value_type,
@@ -243,7 +279,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 		}
 
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("GreaterEqual")->GetValueConstraint();
-		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT});
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT32});
 		AddConstraint(constraint_tid, fns);
 	}
 	// 手动实现Sub约束
@@ -256,14 +292,14 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* another_value_type = new AstNodeType();
-					another_value_type->InitWithIdentifier("int");
+					another_value_type->InitWithIdentifier("i32");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = another_value_type,
 					}});
 				}
 				AstNodeType* return_type = new AstNodeType();
-				return_type->InitWithIdentifier("int");
+				return_type->InitWithIdentifier("i32");
 				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_sub));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("sub", implements);
@@ -272,7 +308,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 		}
 
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Sub")->GetValueConstraint();
-		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT, TYPE_ID_INT});
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_INT32, TYPE_ID_INT32});
 		AddConstraint(constraint_tid, fns);
 	}
 	ctx.PopSTack();

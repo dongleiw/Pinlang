@@ -13,10 +13,6 @@ void VerifyContext::PushStack(){
 	m_top_stack = new_stack;
 }
 void VerifyContext::PopSTack(){
-	assert(m_top_stack!=NULL);
+	assert(m_top_stack!=nullptr);
 	m_top_stack = m_top_stack->GetNextStack();
-}
-void VerifyContext::init_global_vt(){
-	m_global_vt.AddVariable("type", Variable::CreateTypeVariable(TYPE_ID_TYPE));
-	m_global_vt.AddVariable("int", Variable::CreateTypeVariable(TYPE_ID_INT));
 }

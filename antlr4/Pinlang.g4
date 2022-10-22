@@ -3,10 +3,11 @@ import Pinlang_lex;
 
 type_array: L_BRACKET R_BRACKET type ;
 type_tuple: L_PAREN type_list R_PAREN ;
+type_fn: FN L_PAREN parameter_list R_PAREN type? ;
 type
     : TYPE
 	| Identifier
-	| FN L_PAREN parameter_list R_PAREN type?
+	| type_fn
 	| type_array
 	| type_tuple
 	;
@@ -15,8 +16,7 @@ type_list
 	: type (',' type)*
 	;
 
-
-
+/////// 初始化. (数组, 类名)
 expr_init_element
     : expr_init_body
     | ( Identifier ':' )? expr
@@ -25,7 +25,7 @@ expr_init_body
     : L_CURLY expr_init_element (',' expr_init_element)* ','? R_CURLY
     | L_CURLY R_CURLY
     ;
-expr_init : type expr_init_body ;
+expr_init : (type_array | Identifier) expr_init_body ;
 
 expr_primary
     : literal                                           # expr_primary_literal
@@ -43,7 +43,7 @@ expr
     | expr op=(MUL|DIV|MOD) expr														# expr_muliplicative
     | expr op=(ADD|SUB) expr      														# expr_additive
     | expr op=(EQUALS|NOT_EQUALS|LESS|GREATER|LESS_OR_EQUALS|GREATER_OR_EQUALS) expr  	# expr_relational
-    | expr op=(LOGICAL_OR| LOGICAL_AND) expr											# expr_logical
+    | expr op=(LOGICAL_OR| LOGICAL_AND | '!') expr                                      # expr_logical
     ;
 
 expr_list_optional
@@ -96,6 +96,7 @@ stmt_complex_fndef
 	: FN Identifier L_CURLY stmt_complex_fndef_implement+ R_CURLY
 	;
 
+////// return
 stmt_return
 	: RETURN expr? ';'
 	;
@@ -154,6 +155,11 @@ stmt_class_def
 stmt_assignment
 	: expr ASSIGN expr
 	;
+
+//// dl import
+//stmt_dlimport
+//	: 'dlimport'
+//	;
 
 statement
 	: expr ';'

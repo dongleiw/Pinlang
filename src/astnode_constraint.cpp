@@ -53,7 +53,7 @@ TypeId AstNodeConstraint::Instantiate(VerifyContext& ctx, std::vector<TypeId> co
 		if (rule.return_type != nullptr) {
 			fn_return_tid = rule.return_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 		}
-		TypeId fn_tid = g_typemgr.GetOrAddTypeFn(fn_params, fn_return_tid);
+		TypeId fn_tid = g_typemgr.GetOrAddTypeFn(ctx,fn_params, fn_return_tid);
 
 		concrete_rules.push_back(TypeInfoConstraint::Rule{.fn_name = rule.fnname, .fn_tid = fn_tid});
 	}

@@ -18,7 +18,7 @@
 #include "variable_table.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
 	TypeInfoTuple*		ti_tuple	 = dynamic_cast<TypeInfoTuple*>(g_typemgr.GetTypeInfo(thisobj->GetTypeId()));
 	std::vector<TypeId> element_tids = ti_tuple->GetElementTids();
@@ -26,7 +26,7 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std
 	std::string s = "(";
 	for (size_t i = 0; i < element_tids.size(); i++) {
 		std::string field_name = TypeInfoTuple::GetFieldName(i);
-		Variable* element = thisobj->GetFieldValue(field_name);
+		Variable*	element	   = thisobj->GetFieldValue(field_name);
 		// 调用tostring方法来转换为str
 		// TODO 目前得先获取MethodIndex然后调用
 		TypeInfo*	ti_element	 = g_typemgr.GetTypeInfo(element_tids.at(i));

@@ -3,6 +3,7 @@
 #include "define.h"
 #include "function_obj.h"
 #include "type.h"
+#include <bits/stdint-intn.h>
 #include <map>
 #include <vector>
 
@@ -17,7 +18,8 @@ class AstNodeComplexFnDef;
 class Variable {
 public:
 	Variable(TypeId tid);
-	Variable(int value);
+	Variable(int32_t value);
+	Variable(int64_t value);
 	Variable(float value);
 	Variable(bool value);
 	Variable(std::string value);
@@ -32,7 +34,8 @@ public:
 	TypeId GetTypeId() const { return m_tid; }
 
 	TypeId						  GetValueTid() const;
-	int							  GetValueInt() const;
+	int32_t						  GetValueInt32() const;
+	int64_t						  GetValueInt64() const;
 	float						  GetValueFloat() const;
 	bool						  GetValueBool() const;
 	std::string					  GetValueStr() const;
@@ -61,19 +64,21 @@ public:
 
 private:
 	void set_default_value();
+
 private:
 	TypeId m_tid;
 	bool   m_is_const;
 	bool   m_is_tmp; // 是否是临时变量.
 
 	// value type
-	TypeId		m_value_tid;
-	int			m_value_int;   // int
-	float		m_value_float; // float
-	bool		m_value_bool;  // bool
-	std::string m_value_str;   // str
+	TypeId	m_value_tid;   // type
+	int32_t m_value_int32; // i32
+	int64_t m_value_int64; // i64
+	float	m_value_float; // float
+	bool	m_value_bool;  // bool
 
 	// reference type
+	std::string*					  m_value_str;	 // str
 	FunctionObj*					  m_value_fnobj; // function
 	std::vector<Variable*>*			  m_value_array; // array
 	std::map<std::string, Variable*>* m_fields;		 // class|tuple

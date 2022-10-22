@@ -8,7 +8,8 @@
 #include "type_constraint.h"
 #include "type_float.h"
 #include "type_fn.h"
-#include "type_int.h"
+#include "type_int32.h"
+#include "type_int64.h"
 #include "type_mgr.h"
 #include "type_str.h"
 #include "type_tuple.h"
@@ -40,10 +41,16 @@ void TypeMgr::InitTypes() {
 		assert(TYPE_ID_TYPE == ti_type->GetTypeId());
 	}
 	{
-		TypeInfoInt* ti_int = new TypeInfoInt();
+		TypeInfoInt32* ti_int = new TypeInfoInt32();
 		ti_int->SetTypeId(allocate_typeid());
 		m_typeinfos.push_back(ti_int);
-		assert(TYPE_ID_INT == ti_int->GetTypeId());
+		assert(TYPE_ID_INT32 == ti_int->GetTypeId());
+	}
+	{
+		TypeInfoInt64* ti_int = new TypeInfoInt64();
+		ti_int->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti_int);
+		assert(TYPE_ID_INT64 == ti_int->GetTypeId());
 	}
 	{
 		TypeInfoFloat* ti_float = new TypeInfoFloat();
@@ -89,7 +96,7 @@ void TypeMgr::InitTypes() {
 }
 void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods(ctx);
-	m_typeinfos.at(TYPE_ID_INT)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_INT32)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_FLOAT)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_BOOL)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods(ctx);
@@ -133,7 +140,7 @@ TypeId TypeMgr::AddGenericType(TypeInfo* ti) {
 TypeId TypeMgr::AddTypeInfo(TypeInfo* ti) {
 	return add_type(ti);
 }
-TypeId TypeMgr::GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid) {
+TypeId TypeMgr::GetOrAddTypeFn(VerifyContext& ctx, std::vector<TypeId> params, TypeId return_tid) {
 	for (const auto ti : m_typeinfos) {
 		if (ti->IsFn()) {
 			const TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(ti);
@@ -142,9 +149,12 @@ TypeId TypeMgr::GetOrAddTypeFn(std::vector<TypeId> params, TypeId return_tid) {
 			}
 		}
 	}
-	return add_type(new TypeInfoFn(params, return_tid));
+	TypeInfoFn* ti = new TypeInfoFn(params, return_tid);
+	add_type(ti);
+	ti->InitBuiltinMethods(ctx);
+	return ti->GetTypeId();
 }
-TypeId TypeMgr::GetOrAddTypeArray(TypeId element_tid, bool& added) {
+TypeId TypeMgr::GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, bool& added) {
 	added = false;
 	for (const auto ti : m_typeinfos) {
 		if (ti->IsArray()) {
@@ -154,8 +164,11 @@ TypeId TypeMgr::GetOrAddTypeArray(TypeId element_tid, bool& added) {
 			}
 		}
 	}
-	added = true;
-	return add_type(new TypeInfoArray(element_tid));
+	added			  = true;
+	TypeInfoArray* ti = new TypeInfoArray(element_tid);
+	add_type(ti);
+	ti->InitBuiltinMethods(ctx);
+	return ti->GetTypeId();
 }
 bool TypeMgr::IsTypeExist(TypeId tid) const {
 	return 0 < tid && tid < m_typeinfos.size();
@@ -172,6 +185,7 @@ TypeId TypeMgr::GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> elemen
 	}
 	added			  = true;
 	TypeInfoTuple* ti = new TypeInfoTuple(element_tids);
+	add_type(ti);
 	ti->InitBuiltinMethods(ctx);
-	return add_type(ti);
+	return ti->GetTypeId();
 }

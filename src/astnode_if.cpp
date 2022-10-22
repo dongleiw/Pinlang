@@ -18,11 +18,11 @@ VerifyContextResult AstNodeIf::Verify(VerifyContext& ctx, VerifyContextParam vpa
 		}
 	}
 	for (auto iter : m_cond_block_list) {
-		iter->Verify(ctx,VerifyContextParam());
+		iter->Verify(ctx, VerifyContextParam().SetReturnTid(vparam.GetReturnTid()));
 	}
 
 	if (m_else_cond_block != nullptr) {
-		m_else_cond_block->Verify(ctx,VerifyContextParam());
+		m_else_cond_block->Verify(ctx, VerifyContextParam().SetReturnTid(vparam.GetResultTid()));
 	}
 
 	m_result_typeid = TYPE_ID_NONE;
@@ -31,7 +31,7 @@ VerifyContextResult AstNodeIf::Verify(VerifyContext& ctx, VerifyContextParam vpa
 Variable* AstNodeIf::Execute(ExecuteContext& ctx) {
 	for (size_t i = 0; i < m_cond_expr_list.size(); i++) {
 		Variable* v = m_cond_expr_list.at(i)->Execute(ctx);
-		if (v->GetValueBool()) {
+		if (v->GetValueBool()==true) {
 			m_cond_block_list.at(i)->Execute(ctx);
 			return nullptr;
 		}
@@ -45,7 +45,7 @@ Variable* AstNodeIf::Execute(ExecuteContext& ctx) {
 AstNodeIf* AstNodeIf::DeepCloneT() {
 	std::vector<AstNode*> cond_expr_list;
 	std::vector<AstNode*> cond_block_list;
-	AstNode*			  else_cond_block;
+	AstNode*			  else_cond_block = nullptr;
 
 	for (auto iter : m_cond_expr_list) {
 		cond_expr_list.push_back(iter->DeepClone());
@@ -54,7 +54,7 @@ AstNodeIf* AstNodeIf::DeepCloneT() {
 		cond_block_list.push_back(iter->DeepClone());
 	}
 
-	if (m_else_cond_block)
+	if (m_else_cond_block != nullptr)
 		else_cond_block = m_else_cond_block->DeepClone();
 	return new AstNodeIf(cond_expr_list, cond_block_list, else_cond_block);
 }

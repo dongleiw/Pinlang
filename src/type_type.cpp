@@ -6,19 +6,19 @@
 #include "type_mgr.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_equal(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_equal(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_TYPE);
 	return new Variable(thisobj->GetValueTid() == args.at(0)->GetValueTid());
 }
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
 	return new Variable(GET_TYPENAME(thisobj->GetValueTid()));
 }
-static Variable* builtin_fn_getTypeName(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_getTypeName(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
 	return new Variable(GET_TYPENAME(thisobj->GetValueTid()));
 }
-static Variable* builtin_fn_getTypeId(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_getTypeId(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
 	return new Variable(int(thisobj->GetValueTid()));
 }

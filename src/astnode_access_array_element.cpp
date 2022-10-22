@@ -14,7 +14,7 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 	TypeInfo* ti	  = g_typemgr.GetTypeInfo(obj_tid);
 
 	TypeId index_tid = m_index_expr->Verify(ctx, VerifyContextParam()).GetResultTypeId();
-	if (index_tid != TYPE_ID_INT) {
+	if (index_tid != TYPE_ID_INT32) {
 		panicf("index type is not int");
 	}
 

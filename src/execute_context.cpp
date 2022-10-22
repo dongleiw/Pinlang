@@ -16,7 +16,3 @@ void ExecuteContext::PopStack() {
 	assert(m_top_stack != nullptr);
 	m_top_stack = m_top_stack->GetNextStack();
 }
-void ExecuteContext::init_global_vt(){
-	m_global_vt.AddVariable("type", Variable::CreateTypeVariable(TYPE_ID_TYPE));
-	m_global_vt.AddVariable("int", Variable::CreateTypeVariable(TYPE_ID_INT));
-}

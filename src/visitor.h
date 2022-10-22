@@ -9,6 +9,7 @@ public:
 	 */
 	virtual std::any visitType_array(PinlangParser::Type_arrayContext* ctx) override;
 	virtual std::any visitType_tuple(PinlangParser::Type_tupleContext* ctx) override;
+	virtual std::any visitType_fn(PinlangParser::Type_fnContext* ctx) override;
 	/*
 	 * 解析类型. 返回AstNodeType*
 	 */

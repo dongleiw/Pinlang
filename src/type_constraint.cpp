@@ -10,7 +10,7 @@
 #include "utils.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_never_call(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_never_call(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	panicf("bug");
 	return nullptr;
 }

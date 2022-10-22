@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <vector>
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj != nullptr && args.size() == 0);
 	std::string					  s			 = "{";
 	TypeInfoArray*				  ti_array	 = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(thisobj->GetTypeId()));
@@ -30,16 +30,16 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std
 	s += "}";
 	return new Variable(s);
 }
-static Variable* builtin_fn_size(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_size(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj != nullptr && args.size() == 0);
 	return new Variable(int(thisobj->GetValueArray().size()));
 }
 
-static Variable* builtin_fn_index(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj != nullptr && g_typemgr.GetTypeInfo(thisobj->GetTypeId())->IsArray() && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
+static Variable* builtin_fn_index(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj != nullptr && g_typemgr.GetTypeInfo(thisobj->GetTypeId())->IsArray() && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
 
 	std::vector<Variable*> elements = thisobj->GetValueArray();
-	int					   index	= args.at(0)->GetValueInt();
+	int32_t				   index	= args.at(0)->GetValueInt32();
 	return elements.at(index);
 }
 
@@ -84,7 +84,7 @@ void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* index_type = new AstNodeType();
-					index_type->InitWithIdentifier("int");
+					index_type->InitWithIdentifier("i32");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = index_type,

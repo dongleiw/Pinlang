@@ -15,27 +15,33 @@
 
 #include <cassert>
 
-static Variable* builtin_fn_add_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_add_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	float result = thisobj->GetValueFloat() + args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_sub_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_sub_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	float result = thisobj->GetValueFloat() - args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_mul_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_mul_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	float result = thisobj->GetValueFloat() * args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_div_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_greaterThan(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_FLOAT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_FLOAT);
+	bool result = thisobj->GetValueFloat() > args.at(0)->GetValueFloat();
+	return new Variable(result);
+}
+
+static Variable* builtin_fn_div_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	float result = thisobj->GetValueFloat() / args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
 	char buf[16];
 	snprintf(buf, sizeof(buf), "%f", thisobj->GetValueFloat());
@@ -103,6 +109,35 @@ void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Add")->GetValueConstraint();
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_FLOAT, TYPE_ID_FLOAT});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 手动实现GreaterThan约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				{
+					AstNodeType* another_value_type = new AstNodeType();
+					another_value_type->InitWithIdentifier("float");
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = another_value_type,
+					}});
+				}
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("bool");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_greaterThan));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterThan", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("GreaterThan")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_FLOAT});
 		AddConstraint(constraint_tid, fns);
 	}
 	ctx.PopSTack();

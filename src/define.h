@@ -32,12 +32,13 @@ enum TypeId {
 	TYPE_ID_NONE			   = 0,
 	TYPE_ID_INFER			   = 1, // 推导类型. 在Verify阶段, 所有这种类型的变量都将变更为实际具体类型
 	TYPE_ID_TYPE			   = 2, // type类型.
-	TYPE_ID_INT				   = 3,
-	TYPE_ID_FLOAT			   = 4,
-	TYPE_ID_BOOL			   = 5,
-	TYPE_ID_STR				   = 6,
-	TYPE_ID_GENERIC_CONSTRAINT = 7, // 泛型约束
-	TYPE_ID_COMPLEX_FN		   = 8, // 复杂函数
+	TYPE_ID_INT32			   = 3,
+	TYPE_ID_INT64			   = 4,
+	TYPE_ID_FLOAT			   = 5,
+	TYPE_ID_BOOL			   = 6,
+	TYPE_ID_STR				   = 7,
+	TYPE_ID_GENERIC_CONSTRAINT = 8, // 泛型约束
+	TYPE_ID_COMPLEX_FN		   = 9, // 复杂函数
 };
 
 #define CONSTRAINT_ID_NONE ((TypeId)0)
@@ -46,9 +47,10 @@ class ExecuteContext;
 class Variable;
 class AstNode;
 class AstNodeComplexFnDef;
+class Function;
 
 // 指向内置函数的指针
-typedef Variable* (*BuiltinFnCallback)(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);
+typedef Variable* (*BuiltinFnCallback)(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args);
 
 class AstNodeType;
 /*

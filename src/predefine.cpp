@@ -29,7 +29,7 @@ std::string format_string(ExecuteContext& ctx, std::vector<Variable*> args) {
 			TypeInfo*	ti			 = g_typemgr.GetTypeInfo(arg->GetTypeId());
 			MethodIndex method_index = ti->GetMethodIdx("tostring[]()str");
 			//MethodIndex method_index = ti->GetConcreteMethod(ctx, "tostring[]()");
-			Variable*	str_v		 = arg->CallMethod(ctx, method_index, std::vector<Variable*>());
+			Variable* str_v = arg->CallMethod(ctx, method_index, std::vector<Variable*>());
 
 			value += str_v->GetValueStr().c_str();
 
@@ -41,7 +41,7 @@ std::string format_string(ExecuteContext& ctx, std::vector<Variable*> args) {
 
 	return value;
 }
-Variable* builtin_fn_printf(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+Variable* builtin_fn_printf(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj == nullptr);
 	assert(args.size() >= 1 && args.at(0)->GetTypeId() == TYPE_ID_STR);
 
@@ -80,11 +80,6 @@ static AstNodeComplexFnDef::Implement create_implement_of_printf(int args_num) {
 static AstNodeComplexFnDef* create_astnode_printf() {
 	std::vector<AstNodeComplexFnDef::Implement> implements;
 
-	AstNodeType* param_fmt_type = new AstNodeType();
-	param_fmt_type->InitWithIdentifier("str");
-
-	AstNodeType* param_value_type = new AstNodeType();
-	param_value_type->InitWithIdentifier("T");
 	for (int i = 0; i < 16; i++) {
 		implements.push_back(create_implement_of_printf(i));
 	}

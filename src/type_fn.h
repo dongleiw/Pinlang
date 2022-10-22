@@ -34,6 +34,8 @@ public:
 
 	std::vector<TypeId> GetParmsTid() const;
 
+	void InitBuiltinMethods(VerifyContext& ctx) override;
+
 private:
 	void set_name();
 

@@ -11,9 +11,9 @@ add_executable ( pinlang ${sources} ${sources_parser} ${sources_antlr4_runtime})
 
 find_package(Threads REQUIRED)
 
-set (CMAKE_CXX_FLAGS "-pthread")
+set (CMAKE_CXX_FLAGS "-pthread -ldl")
 
-target_link_libraries ( pinlang  ${lib})
+target_link_libraries ( pinlang  ${lib} "dl")
 target_compile_options(pinlang PUBLIC -std=c++17 -Wall -Wfloat-conversion -Wfloat-equal -g)
 
 target_include_directories(pinlang PUBLIC "antlr4/cpp_runtime")

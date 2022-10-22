@@ -1,17 +1,25 @@
+var dynlib_handler = dl_open("./libmy.so");
 
-class Foo{
-	impl constraint Index[int]{
-		fn index(idx int)int{
-			return idx+1;
-		}
-	}
-	impl constraint Index[float]{
-		fn index(idx int)float{
-			return 1.9;
-		}
-	}
+var args_void_ret_void fn() = dl_getFn(dynlib_handler, "args_void_ret_void");
+args_void_ret_void();
+
+var args_int_ret_void fn(int) = dl_getFn(dynlib_handler, "args_int_ret_void");
+args_int_ret_void(1);
+
+var args_int_int_ret_void fn(int,int) = dl_getFn(dynlib_handler, "args_int_int_ret_void");
+args_int_int_ret_void(1,2);
+
+{
+	var args_str_int_ret_int fn(str,int)int = dl_getFn(dynlib_handler, "args_constcharptr_int_ret_int");
+	var ret = args_str_int_ret_int("hello",2);
+	printf("ret={}\n", ret);
 }
 
-var f = Foo{};
-printf("{}\n", f[0]);
-printf("{}\n", f[9]);
+
+// libc
+{
+	var dynlib_handler = dl_open("/lib/x86_64-linux-gnu/libc.so.6");
+	var args_str_int_ret_int fn(str,int)int = dl_getFn(dynlib_handler, "open");
+	var ret = args_str_int_ret_int("hello",0);
+	printf("ret={}\n", ret);
+}

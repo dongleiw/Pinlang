@@ -31,12 +31,7 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextPa
 		ctx.GetCurStack()->EnterBlock(new VariableTable());
 	}
 	for (auto n : m_stmts) {
-		AstNodeReturn* astnode_return = dynamic_cast<AstNodeReturn*>(n);
-		if (astnode_return != nullptr) {
-			n->Verify(ctx, VerifyContextParam().SetReturnTid(vparam.GetReturnTid()));
-		} else {
-			n->Verify(ctx, VerifyContextParam());
-		}
+		n->Verify(ctx, VerifyContextParam().SetReturnTid(vparam.GetReturnTid()));
 	}
 	ctx.GetCurStack()->LeaveBlock();
 	return vr;
@@ -58,6 +53,9 @@ Variable* AstNodeBlockStmt::Execute(ExecuteContext& ctx) {
 
 	for (auto n : m_stmts) {
 		n->Execute(ctx);
+		if (ctx.GetCurStack()->HasReturned()) {
+			break;
+		}
 	}
 	ctx.GetCurStack()->LeaveBlock();
 	return nullptr;

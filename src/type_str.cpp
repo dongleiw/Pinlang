@@ -14,24 +14,24 @@
 
 #include <cassert>
 
-static Variable* builtin_fn_add_str(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_add_str(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	std::string result = thisobj->GetValueStr() + args.at(0)->GetValueStr();
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
 	return thisobj;
 }
 
-static Variable* builtin_fn_index(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT);
+static Variable* builtin_fn_index(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
 	std::string value = thisobj->GetValueStr();
-	int			index = args.at(0)->GetValueInt();
-	return new Variable(int(value.at(index)));
+	int32_t index = args.at(0)->GetValueInt32();
+	return new Variable(int32_t(value.at(index)));
 }
 
-static Variable* builtin_fn_size(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_size(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 0);
 
 	return new Variable(int(thisobj->GetValueStr().size()));
@@ -110,7 +110,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* index_type = new AstNodeType();
-					index_type->InitWithIdentifier("int");
+					index_type->InitWithIdentifier("i32");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = index_type,
@@ -143,7 +143,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserGenericParam> gparams;
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
-				return_type->InitWithIdentifier("int");
+				return_type->InitWithIdentifier("i32");
 				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_size));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("Size", implements);

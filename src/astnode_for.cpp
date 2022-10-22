@@ -20,7 +20,7 @@ VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vp
 		m_loop_expr->Verify(ctx, VerifyContextParam());
 	}
 
-	m_body->Verify(ctx, VerifyContextParam());
+	m_body->Verify(ctx, VerifyContextParam().SetReturnTid(vparam.GetReturnTid()));
 
 	m_result_typeid = TYPE_ID_NONE;
 	return VerifyContextResult(m_result_typeid);
@@ -32,11 +32,14 @@ Variable* AstNodeFor::Execute(ExecuteContext& ctx) {
 	}
 	while (true) {
 		Variable* v_cond = m_cond_expr->Execute(ctx);
-		if (v_cond->GetValueBool()==false) {
+		if (v_cond->GetValueBool() == false) {
 			break;
 		}
 
 		m_body->Execute(ctx);
+		if (ctx.GetCurStack()->HasReturned()) {
+			break;
+		}
 
 		if (m_loop_expr != nullptr) {
 			m_loop_expr->Execute(ctx);

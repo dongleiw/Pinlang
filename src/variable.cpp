@@ -11,37 +11,20 @@
 #include <cassert>
 
 Variable::Variable(TypeId tid) {
-	m_tid			   = tid;
+	m_tid	 = tid;
 	m_is_tmp = true;
 
 	set_default_value();
-
-	//m_fields		   = new std::map<std::string, Variable*>();
-	//m_value_array	   = new std::vector<Variable*>();
-	//const TypeInfo* ti = g_typemgr.GetTypeInfo(tid);
-	//for (auto iter : ti->GetField()) {
-	//	Variable* v = new Variable(iter.tid);
-	//	v->SetTmp(false);
-	//	(*m_fields)[iter.name] = v;
-	//}
-	//switch (m_tid) {
-	//case TYPE_ID_INT:
-	//	m_value_int = 0;
-	//	break;
-	//case TYPE_ID_FLOAT:
-	//	m_value_float = 0.0;
-	//	break;
-	//case TYPE_ID_BOOL:
-	//	m_value_bool = false;
-	//	break;
-	//default:
-	//	break;
-	//}
 }
-Variable::Variable(int value) {
-	m_tid		= TYPE_ID_INT;
-	m_value_int = value;
-	m_is_tmp	= true;
+Variable::Variable(int32_t value) {
+	m_tid		  = TYPE_ID_INT32;
+	m_value_int32 = value;
+	m_is_tmp	  = true;
+}
+Variable::Variable(int64_t value) {
+	m_tid		  = TYPE_ID_INT64;
+	m_value_int64 = value;
+	m_is_tmp	  = true;
 }
 Variable::Variable(float value) {
 	m_tid		  = TYPE_ID_FLOAT;
@@ -54,9 +37,10 @@ Variable::Variable(bool value) {
 	m_is_tmp	 = true;
 }
 Variable::Variable(std::string value) {
-	m_tid		= TYPE_ID_STR;
-	m_value_str = value;
-	m_is_tmp	= true;
+	m_tid		 = TYPE_ID_STR;
+	m_value_str	 = new std::string();
+	*m_value_str = value;
+	m_is_tmp	 = true;
 }
 Variable::Variable(FunctionObj fnobj) {
 	m_tid		   = fnobj.GetFunction()->GetTypeId();
@@ -125,12 +109,12 @@ std::string Variable::ToString() const {
 		snprintf(buf, sizeof(buf) - 1, "type(%d:%s)", m_value_tid, GET_TYPENAME_C(m_value_tid));
 		s += buf;
 		break;
-	case TYPE_ID_INT:
-		snprintf(buf, sizeof(buf) - 1, "int(%d)", m_value_int);
+	case TYPE_ID_INT32:
+		snprintf(buf, sizeof(buf) - 1, "int(%d)", m_value_int32);
 		s += buf;
 		break;
 	case TYPE_ID_STR:
-		snprintf(buf, sizeof(buf) - 1, "str(%s)", m_value_str.c_str());
+		snprintf(buf, sizeof(buf) - 1, "str(%s)", m_value_str->c_str());
 		s += buf;
 		break;
 	case TYPE_ID_FLOAT:
@@ -152,9 +136,13 @@ TypeId Variable::GetValueTid() const {
 	assert(m_tid == TYPE_ID_TYPE);
 	return m_value_tid;
 }
-int Variable::GetValueInt() const {
-	assert(m_tid == TYPE_ID_INT);
-	return m_value_int;
+int32_t Variable::GetValueInt32() const {
+	assert(m_tid == TYPE_ID_INT32);
+	return m_value_int32;
+}
+int64_t Variable::GetValueInt64() const {
+	assert(m_tid == TYPE_ID_INT64);
+	return m_value_int64;
 }
 float Variable::GetValueFloat() const {
 	assert(m_tid == TYPE_ID_FLOAT);
@@ -166,7 +154,7 @@ bool Variable::GetValueBool() const {
 }
 std::string Variable::GetValueStr() const {
 	assert(m_tid == TYPE_ID_STR);
-	return m_value_str;
+	return *m_value_str;
 }
 FunctionObj* Variable::GetValueFunctionObj() const {
 	assert(g_typemgr.GetTypeInfo(m_tid)->IsFn());
@@ -228,13 +216,14 @@ void Variable::set_default_value() {
 		m_value_array = new std::vector<Variable*>();
 	} else if (ti->IsFn()) {
 		//panicf("function can not have default value");
+		m_value_fnobj = nullptr;
 	} else {
 		switch (m_tid) {
 		case TYPE_ID_TYPE:
 			m_value_tid = TYPE_ID_NONE;
 			break;
-		case TYPE_ID_INT:
-			m_value_int = 0;
+		case TYPE_ID_INT32:
+			m_value_int32 = 0;
 			break;
 		case TYPE_ID_FLOAT:
 			m_value_float = 0.0;
@@ -243,7 +232,8 @@ void Variable::set_default_value() {
 			m_value_bool = false;
 			break;
 		case TYPE_ID_STR:
-			m_value_str = "";
+			m_value_str	 = new std::string();
+			*m_value_str = "";
 			break;
 		default:
 			panicf("unknown type[%d:%s]", m_tid, GET_TYPENAME_C(m_tid));

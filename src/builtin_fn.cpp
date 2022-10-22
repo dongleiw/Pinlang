@@ -19,14 +19,6 @@ Variable* builtin_fn_printf_type(ExecuteContext& ctx, Variable* thisobj, std::ve
 	printf(fmt.c_str(), GET_TYPENAME_C(tid));
 	return nullptr;
 }
-Variable* builtin_fn_printf_str_int(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj == nullptr);
-	assert(args.size() == 2 && args.at(0)->GetTypeId() == TYPE_ID_STR && args.at(1)->GetTypeId() == TYPE_ID_INT);
-	std::string fmt	 = args.at(0)->GetValueStr();
-	int			arg1 = args.at(1)->GetValueInt();
-	printf(fmt.c_str(), arg1);
-	return nullptr;
-}
 Variable* builtin_fn_printf_str_float(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj == nullptr);
 	assert(args.size() == 2 && args.at(0)->GetTypeId() == TYPE_ID_STR && args.at(1)->GetTypeId() == TYPE_ID_FLOAT);

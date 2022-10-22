@@ -8,7 +8,7 @@
 
 #include <cassert>
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function*fn,Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
 	if (thisobj->GetValueBool()) {
 		return new Variable(std::string("true"));

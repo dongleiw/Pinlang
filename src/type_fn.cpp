@@ -1,8 +1,9 @@
 #include "type_fn.h"
+#include "astnode_complex_fndef.h"
+#include "astnode_constraint.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
-#include <functional>
 
 TypeInfoFn::TypeInfoFn(std::vector<TypeId> params, TypeId return_tid) {
 	m_params	 = params;
@@ -83,4 +84,16 @@ std::vector<TypeId> TypeInfoFn::GetParmsTid() const {
 		params_tid.push_back(iter);
 	}
 	return params_tid;
+}
+void TypeInfoFn::InitBuiltinMethods(VerifyContext& ctx) {
+	ctx.PushStack();
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
+	// 手动实现Fn约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		AstNodeConstraint*				  constraint	 = ctx.GetCurStack()->GetVariable("Fn")->GetValueConstraint();
+		TypeId							  constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
+		AddConstraint(constraint_tid, fns);
+	}
+	ctx.PopSTack();
 }

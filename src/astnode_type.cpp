@@ -65,20 +65,15 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam v
 			fn_return_tid = m_fn_return_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 		}
 
-		TypeId fn_tid = g_typemgr.GetOrAddTypeFn(fn_params_tid, fn_return_tid);
+		TypeId fn_tid = g_typemgr.GetOrAddTypeFn(ctx, fn_params_tid, fn_return_tid);
 		vr.SetResultTypeId(fn_tid);
 		break;
 	}
 	case TYPE_KIND_ARRAY:
 	{
-		TypeId		   element_tid = m_element_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
-		bool		   added	   = false;
-		TypeId		   array_tid   = g_typemgr.GetOrAddTypeArray(element_tid, added);
-		TypeInfoArray* ti		   = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(array_tid));
-		if (added) {
-			ti->InitBuiltinMethods(ctx);
-		}
-
+		TypeId element_tid = m_element_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
+		bool   added	   = false;
+		TypeId array_tid   = g_typemgr.GetOrAddTypeArray(ctx, element_tid, added);
 		vr.SetResultTypeId(array_tid);
 		break;
 	}

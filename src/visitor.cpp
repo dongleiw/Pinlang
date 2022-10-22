@@ -15,6 +15,7 @@
 #include "astnode_if.h"
 #include "astnode_init.h"
 #include "astnode_literal.h"
+#include "astnode_logical_operator.h"
 #include "astnode_operator.h"
 #include "astnode_return.h"
 #include "astnode_tuple.h"
@@ -44,19 +45,24 @@ std::any Visitor::visitType_tuple(PinlangParser::Type_tupleContext* ctx) {
 	r->InitWithTuple(tuple_element_types);
 	return r;
 }
+std::any Visitor::visitType_fn(PinlangParser::Type_fnContext* ctx) {
+	AstNodeType*				 r			 = new AstNodeType();
+	std::vector<ParserParameter> params		 = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
+	AstNodeType*				 return_type = nullptr;
+	if (ctx->type() != nullptr) {
+		return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	}
+	r->InitWithFn(params, return_type);
+	return r;
+}
 std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
 	AstNodeType* r = new AstNodeType();
 	if (ctx->TYPE() != nullptr) {
 		r->InitWithType();
 	} else if (ctx->Identifier() != nullptr) {
 		r->InitWithIdentifier(ctx->Identifier()->getText());
-	} else if (ctx->FN() != nullptr) {
-		std::vector<ParserParameter> params		 = std::any_cast<std::vector<ParserParameter>>(ctx->parameter_list()->accept(this));
-		AstNodeType*				 return_type = nullptr;
-		if (ctx->type() != nullptr) {
-			return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
-		}
-		r->InitWithFn(params, return_type);
+	} else if (ctx->type_fn() != nullptr) {
+		return ctx->type_fn()->accept(this);
 	} else if (ctx->type_array() != nullptr) {
 		return ctx->type_array()->accept(this);
 	} else if (ctx->type_tuple() != nullptr) {
@@ -129,28 +135,28 @@ std::any Visitor::visitExpr_relational(PinlangParser::Expr_relationalContext* ct
 	std::string op;
 	SourceInfo	si;
 	if (ctx->EQUALS() != NULL) {
-		constraint_name="Equal";
-		op = "equal";
+		constraint_name = "Equal";
+		op				= "equal";
 		si.Init(ctx->EQUALS()->getSymbol());
 	} else if (ctx->LESS() != NULL) {
-		constraint_name="Less";
-		op = "less";
+		constraint_name = "LessThan";
+		op				= "lessThan";
 		si.Init(ctx->LESS()->getSymbol());
 	} else if (ctx->LESS_OR_EQUALS() != NULL) {
-		constraint_name="LessEqual";
-		op = "lessEqual";
+		constraint_name = "LessEqual";
+		op				= "lessEqual";
 		si.Init(ctx->LESS_OR_EQUALS()->getSymbol());
 	} else if (ctx->GREATER() != NULL) {
-		constraint_name="Greater";
-		op = "greater";
+		constraint_name = "GreaterThan";
+		op				= "greaterThan";
 		si.Init(ctx->GREATER()->getSymbol());
 	} else if (ctx->GREATER_OR_EQUALS() != NULL) {
-		constraint_name="GreaterEqual";
-		op = "greaterEqual";
+		constraint_name = "GreaterEqual";
+		op				= "greaterEqual";
 		si.Init(ctx->GREATER_OR_EQUALS()->getSymbol());
 	} else if (ctx->NOT_EQUALS() != NULL) {
-		constraint_name="NotEqual";
-		op = "notEqual";
+		constraint_name = "NotEqual";
+		op				= "notEqual";
 		si.Init(ctx->NOT_EQUALS()->getSymbol());
 	} else {
 		panicf("unknown op");
@@ -166,16 +172,16 @@ std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeConte
 	std::string op;
 	SourceInfo	si;
 	if (ctx->MUL() != NULL) {
-		constraint_name="Mul";
-		op = "mul";
+		constraint_name = "Mul";
+		op				= "mul";
 		si.Init(ctx->MUL()->getSymbol());
 	} else if (ctx->DIV() != NULL) {
-		constraint_name="Div";
-		op = "div";
+		constraint_name = "Div";
+		op				= "div";
 		si.Init(ctx->DIV()->getSymbol());
 	} else if (ctx->MOD() != NULL) {
-		constraint_name="Mod";
-		op = "mod";
+		constraint_name = "Mod";
+		op				= "mod";
 		si.Init(ctx->MOD()->getSymbol());
 	} else {
 		panicf("unknown op");
@@ -185,8 +191,18 @@ std::any Visitor::visitExpr_muliplicative(PinlangParser::Expr_muliplicativeConte
 	return (AstNode*)node;
 }
 std::any Visitor::visitExpr_logical(PinlangParser::Expr_logicalContext* ctx) {
-	panicf("not implemented yet\n");
-	return nullptr;
+	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
+	AstNode*	right = std::any_cast<AstNode*>(ctx->expr().at(1)->accept(this));
+	std::string op;
+	if (ctx->LOGICAL_AND() != nullptr) {
+		op = "and";
+	} else if (ctx->LOGICAL_OR() != nullptr) {
+		op = "or";
+	} else {
+		op = "not";
+	}
+
+	return (AstNode*)new AstNodeLogicalOperator(left, op, right);
 }
 std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	AstNode*	left  = std::any_cast<AstNode*>(ctx->expr().at(0)->accept(this));
@@ -195,12 +211,12 @@ std::any Visitor::visitExpr_additive(PinlangParser::Expr_additiveContext* ctx) {
 	std::string op;
 	SourceInfo	si;
 	if (ctx->ADD() != nullptr) {
-		constraint_name="Add";
-		op = "add";
+		constraint_name = "Add";
+		op				= "add";
 		si.Init(ctx->ADD()->getSymbol());
 	} else if (ctx->SUB() != nullptr) {
-		constraint_name="Sub";
-		op = "sub";
+		constraint_name = "Sub";
+		op				= "sub";
 		si.Init(ctx->SUB()->getSymbol());
 	} else {
 		panicf("unknown op");
@@ -591,7 +607,15 @@ std::any Visitor::visitExpr_init_body(PinlangParser::Expr_init_bodyContext* ctx)
  */
 std::any Visitor::visitExpr_init(PinlangParser::Expr_initContext* ctx) {
 	AstNodeInit* astnode_init = std::any_cast<AstNodeInit*>(ctx->expr_init_body()->accept(this));
-	AstNodeType* astnode_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	AstNodeType* astnode_type = nullptr;
+	if (ctx->type_array() != nullptr) {
+		astnode_type = std::any_cast<AstNodeType*>(ctx->type_array()->accept(this));
+	} else if (ctx->Identifier() != nullptr) {
+		astnode_type = new AstNodeType();
+		astnode_type->InitWithIdentifier(ctx->Identifier()->getText());
+	} else {
+		panicf("bug");
+	}
 	astnode_init->SetType(astnode_type);
 	return (AstNode*)astnode_init;
 }

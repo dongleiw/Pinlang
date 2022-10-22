@@ -48,10 +48,26 @@ TypeId Function::GetReturnTypeId() const {
 }
 Variable* Function::Call(ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
 	if (m_builtin_callback != nullptr) {
+		// 构造block
+		VariableTable* vt_args = new VariableTable();
+		// 将泛参定义到block中
+		for (auto iter : m_gparams) {
+			vt_args->AddVariable(iter.gparam_name, Variable::CreateTypeVariable(iter.gparam_tid));
+		}
+		// 将参数定义到block中
+		for (size_t i = 0; i < args.size(); i++) {
+			vt_args->AddVariable(m_params_name.at(i), args.at(i));
+		}
+		if (obj != nullptr) {
+			assert(obj->GetTypeId() == m_obj_tid);
+			vt_args->AddVariable("this", obj);
+		}
+
 		ctx.PushStack();
-		Variable* result = m_builtin_callback(ctx, obj, args);
+		ctx.GetCurStack()->EnterBlock(vt_args);
+		Variable* ret_var = m_builtin_callback(ctx, this, obj, args);
 		ctx.PopStack();
-		return result;
+		return ret_var;
 	} else if (m_body != nullptr) {
 		// 构造block
 		VariableTable* vt_args = new VariableTable();
@@ -63,7 +79,8 @@ Variable* Function::Call(ExecuteContext& ctx, Variable* obj, std::vector<Variabl
 		for (size_t i = 0; i < args.size(); i++) {
 			vt_args->AddVariable(m_params_name.at(i), args.at(i));
 		}
-		if(obj!=nullptr){
+		if (obj != nullptr) {
+			assert(obj->GetTypeId() == m_obj_tid);
 			vt_args->AddVariable("this", obj);
 		}
 

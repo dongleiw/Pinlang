@@ -48,8 +48,8 @@ GREATER                : '>';
 GREATER_OR_EQUALS      : '>=';
 
 // Logical
-LOGICAL_OR             : 'or';
-LOGICAL_AND            : 'and';
+LOGICAL_OR             : '||';
+LOGICAL_AND            : '&&';
 
 // operators
 ADD				: '+';
@@ -64,7 +64,7 @@ R_CURLY         : '}';
 L_BRACKET		: '[';
 R_BRACKET		: ']';
 
-// unused character ^ ' ~ ^ $ @ # ` : | &
+// unused character ^ ' ~ $ @ # ` : 
 
 ASSIGN : '=';
 

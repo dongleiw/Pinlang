@@ -1,0 +1,12 @@
+调用c库
+
+语法:
+	没有新增语法, 提供三个函数实现
+
+函数:
+	fn dl_open(dlpath str) int{
+	}
+	fn dl_getFn[T Fn](dl_handler int, fnname str) T{
+	}
+	fn dl_close(dl_handler int){
+	}

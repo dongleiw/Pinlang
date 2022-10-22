@@ -92,7 +92,6 @@ public:
 	VariableTable* GetGlobalVt() { return &m_global_vt; }
 
 private:
-	void init_global_vt();
 
 private:
 	Stack*		  m_top_stack;

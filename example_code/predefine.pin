@@ -8,14 +8,17 @@ constraint Sub[AnotherT,ReturnT]{
 constraint Equal[AnotherT]{
 	fn equal(another AnotherT) bool;
 }
-constraint Less[AnotherT]{
+constraint NotEqual[AnotherT]{
+	fn notEqual(another AnotherT) bool;
+}
+constraint LessThan[AnotherT]{
 	fn less(another AnotherT) bool;
 }
 constraint LessEqual[AnotherT]{
 	fn lessEqual(another AnotherT) bool;
 }
-constraint Greater[AnotherT]{
-	fn greater(another AnotherT) bool;
+constraint GreaterThan[AnotherT]{
+	fn greaterThan(another AnotherT) bool;
 }
 constraint GreaterEqual[AnotherT]{
 	fn greaterEqual(another AnotherT) bool;
@@ -24,5 +27,15 @@ constraint ToString{
 	fn tostring() str;
 }
 constraint Index[ReturnT]{
-	fn index(idx int) ReturnT;
+	fn index(idx i32) ReturnT;
 }
+
+// 所有fn都自动实现该约束
+constraint Fn{
+}
+
+// 增加约束的隐藏类型参数?
+//constraint Index{
+//	type ReturnT;
+//	fn index(idx int) ReturnT;
+//}
