@@ -10,21 +10,4 @@
 		fn,array,class,tuple类型的变量是引用类型.
 		引用类型在赋值时, src将指向dst指向的值
 
-各类型的默认值:
-	type	none
-	int		0
-	float	0.0
-	bool	false
-	str		""
-	[]T		[]T{}
 
-各类型的内存大小:
-	type	4
-	i32		4
-	int		4
-	i64		8
-	float	4
-	bool	1
-	str		16 ( size(4) + ptr(8) )
-	[]T		8 (ptr)
-	class	?

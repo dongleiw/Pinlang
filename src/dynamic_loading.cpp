@@ -263,21 +263,21 @@ BuiltinFnCallback DynamicLoading::GetBuiltinFnCallback(std::vector<TypeId> param
 	*/
 	if (params_tid.size() == 0) {
 		if (return_tid == TYPE_ID_NONE) {
-			return builtin_fn_call_dynlib_fn_args_void_ret_void;
+			return builtin_fn_call_dynlib_fn_args_void_ret_void; // fn()
 		}
 	} else if (params_tid.size() == 1) {
 		if (params_tid.at(0) == TYPE_ID_INT32 && return_tid == TYPE_ID_NONE) {
-			return builtin_fn_call_dynlib_fn_args_int_ret_void;
+			return builtin_fn_call_dynlib_fn_args_int_ret_void; // fn(int)
 		}
 	} else if (params_tid.size() == 2) {
 		if (params_tid.at(0) == TYPE_ID_INT32 && params_tid.at(1) == TYPE_ID_INT32 && return_tid == TYPE_ID_NONE) {
-			return builtin_fn_call_dynlib_fn_args_int_int_ret_void;
+			return builtin_fn_call_dynlib_fn_args_int_int_ret_void; // fn(int,int)
 		} else if (params_tid.at(0) == TYPE_ID_STR && params_tid.at(1) == TYPE_ID_INT32 && return_tid == TYPE_ID_INT32) {
-			return builtin_fn_call_dynlib_fn_args_constcharptr_int_ret_int;
+			return builtin_fn_call_dynlib_fn_args_constcharptr_int_ret_int; // fn(const char*, int)int
 		}
 	} else if (params_tid.size() == 3) {
 		if (params_tid.at(0) == TYPE_ID_STR && params_tid.at(1) == TYPE_ID_INT32 && params_tid.at(2) == TYPE_ID_INT32 && return_tid == TYPE_ID_INT32) {
-			return builtin_fn_call_dynlib_fn_args_constcharptr_int_int_ret_int;
+			return builtin_fn_call_dynlib_fn_args_constcharptr_int_int_ret_int; // fn(const char*, int,int)int
 		}
 	}
 	panicf("not implemented yet");

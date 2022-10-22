@@ -41,7 +41,7 @@ Variable::Variable(bool value) {
 	m_is_tmp		   = true;
 }
 Variable::Variable(std::string value) {
-	m_tid = TYPE_ID_STR;
+	m_tid					= TYPE_ID_STR;
 	m_value.value_str		= new TypeInfoStr::MemStructure();
 	m_value.value_str->size = value.size();
 	m_value.value_str->data = new uint8_t[value.size() + 1];
@@ -66,8 +66,9 @@ Variable::Variable(AstNodeComplexFnDef* astnode) {
 	m_is_tmp		   = true;
 }
 Variable::Variable(TypeId array_tid, std::vector<Variable*> array) {
-	const TypeInfoArray* tiarray	 = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(array_tid));
-	TypeId				 element_tid = tiarray->GetElementType();
+	const TypeInfoArray* ti_array	 = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(array_tid));
+	TypeId				 element_tid = ti_array->GetElementType();
+	const TypeInfo*		 ti_element	 = g_typemgr.GetTypeInfo(element_tid);
 	for (auto iter : array) {
 		if (iter->GetTypeId() != element_tid) {
 			panicf("bug");
@@ -79,11 +80,11 @@ Variable::Variable(TypeId array_tid, std::vector<Variable*> array) {
 
 	m_value.value_array		  = new TypeInfoArray::MemStructure();
 	m_value.value_array->size = array.size();
-	m_value.value_array->data = new uint8_t[array.size() * tiarray->GetMemSize()];
+	m_value.value_array->data = new uint8_t[array.size() * ti_element->GetMemSize()];
 	uint8_t* ptr			  = m_value.value_array->data;
 	for (auto iter : array) {
-		memcpy((void*)ptr, (const void*)&iter->m_value, tiarray->GetMemSize());
-		ptr += tiarray->GetMemSize();
+		memcpy((void*)ptr, (const void*)&iter->m_value, ti_element->GetMemSize());
+		ptr += ti_element->GetMemSize();
 	}
 }
 Variable* Variable::CreateTypeVariable(TypeId tid) {
@@ -191,12 +192,21 @@ const int Variable::GetValueArraySize() const {
 	return m_value.value_array->size;
 }
 Variable* Variable::GetValueArrayElement(int idx) {
-	TypeInfoArray* ti = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(m_tid));
 	assert(0 <= idx && idx < GetValueArraySize());
-	Variable* element = new Variable(ti->GetElementType());
+
+	TypeInfoArray* ti_array	  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(m_tid));
+	TypeInfo*	   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
+	Variable*	   element	  = new Variable(ti_element->GetTypeId());
 	element->SetTmp(false);
-	memcpy((void*)&element->m_value, (const void*)(m_value.value_array->data + idx * ti->GetMemSize()), ti->GetMemSize());
+	memcpy((void*)&element->m_value, (const void*)(m_value.value_array->data + idx * ti_element->GetMemSize()), ti_element->GetMemSize());
 	return element;
+}
+void Variable::SetValueArrayElement(int idx, Variable* element) {
+	assert(0 <= idx && idx < GetValueArraySize());
+
+	TypeInfoArray* ti_array	  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(m_tid));
+	TypeInfo*	   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
+	memcpy((void*)(m_value.value_array->data + idx * ti_array->GetMemSize()), (const void*)&element->m_value, ti_array->GetMemSize());
 }
 Variable* Variable::GetMethodValue(MethodIndex method_idx) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
@@ -206,12 +216,32 @@ Variable* Variable::GetMethodValue(MethodIndex method_idx) {
 	return v;
 }
 Variable* Variable::GetFieldValue(std::string field_name) {
-	auto found = m_fields->find(field_name);
-	if (found == m_fields->end()) {
-		panicf("field[%s] not exists", field_name.c_str());
-	} else {
-		return found->second;
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
+	assert(ti->IsTuple() || ti->IsClass());
+
+	for (auto field : ti->GetField()) {
+		if (field.name == field_name) {
+			TypeInfo* ti_field	  = g_typemgr.GetTypeInfo(field.tid);
+			Variable* field_value = new Variable(field.tid);
+			memcpy((void*)&field_value->m_value, (const void*)(m_value.value_fields + field.mem_offset), ti_field->GetMemSize());
+			return field_value;
+		}
 	}
+	panicf("field[%s] not exists", field_name.c_str());
+	return nullptr;
+}
+void Variable::SetFieldValue(std::string field_name, Variable* v) {
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
+	assert(ti->IsTuple() || ti->IsClass());
+
+	for (auto field : ti->GetField()) {
+		if (field.name == field_name) {
+			TypeInfo* ti_field	  = g_typemgr.GetTypeInfo(field.tid);
+			memcpy((void*)(m_value.value_fields + field.mem_offset), (void*)&v->m_value, ti_field->GetMemSize());
+			return;
+		}
+	}
+	panicf("field[%s] not exists", field_name.c_str());
 }
 void Variable::Assign(Variable* tmp) {
 	assert(!IsTmp());
@@ -224,25 +254,32 @@ void Variable::Assign(Variable* tmp) {
 	m_is_tmp = false;
 }
 void Variable::InitField(std::map<std::string, Variable*> fields) {
-	if (m_fields != nullptr) {
-		m_fields = new std::map<std::string, Variable*>();
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
+	assert(ti->IsTuple() || ti->IsClass());
+	assert(ti->GetField().size() == fields.size());
+
+	m_value.value_fields = new uint8_t[ti->GetMemSize()];
+	for (auto field : ti->GetField()) {
+		TypeInfo* ti_field = g_typemgr.GetTypeInfo(field.tid);
+		auto	  found	   = fields.find(field.name);
+		assert(found != fields.end());
+		memcpy((void*)(m_value.value_fields + field.mem_offset), (const void*)&found->second->m_value, ti_field->GetMemSize());
 	}
-	*m_fields = fields;
 }
 void Variable::set_default_value() {
 	const TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
 	if (ti->IsTuple() || ti->IsClass()) {
-		m_fields = new std::map<std::string, Variable*>();
-		for (auto iter : ti->GetField()) {
-			Variable* v = new Variable(iter.tid);
-			v->SetTmp(false);
-			(*m_fields)[iter.name] = v;
+		m_value.value_fields = new uint8_t[ti->GetMemSize()];
+		for (auto field : ti->GetField()) {
+			TypeInfo* ti_field		= g_typemgr.GetTypeInfo(field.tid);
+			Variable* default_value = new Variable(field.tid);
+			memcpy((void*)(m_value.value_fields + field.mem_offset), (const void*)&default_value->m_value, ti_field->GetMemSize());
 		}
 	} else if (ti->IsArray()) {
 		assert(m_value.value_array == nullptr);
 		m_value.value_array = new TypeInfoArray::MemStructure();
 	} else if (ti->IsFn()) {
-		//panicf("function can not have default value");
+		// panicf("function can not have default value");
 		m_value_fnobj = nullptr;
 	} else {
 		switch (m_tid) {

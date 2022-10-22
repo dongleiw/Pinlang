@@ -46,8 +46,10 @@ public:
 	FunctionObj*		 GetValueFunctionObj() const;
 	AstNodeConstraint*	 GetValueConstraint() const;
 	AstNodeComplexFnDef* GetValueComplexFn() const;
-	const int			 GetValueArraySize() const;
-	Variable*			 GetValueArrayElement(int idx);
+
+	const int GetValueArraySize() const;
+	Variable* GetValueArrayElement(int idx);
+	void	  SetValueArrayElement(int idx, Variable* element);
 
 	bool IsConst() const { return m_is_const; }
 
@@ -63,6 +65,7 @@ public:
 
 	Variable* GetMethodValue(MethodIndex method_idx);
 	Variable* GetFieldValue(std::string field_name);
+	void	  SetFieldValue(std::string field_name, Variable* v);
 
 	void Assign(Variable* tmp);
 	void InitField(std::map<std::string, Variable*> fields);
@@ -77,7 +80,6 @@ private:
 
 	// reference type
 	FunctionObj*					  m_value_fnobj; // function
-	std::map<std::string, Variable*>* m_fields;		 // class|tuple
 
 	union Value {
 		// value type
@@ -88,8 +90,9 @@ private:
 		bool	value_bool;	 // bool
 
 		// reference type
-		TypeInfoArray::MemStructure* value_array; // array
-		TypeInfoStr::MemStructure*	 value_str; // str
+		TypeInfoArray::MemStructure* value_array;  // array
+		TypeInfoStr::MemStructure*	 value_str;	   // str
+		uint8_t*					 value_fields; // class/tuple
 	};
 	Value m_value;
 

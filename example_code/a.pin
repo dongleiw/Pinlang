@@ -1,16 +1,14 @@
-var a = []int{1};
-printf("a={}\n", a[0]);
-a[0]=1000;
-printf("a={}\n", a[0]);
+var a=[](int,str){
+	(1,"hello"),
+	(2,"yes")
+};
+printf("a={}\n", a);
+a[0].f0=100;
+printf("a={}\n", a);
+a[0]=(999,"new");
+printf("a={}\n", a);
 
-// 数组元素求和
-{
-	fn sum(array []int)int{
-		var s=0;
-		for var i=0; i<array.Size(); i=i+1{
-			s = s+array[i];	
-		}
-		return s;
-	}
-	printf("sum={}\n", sum( []int{1,2,3,4,5} ) );
-}
+var i=1;
+printf("{}\n", i);
+i=2;
+printf("{}\n", i);

@@ -1,21 +1,32 @@
 类型
 
 分类:
-	特殊类型
+	内置基础类型
 		type
-			类型的类型
-		infer 
-			表示一个类型需要编译期自动推导得到
-		unresolved
-			表示当前类型尚未定义
-			
-	基础类型
-		int
+		i32
+		i64
 		float
 		str
 		bool
-
-	复合类型
+	基础类型组合得到的复合类型
+		class
+		tuple
+		array
+	值类型和引用类型
+		值类型(value type):
+			type, i32, i64, float, bool都是值类型
+		引用类型(reference type):
+			str class tuple array
+		区别:
+			值类型的变量的内容为值, 而引用类型的值是一个指向真正的数据内存地址的指针
+			赋值区别:
+				a = b;
+				假如a/b是值类型, 那么a会得到b的值的一份拷贝(数据相同, 内存地址不同)
+				假如a/b是引用类型, 那么a会指向b指向的数据(内存地址相同, 数据自然也相同)
+				值类型的变量在赋值时, 目标变量获得到源变量的值的一份拷贝. 而引用类型的变量在赋值时, 目标
+			将一个类型定义为值类型还是引用类型的依据是什么? 为什么不都设置为值类型(引用类型)?
+				
+				
 
 特殊类型type:
 	将类型当作值(该值的类型是type)
@@ -24,27 +35,25 @@
 		1. 类型别名
 			const StudentId = int;
 			StudentId是一个类型, 该类型的值是int. 
-		2. 参数传递
-			fn foo(T type, a T, b T) T{
-				return a+b;
-			}
-			foo(int, a, b);
-		3. type constructor
-			fn max(T comparable)(a T, b T) T{
-				return a>b? a:b;
-			}
-			max是一个type constructor, 传入参数int后得到实际类型
-			max(int) => max(a int, b int)int
-			max(int)(1,2) // 函数调用
-			max(1,2) // 省掉type
-	语法:
-			var t1 = int;
-			var t2 = Person;
-			var t3 = t1;
-			var t type; // 初始化为TYPE_ID_NONE
 
-			var array = []type{int,float};
 
-			// 必须是const修饰, 也即是编译期确定
-			const PersonId = int;
-			var id PersonId;
+	
+各类型的默认值:
+	type	none
+	i32		0
+	i64		0
+	float	0.0
+	bool	false
+	str		""
+	[]T		[]T{}
+
+各类型的内存大小:
+	type	4
+	i32		4
+	int		4
+	i64		8
+	float	4
+	bool	1
+	str		8 (pointer)
+	[]T		8 (pointer)
+	class	8 (pointer)

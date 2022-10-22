@@ -48,7 +48,12 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
 Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
-	return ctx.GetCurStack()->GetVariable(m_id);
+	if (ctx.IsAssign()) {
+		ctx.GetCurStack()->GetVariable(m_id)->Assign(ctx.GetAssignValue());
+		return nullptr;
+	} else {
+		return ctx.GetCurStack()->GetVariable(m_id);
+	}
 }
 AstNodeIdentifier* AstNodeIdentifier::DeepCloneT() {
 	return new AstNodeIdentifier(m_id);

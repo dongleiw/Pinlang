@@ -39,11 +39,18 @@ public:
 		m_args_tid.clear();
 	}
 
+	VerifyContextParam& SetExepectLeftValue(bool b) {
+		m_expect_left_value = b;
+		return *this;
+	}
+	bool ExpectLeftValue() const { return m_expect_left_value; }
+
 private:
 	TypeId				m_expect_result_tid;
 	TypeId				m_expect_return_tid;
 	bool				m_args_tid_is_set;
 	std::vector<TypeId> m_args_tid;
+	bool				m_expect_left_value;
 };
 
 class VerifyContextResult {
@@ -92,7 +99,6 @@ public:
 	VariableTable* GetGlobalVt() { return &m_global_vt; }
 
 private:
-
 private:
 	Stack*		  m_top_stack;
 	VariableTable m_global_vt;

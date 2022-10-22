@@ -72,13 +72,13 @@ bool TypeInfo::HasField(std::string field_name) const {
 	}
 	return false;
 }
-//void TypeInfo::AddField(std::string field_name, TypeId tid) {
+// void TypeInfo::AddField(std::string field_name, TypeId tid) {
 //	assert(!HasField(field_name));
 //	m_field_list.push_back(Field{
 //		.name = field_name,
 //		.tid  = tid,
 //	});
-//}
+// }
 void TypeInfo::SetFields(std::vector<std::pair<std::string, TypeId>> fields) {
 	assert(m_field_list.empty());
 	for (auto iter : fields) {
@@ -192,15 +192,15 @@ std::vector<MethodIndex> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::
 	return method_indexs;
 }
 void TypeInfo::align_field() {
-	int total_mem_size;
-	int max_mem_align_size = 1; // 最大的对齐需求
+	uint32_t total_mem_size		= 0;
+	uint32_t max_mem_align_size = 1; // 最大的对齐需求
 	for (auto& iter : m_field_list) {
 		TypeInfo* ti				   = g_typemgr.GetTypeInfo(iter.tid);
-		int		  field_mem_size	   = ti->GetMemSize();
-		int		  field_mem_align_size = ti->GetMemAlignSize();
+		uint32_t  field_mem_size	   = ti->GetMemSize();
+		uint32_t  field_mem_align_size = ti->GetMemAlignSize();
 
 		// 将当前地址补齐, 以满足当前字段对对齐的需求
-		total_mem_size += field_mem_align_size - (total_mem_size % field_mem_align_size);
+		total_mem_size = (total_mem_size + field_mem_align_size - 1) & (~(field_mem_align_size-1));
 		// 记录当前字段的起始偏移
 		iter.mem_offset = total_mem_size;
 		// 增加当前字段的内存长度
@@ -213,7 +213,7 @@ void TypeInfo::align_field() {
 
 	// 将整个类型的内存大小再进行一次对齐. 确保该元素后续可以
 	// TODO 应该可以省去这个对齐
-	total_mem_size += max_mem_align_size - (total_mem_size % max_mem_align_size);
+	total_mem_size = (total_mem_size + max_mem_align_size - 1) & (~(max_mem_align_size-1));
 
 	m_mem_size		 = total_mem_size;
 	m_mem_align_size = max_mem_align_size;

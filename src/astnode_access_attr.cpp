@@ -59,11 +59,23 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
 Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
-	Variable* v = m_obj_expr->Execute(ctx);
-	if (m_is_field) {
-		return v->GetFieldValue(m_attr_name);
+	Variable* assign_value = ctx.GetAssignValue();
+	ctx.SetAssignValue(nullptr);
+	if (assign_value != nullptr) {
+		if (m_is_field) {
+			Variable* v = m_obj_expr->Execute(ctx);
+			v->SetFieldValue(m_attr_name, assign_value);
+			return nullptr;
+		} else {
+			panicf("assign method!");
+		}
 	} else {
-		return v->GetMethodValue(m_method_idx);
+		Variable* v = m_obj_expr->Execute(ctx);
+		if (m_is_field) {
+			return v->GetFieldValue(m_attr_name);
+		} else {
+			return v->GetMethodValue(m_method_idx);
+		}
 	}
 }
 AstNodeAccessAttr* AstNodeAccessAttr::DeepCloneT() {

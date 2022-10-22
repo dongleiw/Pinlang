@@ -1,14 +1,17 @@
 #include "astnode_access_array_element.h"
 #include "astnode_constraint.h"
 #include "define.h"
+#include "function.h"
 #include "log.h"
 #include "type_array.h"
 #include "type_mgr.h"
 #include "variable.h"
-#include "function.h"
 
 VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify access array element");
+
+	if (vparam.ExpectLeftValue()) {
+	}
 
 	TypeId	  obj_tid = m_array_expr->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 	TypeInfo* ti	  = g_typemgr.GetTypeInfo(obj_tid);
@@ -26,17 +29,26 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 	} else {
 	}
 
-	m_method_index= method_indexs.at(0);
-	Function*	f		   = ti->GetMethodByIdx(m_method_index);
+	m_method_index	= method_indexs.at(0);
+	Function* f		= ti->GetMethodByIdx(m_method_index);
 	m_result_typeid = f->GetReturnTypeId();
 
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
 Variable* AstNodeAccessArrayElement::Execute(ExecuteContext& ctx) {
+	Variable* assign_value = ctx.GetAssignValue();
+	ctx.SetAssignValue(nullptr);
+
 	Variable* v_array = m_array_expr->Execute(ctx);
 	Variable* v_index = m_index_expr->Execute(ctx);
-	std::vector<Variable*> args{v_index};
-	return v_array->CallMethod(ctx, m_method_index, args);
+
+	if (assign_value != nullptr) {
+		v_array->SetValueArrayElement(v_index->GetValueInt32(), assign_value);
+		return nullptr;
+	} else {
+		std::vector<Variable*> args{v_index};
+		return v_array->CallMethod(ctx, m_method_index, args);
+	}
 }
 AstNodeAccessArrayElement* AstNodeAccessArrayElement::DeepCloneT() {
 	AstNodeAccessArrayElement* newone = new AstNodeAccessArrayElement();

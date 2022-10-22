@@ -4,8 +4,10 @@
 
 #include <assert.h>
 
-ExecuteContext::ExecuteContext() : m_top_stack(nullptr) {
+ExecuteContext::ExecuteContext() {
+	m_top_stack = nullptr;
 	m_global_vt.InitAsGlobal();
+	m_assign_value = nullptr;
 }
 void ExecuteContext::PushStack() {
 	Stack* new_stack = new Stack(m_top_stack);

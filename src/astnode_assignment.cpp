@@ -29,11 +29,10 @@ VerifyContextResult AstNodeAssignment::Verify(VerifyContext& ctx, VerifyContextP
 	return VerifyContextResult(m_result_typeid);
 }
 Variable* AstNodeAssignment::Execute(ExecuteContext& ctx) {
-
-	Variable* v_left = m_left->Execute(ctx);
 	Variable* v_right= m_right->Execute(ctx);
-
-	v_left->Assign(v_right);
+	ctx.SetAssignValue(v_right);
+	m_left->Execute(ctx);
+	ctx.SetAssignValue(nullptr);
 	return nullptr;
 }
 AstNodeAssignment* AstNodeAssignment::DeepCloneT() {
