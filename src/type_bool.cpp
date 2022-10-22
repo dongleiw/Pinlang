@@ -1,14 +1,14 @@
 #include "type_bool.h"
+#include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "function.h"
 #include "type_mgr.h"
 #include "variable.h"
 #include "verify_context.h"
-#include "astnode_complex_fndef.h"
 
 #include <cassert>
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function*fn,Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
 	if (thisobj->GetValueBool()) {
 		return new Variable(std::string("true"));
@@ -18,8 +18,10 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function*fn,Variable* 
 }
 
 TypeInfoBool::TypeInfoBool() {
-	m_name		   = "bool";
-	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
+	m_name			 = "bool";
+	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;
+	m_mem_size		 = 1;
+	m_mem_align_size = 1;
 }
 void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();

@@ -12,18 +12,19 @@
 
 static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj != nullptr && args.size() == 0);
-	std::string					  s			 = "{";
-	TypeInfoArray*				  ti_array	 = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(thisobj->GetTypeId()));
-	TypeInfo*					  ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
-	const std::vector<Variable*>& elements	 = thisobj->GetValueArray();
-	for (size_t i = 0; i < elements.size(); i++) {
-		Variable* element = elements.at(i);
+	std::string	   s		  = "{";
+	TypeInfoArray* ti_array	  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(thisobj->GetTypeId()));
+	TypeInfo*	   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
+
+	int array_size = thisobj->GetValueArraySize();
+	for (int i = 0; i < array_size; i++) {
+		Variable* element = thisobj->GetValueArrayElement(i);
 		// 调用tostring方法来转换为str
 		// TODO 目前得先获取MethodIndex然后调用
 		MethodIndex method_index = ti_element->GetMethodIdx("tostring[]()str");
 		Variable*	str_e		 = element->CallMethod(ctx, method_index, std::vector<Variable*>());
 		s += str_e->GetValueStr();
-		if (i + 1 < elements.size()) {
+		if (i + 1 < array_size) {
 			s += ",";
 		}
 	}
@@ -32,21 +33,22 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable
 }
 static Variable* builtin_fn_size(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj != nullptr && args.size() == 0);
-	return new Variable(int(thisobj->GetValueArray().size()));
+	return new Variable(thisobj->GetValueArraySize());
 }
 
 static Variable* builtin_fn_index(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj != nullptr && g_typemgr.GetTypeInfo(thisobj->GetTypeId())->IsArray() && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
 
-	std::vector<Variable*> elements = thisobj->GetValueArray();
-	int32_t				   index	= args.at(0)->GetValueInt32();
-	return elements.at(index);
+	int32_t index = args.at(0)->GetValueInt32();
+	return thisobj->GetValueArrayElement(index);
 }
 
 TypeInfoArray::TypeInfoArray(TypeId element_tid) {
-	m_element_tid  = element_tid;
-	m_name		   = "[]" + GET_TYPENAME(element_tid);
-	m_typegroup_id = TYPE_GROUP_ID_ARRAY;
+	m_element_tid	 = element_tid;
+	m_name			 = "[]" + GET_TYPENAME(element_tid);
+	m_typegroup_id	 = TYPE_GROUP_ID_ARRAY;
+	m_mem_size		 = 8;
+	m_mem_align_size = 8;
 }
 void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();

@@ -79,8 +79,10 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable
 }
 
 TypeInfoInt64::TypeInfoInt64() {
-	m_name		   = "i64";
-	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
+	m_name			 = "i64";
+	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;
+	m_mem_size		 = 8;
+	m_mem_align_size = 8;
 }
 void TypeInfoInt64::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();

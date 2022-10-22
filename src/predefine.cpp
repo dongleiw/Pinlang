@@ -31,7 +31,7 @@ std::string format_string(ExecuteContext& ctx, std::vector<Variable*> args) {
 			//MethodIndex method_index = ti->GetConcreteMethod(ctx, "tostring[]()");
 			Variable* str_v = arg->CallMethod(ctx, method_index, std::vector<Variable*>());
 
-			value += str_v->GetValueStr().c_str();
+			value += str_v->GetValueStr();
 
 			arg_count++;
 		} else {

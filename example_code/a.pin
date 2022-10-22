@@ -1,25 +1,16 @@
-var dynlib_handler = dl_open("./libmy.so");
+var a = []int{1};
+printf("a={}\n", a[0]);
+a[0]=1000;
+printf("a={}\n", a[0]);
 
-var args_void_ret_void fn() = dl_getFn(dynlib_handler, "args_void_ret_void");
-args_void_ret_void();
-
-var args_int_ret_void fn(int) = dl_getFn(dynlib_handler, "args_int_ret_void");
-args_int_ret_void(1);
-
-var args_int_int_ret_void fn(int,int) = dl_getFn(dynlib_handler, "args_int_int_ret_void");
-args_int_int_ret_void(1,2);
-
+// 数组元素求和
 {
-	var args_str_int_ret_int fn(str,int)int = dl_getFn(dynlib_handler, "args_constcharptr_int_ret_int");
-	var ret = args_str_int_ret_int("hello",2);
-	printf("ret={}\n", ret);
-}
-
-
-// libc
-{
-	var dynlib_handler = dl_open("/lib/x86_64-linux-gnu/libc.so.6");
-	var args_str_int_ret_int fn(str,int)int = dl_getFn(dynlib_handler, "open");
-	var ret = args_str_int_ret_int("hello",0);
-	printf("ret={}\n", ret);
+	fn sum(array []int)int{
+		var s=0;
+		for var i=0; i<array.Size(); i=i+1{
+			s = s+array[i];	
+		}
+		return s;
+	}
+	printf("sum={}\n", sum( []int{1,2,3,4,5} ) );
 }

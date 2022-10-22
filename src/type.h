@@ -2,6 +2,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 
 #include "define.h"
 
@@ -33,6 +34,7 @@ public:
 	struct Field {
 		std::string name;
 		TypeId		tid;
+		int			mem_offset; // 该字段的内存地址偏移
 	};
 
 public:
@@ -81,17 +83,36 @@ public:
 	/*
 	 * 根据constraint的名字 + 方法名字 + 方法参数信息搜索方法. 返回所有匹配的函数位置信息
 	 */
-	std::vector<MethodIndex> GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, std::vector<TypeId> method_params_tid) ;
+	std::vector<MethodIndex> GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, std::vector<TypeId> method_params_tid);
 
-	bool			   HasField(std::string field_name) const;
-	void			   AddField(std::string field_name, TypeId tid);
+	bool HasField(std::string field_name) const;
+	//void			   AddField(std::string field_name, TypeId tid);
+	void			   SetFields(std::vector<std::pair<std::string, TypeId>> fields);
 	TypeId			   GetFieldType(std::string field_name) const;
 	std::vector<Field> GetField() const { return m_field_list; }
+
+	int GetMemSize() const { return m_mem_size; }
+	int GetMemAlignSize() const { return m_mem_align_size; }
+
+protected:
+	/*
+	 * 对齐字段, 计算每个字段的偏移
+	 * 对齐的需求:
+	 *		1byte: i8 u8
+	 *		2byte: i16 u16
+	 *		4byte: i32 u32
+	 *		8byte: i64 u64
+	 *
+	 *		组合类型的对齐需求为"字段的最大对齐需求"
+	 */
+	void align_field();
 
 protected:
 	TypeId		m_typeid;
 	TypeGroupId m_typegroup_id;
 	std::string m_name;
+	int			m_mem_size;		  // 内存大小
+	int			m_mem_align_size; // 内存对齐大小
 
 	/*
 	 * 该类型实现的约束列表. 

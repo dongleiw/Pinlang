@@ -1,0 +1,25 @@
+//var dynlib_handler = dl_open("./libmy.so");
+//
+//var args_void_ret_void fn() = dl_getFn(dynlib_handler, "args_void_ret_void");
+//args_void_ret_void();
+//
+//var args_int_ret_void fn(int) = dl_getFn(dynlib_handler, "args_int_ret_void");
+//args_int_ret_void(1);
+//
+//var args_int_int_ret_void fn(int,int) = dl_getFn(dynlib_handler, "args_int_int_ret_void");
+//args_int_int_ret_void(1,2);
+//
+//{
+//	var args_str_int_ret_int fn(str,int)int = dl_getFn(dynlib_handler, "args_constcharptr_int_ret_int");
+//	var ret = args_str_int_ret_int("hello",2);
+//	printf("ret={}\n", ret);
+//}
+
+
+// libc
+{
+	var dynlib_handler = dl_open("/lib/x86_64-linux-gnu/libc.so.6");
+	var args_str_int_ret_int fn(str,int)int = dl_getFn(dynlib_handler, "open");
+	var ret = args_str_int_ret_int("hello",0);
+	printf("ret={}\n", ret);
+}

@@ -9,5 +9,4 @@ public:
 	TypeInfoClass(std::string class_name);
 	void InitBuiltinMethods(VerifyContext& ctx) override;
 
-private:
 };

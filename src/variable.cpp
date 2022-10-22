@@ -6,41 +6,48 @@
 #include "type.h"
 #include "type_array.h"
 #include "type_mgr.h"
+#include "type_str.h"
 #include "type_tuple.h"
 #include "utils.h"
+#include <bits/stdint-uintn.h>
 #include <cassert>
+#include <cstring>
 
 Variable::Variable(TypeId tid) {
 	m_tid	 = tid;
 	m_is_tmp = true;
 
+	memset((void*)&m_value, 0, sizeof(m_value));
 	set_default_value();
 }
 Variable::Variable(int32_t value) {
-	m_tid		  = TYPE_ID_INT32;
-	m_value_int32 = value;
-	m_is_tmp	  = true;
+	m_tid				= TYPE_ID_INT32;
+	m_value.value_int32 = value;
+	m_is_tmp			= true;
 }
 Variable::Variable(int64_t value) {
-	m_tid		  = TYPE_ID_INT64;
-	m_value_int64 = value;
-	m_is_tmp	  = true;
+	m_tid				= TYPE_ID_INT64;
+	m_value.value_int64 = value;
+	m_is_tmp			= true;
 }
 Variable::Variable(float value) {
-	m_tid		  = TYPE_ID_FLOAT;
-	m_value_float = value;
-	m_is_tmp	  = true;
+	m_tid				= TYPE_ID_FLOAT;
+	m_value.value_float = value;
+	m_is_tmp			= true;
 }
 Variable::Variable(bool value) {
-	m_tid		 = TYPE_ID_BOOL;
-	m_value_bool = value;
-	m_is_tmp	 = true;
+	m_tid			   = TYPE_ID_BOOL;
+	m_value.value_bool = value;
+	m_is_tmp		   = true;
 }
 Variable::Variable(std::string value) {
-	m_tid		 = TYPE_ID_STR;
-	m_value_str	 = new std::string();
-	*m_value_str = value;
-	m_is_tmp	 = true;
+	m_tid = TYPE_ID_STR;
+	m_value.value_str		= new TypeInfoStr::MemStructure();
+	m_value.value_str->size = value.size();
+	m_value.value_str->data = new uint8_t[value.size() + 1];
+	memcpy((void*)m_value.value_str->data, (const void*)value.c_str(), value.size());
+	m_value.value_str->data[value.size()] = '\0';
+	m_is_tmp							  = true;
 }
 Variable::Variable(FunctionObj fnobj) {
 	m_tid		   = fnobj.GetFunction()->GetTypeId();
@@ -67,15 +74,22 @@ Variable::Variable(TypeId array_tid, std::vector<Variable*> array) {
 		}
 	}
 
-	m_tid		   = array_tid;
-	m_value_array  = new std::vector<Variable*>();
-	*m_value_array = array;
-	m_is_tmp	   = true;
+	m_tid	 = array_tid;
+	m_is_tmp = true;
+
+	m_value.value_array		  = new TypeInfoArray::MemStructure();
+	m_value.value_array->size = array.size();
+	m_value.value_array->data = new uint8_t[array.size() * tiarray->GetMemSize()];
+	uint8_t* ptr			  = m_value.value_array->data;
+	for (auto iter : array) {
+		memcpy((void*)ptr, (const void*)&iter->m_value, tiarray->GetMemSize());
+		ptr += tiarray->GetMemSize();
+	}
 }
 Variable* Variable::CreateTypeVariable(TypeId tid) {
-	Variable* v	   = new Variable(TYPE_ID_TYPE);
-	v->m_value_tid = tid;
-	v->m_is_tmp	   = true;
+	Variable* v			 = new Variable(TYPE_ID_TYPE);
+	v->m_value.value_tid = tid;
+	v->m_is_tmp			 = true;
 	return v;
 }
 Variable* Variable::CreateTypeTuple(TypeId tuple_tid, std::vector<Variable*> elements) {
@@ -102,59 +116,63 @@ Variable* Variable::CallMethod(ExecuteContext& ctx, MethodIndex method_idx, std:
 	return f->Call(ctx, this, args);
 }
 std::string Variable::ToString() const {
-	std::string s;
+	std::string ret;
 	char		buf[128];
 	switch (m_tid) {
 	case TYPE_ID_TYPE:
-		snprintf(buf, sizeof(buf) - 1, "type(%d:%s)", m_value_tid, GET_TYPENAME_C(m_value_tid));
-		s += buf;
+		snprintf(buf, sizeof(buf) - 1, "type(%d:%s)", m_value.value_tid, GET_TYPENAME_C(m_value.value_tid));
+		ret += buf;
 		break;
 	case TYPE_ID_INT32:
-		snprintf(buf, sizeof(buf) - 1, "int(%d)", m_value_int32);
-		s += buf;
+		snprintf(buf, sizeof(buf) - 1, "int(%d)", m_value.value_int32);
+		ret += buf;
 		break;
 	case TYPE_ID_STR:
-		snprintf(buf, sizeof(buf) - 1, "str(%s)", m_value_str->c_str());
-		s += buf;
+		snprintf(buf, sizeof(buf) - 1, "str(%s)", m_value.value_str->data);
+		ret += buf;
 		break;
 	case TYPE_ID_FLOAT:
-		snprintf(buf, sizeof(buf) - 1, "float(%f)", m_value_float);
-		s += buf;
+		snprintf(buf, sizeof(buf) - 1, "float(%f)", m_value.value_float);
+		ret += buf;
 		break;
 	case TYPE_ID_BOOL:
-		snprintf(buf, sizeof(buf) - 1, "bool(%s)", m_value_bool == true ? "true" : "false");
-		s += buf;
+		snprintf(buf, sizeof(buf) - 1, "bool(%s)", m_value.value_bool == true ? "true" : "false");
+		ret += buf;
 		break;
 	default:
 		snprintf(buf, sizeof(buf) - 1, "unknown");
-		s += buf;
+		ret += buf;
 		break;
 	}
-	return s;
+	return ret;
 }
 TypeId Variable::GetValueTid() const {
 	assert(m_tid == TYPE_ID_TYPE);
-	return m_value_tid;
+	return m_value.value_tid;
 }
 int32_t Variable::GetValueInt32() const {
 	assert(m_tid == TYPE_ID_INT32);
-	return m_value_int32;
+	return m_value.value_int32;
 }
 int64_t Variable::GetValueInt64() const {
 	assert(m_tid == TYPE_ID_INT64);
-	return m_value_int64;
+	return m_value.value_int64;
 }
 float Variable::GetValueFloat() const {
 	assert(m_tid == TYPE_ID_FLOAT);
-	return m_value_float;
+	return m_value.value_float;
 }
 bool Variable::GetValueBool() const {
 	assert(m_tid == TYPE_ID_BOOL);
-	return m_value_bool;
+	return m_value.value_bool;
 }
-std::string Variable::GetValueStr() const {
+const char* Variable::GetValueStr() const {
 	assert(m_tid == TYPE_ID_STR);
-	return *m_value_str;
+	return (const char*)m_value.value_str->data;
+}
+int Variable::GetValueStrSize() const {
+	assert(m_tid == TYPE_ID_STR);
+	return m_value.value_str->size;
 }
 FunctionObj* Variable::GetValueFunctionObj() const {
 	assert(g_typemgr.GetTypeInfo(m_tid)->IsFn());
@@ -168,9 +186,17 @@ AstNodeComplexFnDef* Variable::GetValueComplexFn() const {
 	assert(m_tid == TYPE_ID_COMPLEX_FN);
 	return m_value_complex_fn;
 }
-const std::vector<Variable*>& Variable::GetValueArray() const {
+const int Variable::GetValueArraySize() const {
 	assert(g_typemgr.GetTypeInfo(m_tid)->IsArray());
-	return *m_value_array;
+	return m_value.value_array->size;
+}
+Variable* Variable::GetValueArrayElement(int idx) {
+	TypeInfoArray* ti = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(m_tid));
+	assert(0 <= idx && idx < GetValueArraySize());
+	Variable* element = new Variable(ti->GetElementType());
+	element->SetTmp(false);
+	memcpy((void*)&element->m_value, (const void*)(m_value.value_array->data + idx * ti->GetMemSize()), ti->GetMemSize());
+	return element;
 }
 Variable* Variable::GetMethodValue(MethodIndex method_idx) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
@@ -213,27 +239,29 @@ void Variable::set_default_value() {
 			(*m_fields)[iter.name] = v;
 		}
 	} else if (ti->IsArray()) {
-		m_value_array = new std::vector<Variable*>();
+		assert(m_value.value_array == nullptr);
+		m_value.value_array = new TypeInfoArray::MemStructure();
 	} else if (ti->IsFn()) {
 		//panicf("function can not have default value");
 		m_value_fnobj = nullptr;
 	} else {
 		switch (m_tid) {
 		case TYPE_ID_TYPE:
-			m_value_tid = TYPE_ID_NONE;
+			m_value.value_tid = TYPE_ID_NONE;
 			break;
 		case TYPE_ID_INT32:
-			m_value_int32 = 0;
+			m_value.value_int32 = 0;
 			break;
 		case TYPE_ID_FLOAT:
-			m_value_float = 0.0;
+			m_value.value_float = 0.0;
 			break;
 		case TYPE_ID_BOOL:
-			m_value_bool = false;
+			m_value.value_bool = false;
 			break;
 		case TYPE_ID_STR:
-			m_value_str	 = new std::string();
-			*m_value_str = "";
+			m_value.value_str		   = new TypeInfoStr::MemStructure();
+			m_value.value_str->data	   = new uint8_t[1];
+			m_value.value_str->data[0] = '\0';
 			break;
 		default:
 			panicf("unknown type[%d:%s]", m_tid, GET_TYPENAME_C(m_tid));

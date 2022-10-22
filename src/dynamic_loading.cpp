@@ -76,7 +76,7 @@ static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_ret_int(Execute
 		panicf("dynlib_fn not exist. dynlib already closed?");
 	}
 	typedef int32_t (*FnType)(const char*, int32_t);
-	int32_t ret = ((FnType)dynlib_fn)(args.at(0)->GetValueStr().c_str(), args.at(1)->GetValueInt32());
+	int32_t ret = ((FnType)dynlib_fn)(args.at(0)->GetValueStr(), args.at(1)->GetValueInt32());
 	return new Variable(ret);
 }
 
@@ -91,7 +91,7 @@ static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_int_ret_int(Exe
 		panicf("dynlib_fn not exist. dynlib already closed?");
 	}
 	typedef int32_t (*FnType)(const char*, int32_t, int32_t);
-	int32_t ret = ((FnType)dynlib_fn)(args.at(0)->GetValueStr().c_str(), args.at(1)->GetValueInt32(), args.at(2)->GetValueInt32());
+	int32_t ret = ((FnType)dynlib_fn)(args.at(0)->GetValueStr(), args.at(1)->GetValueInt32(), args.at(2)->GetValueInt32());
 	return new Variable(ret);
 }
 

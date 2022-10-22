@@ -49,8 +49,10 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable
 }
 
 TypeInfoFloat::TypeInfoFloat() {
-	m_name		   = "float";
-	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
+	m_name			 = "float";
+	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;
+	m_mem_size		 = 4;
+	m_mem_align_size = 4;
 }
 void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();

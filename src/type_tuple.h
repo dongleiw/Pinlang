@@ -17,7 +17,6 @@ public:
 
 private:
 	std::string generate_name();
-	void set_fields();
 private:
 	std::vector<TypeId> m_element_tids;
 };

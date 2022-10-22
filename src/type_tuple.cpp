@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <map>
+#include <utility>
 #include <vector>
 
 #include "astnode_complex_fndef.h"
@@ -46,7 +47,11 @@ TypeInfoTuple::TypeInfoTuple(std::vector<TypeId> element_tids) {
 	m_typegroup_id = TYPE_GROUP_ID_TUPLE;
 	m_name		   = generate_name();
 
-	set_fields();
+	std::vector<std::pair<std::string, TypeId>> fields;
+	for (size_t i = 0; i < m_element_tids.size(); i++) {
+		fields.push_back(std::pair(GetFieldName(i), m_element_tids.at(i)));
+	}
+	SetFields(fields);
 }
 std::string TypeInfoTuple::generate_name() {
 	std::string s = "tuple(";
@@ -61,11 +66,6 @@ std::string TypeInfoTuple::generate_name() {
 	s += ")";
 
 	return s;
-}
-void TypeInfoTuple::set_fields() {
-	for (size_t i = 0; i < m_element_tids.size(); i++) {
-		AddField(GetFieldName(i), m_element_tids.at(i));
-	}
 }
 std::string TypeInfoTuple::GetFieldName(int idx) {
 	return std::string("f") + int_to_str(idx);

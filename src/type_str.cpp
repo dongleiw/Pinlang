@@ -15,7 +15,8 @@
 #include <cassert>
 
 static Variable* builtin_fn_add_str(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	std::string result = thisobj->GetValueStr() + args.at(0)->GetValueStr();
+	std::string result = thisobj->GetValueStr();
+	result += args.at(0)->GetValueStr();
 	return new Variable(result);
 }
 
@@ -27,19 +28,21 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable
 static Variable* builtin_fn_index(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
 	std::string value = thisobj->GetValueStr();
-	int32_t index = args.at(0)->GetValueInt32();
+	int32_t		index = args.at(0)->GetValueInt32();
 	return new Variable(int32_t(value.at(index)));
 }
 
 static Variable* builtin_fn_size(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 0);
 
-	return new Variable(int(thisobj->GetValueStr().size()));
+	return new Variable(thisobj->GetValueStrSize());
 }
 
 TypeInfoStr::TypeInfoStr() {
-	m_name		   = "str";
-	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
+	m_name			 = "str";
+	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;
+	m_mem_size		 = 8;
+	m_mem_align_size = 8;
 }
 void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();
