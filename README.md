@@ -73,3 +73,4 @@
     ```
 * 2022-10-03 class可以实现constraint了
 * 2022-10-16 增加了tuple类型. 增加了for init;cond;loop{}. 增加了while cond {}. 增加了Index约束, 用于实现下标索引操作符. 实现了冒泡排序😎
+* 2022-10-23 增加对动态库的支持, 可以调用libc的open/read等函数了. 给类型增加了"内存大小", 类似C中的sizeof. 改进了变量的内存结构 
