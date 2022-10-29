@@ -1,17 +1,17 @@
-var a=b+1; 
-var c=d+1; 
-
-class Person{
-	id int;
-
-	impl constraint ToString{
-		fn tostring()str{
-			return "{id="+this.id.tostring() + "}";
+// 字符串下标访问
+fn test1(){
+	fn print(s str){
+		printf("s='{}' size={} content=", s, s.Size());
+		for var i=0;i<s.Size();i=i+1{
+			printf("{} ", s[i]);
 		}
+		printf("\n");
 	}
+	print("hello");
 }
 
-fn main(args []str) int{
-	test();
-}
+fn main(args []str)int{
+	test1();
 
+	return 0;
+}

@@ -9,7 +9,6 @@ set -o pipefail
 ./pinlang -f ../example_code/generics.pin
 ./pinlang -f ../example_code/assignment.pin
 ./pinlang -f ../example_code/if.pin
-./pinlang -f ../example_code/for.pin
 ./pinlang -f ../example_code/type.pin
 ./pinlang -f ../example_code/tuple.pin
 ./pinlang -f ../example_code/algorithm.pin

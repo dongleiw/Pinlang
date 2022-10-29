@@ -36,7 +36,7 @@ class Foo{
 	}
 }
 
-{
+fn test1(){
 	printf("############### call method \n");
 
 	var foo Foo;
@@ -50,7 +50,7 @@ class Foo{
 
 
 // 初始化表达式
-{
+fn test2(){
 	printf("############### initial expr\n");
 
 	var foo = Foo{
@@ -68,7 +68,7 @@ class Foo{
 }
 
 // 约束
-{
+fn test3(){
 	printf("############### constraint\n");
 
 	var foo = Foo{
@@ -87,7 +87,7 @@ class Foo{
 }
 
 // 泛型约束
-{
+fn test4(){
 	printf("############### generic constraint\n");
 	var foo1 = Foo{
         id: 99,
@@ -105,7 +105,7 @@ class Foo{
 }
 
 // 函数内使用
-{
+fn test5(){
 	printf("############### in function\n");
 	fn zzz(){
 		var f = Foo{
@@ -116,4 +116,14 @@ class Foo{
 	}
 	zzz();
 	printf("\n");
+}
+
+fn main(args []str)int{
+	test1();
+	test2();
+	test3();
+	test4();
+	test5();
+
+	return 0;
 }

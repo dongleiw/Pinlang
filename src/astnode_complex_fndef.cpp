@@ -14,30 +14,28 @@ AstNodeComplexFnDef::AstNodeComplexFnDef(std::string fn_name, std::vector<Implem
 	m_obj_tid	 = TYPE_ID_NONE;
 }
 AstNodeComplexFnDef* AstNodeComplexFnDef::DeepCloneT() {
-	AstNodeComplexFnDef* newone = new AstNodeComplexFnDef();
-
+	std::vector<Implement> implements;
 	for (auto iter : m_implements) {
-		newone->m_implements.push_back(iter.DeepClone());
+		implements.push_back(iter.DeepClone());
 	}
 
+	AstNodeComplexFnDef* newone = new AstNodeComplexFnDef(m_fnname, implements);
+	newone->SetObjTypeId(m_obj_tid);
 	return newone;
 }
 AstNodeComplexFnDef::Implement AstNodeComplexFnDef::Implement::DeepClone() {
-	Implement implement;
-
+	std::vector<ParserGenericParam> generic_params;
 	for (auto iter : m_generic_params) {
-		implement.m_generic_params.push_back(iter.DeepClone());
+		generic_params.push_back(iter.DeepClone());
 	}
+	std::vector<ParserParameter> params;
 	for (auto iter : m_params) {
-		implement.m_params.push_back(iter.DeepClone());
+		params.push_back(iter.DeepClone());
 	}
-	if (m_return_type != nullptr) {
-		implement.m_return_type = m_return_type->DeepCloneT();
-	}
-	implement.m_body			 = m_body == nullptr ? nullptr : m_body->DeepCloneT();
-	implement.m_builtin_callback = m_builtin_callback;
 
-	return implement;
+	return Implement(generic_params, params, m_return_type == nullptr ? nullptr : m_return_type->DeepCloneT(),
+					 m_body == nullptr ? nullptr : m_body->DeepCloneT(),
+					 m_builtin_callback);
 }
 VerifyContextResult AstNodeComplexFnDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	verify_begin();
@@ -380,9 +378,9 @@ AstNodeComplexFnDef::Instance AstNodeComplexFnDef::Instantiate(VerifyContext& ct
 	}
 	const Implement* implement = &m_implements.at(0);
 	Instance		 instance{
-		.implement	= implement,
-		.params_tid = implement->m_params_tid,
-		.return_tid = implement->m_return_tid,
+				.implement	= implement,
+				.params_tid = implement->m_params_tid,
+				.return_tid = implement->m_return_tid,
 	};
 	instantiate(ctx, instance);
 	return instance;

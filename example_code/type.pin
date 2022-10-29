@@ -1,9 +1,9 @@
-{
+fn test1(){
 	var t=int;
 	printf("typename={} typeid={}\n", t.GetTypeName(), t.GetTypeId());
 }
 
-{
+fn test2(){
 	fn foo[T ToString](a T){
 		printf("typename={} typeid={}\n", T.GetTypeName(), T.GetTypeId());
 	}
@@ -11,4 +11,11 @@
 	foo(1.1);
 	foo(true);
 	foo("3");
+}
+
+fn main(args []str)int{
+	test1();
+	test2();
+
+	return 0;
 }

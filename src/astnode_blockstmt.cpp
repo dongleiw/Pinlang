@@ -96,15 +96,14 @@ void AstNodeBlockStmt::AddPreDefine(AstNodeBlockStmt& another) {
 	another.m_stmts.clear();
 }
 AstNodeBlockStmt* AstNodeBlockStmt::DeepCloneT() {
-	AstNodeBlockStmt* newone = new AstNodeBlockStmt(std::vector<AstNode*>());
+	assert(m_predefine_stmts.empty() && m_global_block==false);
 
-	for (auto iter : m_predefine_stmts) {
-		newone->m_predefine_stmts.push_back(iter->DeepClone());
-	}
+	std::vector<AstNode*> stmts;
 	for (auto iter : m_stmts) {
-		newone->m_stmts.push_back(iter->DeepClone());
+		stmts.push_back(iter->DeepClone());
 	}
 
+	AstNodeBlockStmt* newone = new AstNodeBlockStmt(stmts);
 	return newone;
 }
 void AstNodeBlockStmt::AddChildStmt(AstNode* node) {

@@ -21,9 +21,6 @@ public:
 	AstNodeFor*		 DeepCloneT();
 
 private:
-	AstNodeFor() {}
-
-private:
 	AstNode* m_init_expr; // 初始化部分, 可能为null
 	AstNode* m_cond_expr; // 条件部分, 可能为null
 	AstNode* m_loop_expr; // 循环部分, 可能为null

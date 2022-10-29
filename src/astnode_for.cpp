@@ -12,13 +12,13 @@ AstNodeFor::AstNodeFor(AstNode* init_expr, AstNode* cond_expr, AstNode* loop_exp
 	m_loop_expr = loop_expr;
 	m_body		= body;
 
-	if (m_init_expr == nullptr) {
+	if (m_init_expr != nullptr) {
 		m_init_expr->SetParent(this);
 	}
-	if (m_cond_expr == nullptr) {
+	if (m_cond_expr != nullptr) {
 		m_cond_expr->SetParent(this);
 	}
-	if (m_loop_expr == nullptr) {
+	if (m_loop_expr != nullptr) {
 		m_loop_expr->SetParent(this);
 	}
 	m_body->SetParent(this);
@@ -30,9 +30,11 @@ VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vp
 	if (m_init_expr != nullptr) {
 		m_init_expr->Verify(ctx, VerifyContextParam());
 	}
-	VerifyContextResult vr_cond = m_cond_expr->Verify(ctx, VerifyContextParam().SetResultTid(TYPE_ID_BOOL));
-	if (vr_cond.GetResultTypeId() != TYPE_ID_BOOL) {
-		panicf("type of cond expr is not bool");
+	if (m_cond_expr != nullptr) {
+		VerifyContextResult vr_cond = m_cond_expr->Verify(ctx, VerifyContextParam().SetResultTid(TYPE_ID_BOOL));
+		if (vr_cond.GetResultTypeId() != TYPE_ID_BOOL) {
+			panicf("type of cond expr is not bool");
+		}
 	}
 	if (m_loop_expr != nullptr) {
 		m_loop_expr->Verify(ctx, VerifyContextParam());
@@ -51,9 +53,11 @@ Variable* AstNodeFor::Execute(ExecuteContext& ctx) {
 		m_init_expr->Execute(ctx);
 	}
 	while (true) {
-		Variable* v_cond = m_cond_expr->Execute(ctx);
-		if (v_cond->GetValueBool() == false) {
-			break;
+		if (m_cond_expr != nullptr) {
+			Variable* v_cond = m_cond_expr->Execute(ctx);
+			if (v_cond->GetValueBool() == false) {
+				break;
+			}
 		}
 
 		m_body->Execute(ctx);

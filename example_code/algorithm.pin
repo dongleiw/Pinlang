@@ -1,5 +1,5 @@
 // 字符串是否相等
-{
+fn test1(){
 	fn is_str_equal(a str, b str)bool{
 		if a.Size() != b.Size(){
 			return false;
@@ -17,7 +17,7 @@
 }
 
 // 是否包含子串
-{
+fn test2(){
 	fn contains_substr(s str, sub str)bool{
 		if s.Size()<sub.Size(){
 			return false;
@@ -42,7 +42,7 @@
 }
 
 // 冒泡排序
-{
+fn test3(){
 	fn sort(array []int){
 		for var i=array.Size(); i>0; i=i-1{
 			for var j=1; j<i; j=j+1{
@@ -64,7 +64,7 @@
 }
 
 // 冒泡排序(泛型)
-{
+fn test4(){
 	printf("########### bubble sort\n");
 
 	fn sort[T GreaterThan[T]](array []T){
@@ -88,4 +88,13 @@
 	printf("before sort={}\n", array_float);
 	sort(array_float);
 	printf("after sort={}\n", array_float);
+}
+
+fn main(args []str)int{
+	test1();
+	test2();
+	test3();
+	test4();
+
+	return 0;
 }

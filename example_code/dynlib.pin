@@ -17,7 +17,7 @@
 
 
 // libc
-{
+fn test1(){
 	var dynlib_handler = dl_open("/lib/x86_64-linux-gnu/libc.so.6");
 
 	var open fn(str,int)int = dl_getFn(dynlib_handler, "open");
@@ -31,4 +31,10 @@
 		var read_byte_num = read(fd,s,c);
 		printf("read_byte_num={} str={}\n", read_byte_num, s);
 	}
+}
+
+fn main(args []str)int{
+	test1();
+
+	return 0;
 }
