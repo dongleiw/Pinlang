@@ -26,22 +26,49 @@ AstNodeLiteral::AstNodeLiteral(std::string value) {
 	m_result_typeid = TYPE_ID_STR;
 }
 VerifyContextResult AstNodeLiteral::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
-	switch (m_result_typeid) {
-	case TYPE_ID_INT32:
-	{
-		if (TYPE_ID_INT32 == vparam.GetResultTid() || TYPE_ID_INFER == vparam.GetResultTid()) {
+	if (is_integer_type(m_result_typeid)) {
+		// 将字面值转换为特定类型
+		// TODO 值域校验
+		TypeId target_tid = vparam.GetResultTid() == TYPE_ID_INFER ? m_result_typeid : vparam.GetResultTid();
+		switch (target_tid){
+		case TYPE_ID_INT8:
+			m_result_typeid = TYPE_ID_INT8;
+			return VerifyContextResult(m_result_typeid, new Variable(int8_t(m_value_int)));
+			break;
+		case TYPE_ID_INT16:
+			m_result_typeid = TYPE_ID_INT16;
+			return VerifyContextResult(m_result_typeid, new Variable(int16_t(m_value_int)));
+			break;
+		case TYPE_ID_INT32:
+			m_result_typeid = TYPE_ID_INT32;
 			return VerifyContextResult(m_result_typeid, new Variable(int32_t(m_value_int)));
-		} else if (TYPE_ID_INT64 == vparam.GetResultTid()) {
+			break;
+		case TYPE_ID_INT64:
 			m_result_typeid = TYPE_ID_INT64;
 			return VerifyContextResult(m_result_typeid, new Variable(int64_t(m_value_int)));
-		} else {
+			break;
+		case TYPE_ID_UINT8:
+			m_result_typeid = TYPE_ID_UINT8;
+			return VerifyContextResult(m_result_typeid, new Variable(uint8_t(m_value_int)));
+			break;
+		case TYPE_ID_UINT16:
+			m_result_typeid = TYPE_ID_UINT16;
+			return VerifyContextResult(m_result_typeid, new Variable(uint16_t(m_value_int)));
+			break;
+		case TYPE_ID_UINT32:
+			m_result_typeid = TYPE_ID_UINT32;
+			return VerifyContextResult(m_result_typeid, new Variable(uint32_t(m_value_int)));
+			break;
+		case TYPE_ID_UINT64:
+			m_result_typeid = TYPE_ID_UINT64;
+			return VerifyContextResult(m_result_typeid, new Variable(uint64_t(m_value_int)));
+			break;
+		default:
 			panicf("wrong type");
+			break;
 		}
-		break;
 	}
-	case TYPE_ID_INT64:
-		return VerifyContextResult(m_result_typeid, new Variable(int64_t(m_value_int)));
-		break;
+	switch (m_result_typeid) {
 	case TYPE_ID_FLOAT:
 		return VerifyContextResult(m_result_typeid, new Variable(m_value_float));
 		break;
@@ -58,12 +85,31 @@ VerifyContextResult AstNodeLiteral::Verify(VerifyContext& ctx, VerifyContextPara
 }
 Variable* AstNodeLiteral::Execute(ExecuteContext& ctx) {
 	switch (m_result_typeid) {
+	case TYPE_ID_INT8:
+		return new Variable(int8_t(this->m_value_int));
+		break;
+	case TYPE_ID_INT16:
+		return new Variable(int16_t(this->m_value_int));
+		break;
 	case TYPE_ID_INT32:
 		return new Variable(int32_t(this->m_value_int));
 		break;
 	case TYPE_ID_INT64:
 		return new Variable(int64_t(this->m_value_int));
 		break;
+	case TYPE_ID_UINT8:
+		return new Variable(uint8_t(this->m_value_int));
+		break;
+	case TYPE_ID_UINT16:
+		return new Variable(uint16_t(this->m_value_int));
+		break;
+	case TYPE_ID_UINT32:
+		return new Variable(uint32_t(this->m_value_int));
+		break;
+	case TYPE_ID_UINT64:
+		return new Variable(uint64_t(this->m_value_int));
+		break;
+
 	case TYPE_ID_FLOAT:
 		return new Variable(this->m_value_float);
 		break;

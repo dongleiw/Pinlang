@@ -15,5 +15,6 @@ set -o pipefail
 ./pinlang -f ../example_code/algorithm.pin
 ./pinlang -f ../example_code/string.pin
 ./pinlang -f ../example_code/dynlib.pin
+./pinlang -f ../example_code/int.pin
 
 echo "all pass"

@@ -7,11 +7,46 @@ float str_to_float(const std::string& s) {
 	return std::stof(s.c_str());
 }
 bool str_to_bool(const std::string& s) {
-	return s=="true";
+	return s == "true";
 }
-std::string int_to_str(int i){
+std::string int_to_str(int8_t i) {
 	char buf[16];
-	snprintf(buf,sizeof(buf), "%d",i);
+	snprintf(buf, sizeof(buf), "%d", i);
+	return std::string(buf);
+}
+std::string int_to_str(int16_t i) {
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%d", i);
+	return std::string(buf);
+}
+std::string int_to_str(int32_t i) {
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%d", i);
+	return std::string(buf);
+}
+std::string int_to_str(int64_t i) {
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%ld", i);
+	return std::string(buf);
+}
+std::string int_to_str(uint8_t i) {
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%u", i);
+	return std::string(buf);
+}
+std::string int_to_str(uint16_t i) {
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%u", i);
+	return std::string(buf);
+}
+std::string int_to_str(uint32_t i) {
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%u", i);
+	return std::string(buf);
+}
+std::string int_to_str(uint64_t i) {
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%lu", i);
 	return std::string(buf);
 }
 void replace_str(std::string& str, std::string oldstr, std::string newstr) {

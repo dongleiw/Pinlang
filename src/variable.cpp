@@ -20,16 +20,80 @@ Variable::Variable(TypeId tid) {
 	memset((void*)&m_value, 0, sizeof(m_value));
 	set_default_value();
 }
+
+Variable::Variable(int8_t value) {
+	m_tid			  = TYPE_ID_INT8;
+	m_value.value_int = value;
+	m_is_tmp		  = true;
+}
+Variable::Variable(int16_t value) {
+	m_tid			  = TYPE_ID_INT16;
+	m_value.value_int = value;
+	m_is_tmp		  = true;
+}
 Variable::Variable(int32_t value) {
-	m_tid				= TYPE_ID_INT32;
-	m_value.value_int32 = value;
-	m_is_tmp			= true;
+	m_tid			  = TYPE_ID_INT32;
+	m_value.value_int = value;
+	m_is_tmp		  = true;
 }
 Variable::Variable(int64_t value) {
-	m_tid				= TYPE_ID_INT64;
-	m_value.value_int64 = value;
-	m_is_tmp			= true;
+	m_tid			  = TYPE_ID_INT64;
+	m_value.value_int = value;
+	m_is_tmp		  = true;
 }
+Variable::Variable(uint8_t value) {
+	m_tid			  = TYPE_ID_UINT8;
+	m_value.value_int = value;
+	m_is_tmp		  = true;
+}
+Variable::Variable(uint16_t value) {
+	m_tid			  = TYPE_ID_UINT16;
+	m_value.value_int = value;
+	m_is_tmp		  = true;
+}
+Variable::Variable(uint32_t value) {
+	m_tid			  = TYPE_ID_UINT32;
+	m_value.value_int = value;
+	m_is_tmp		  = true;
+}
+Variable::Variable(uint64_t value) {
+	m_tid			  = TYPE_ID_UINT64;
+	m_value.value_int = value;
+	m_is_tmp		  = true;
+}
+int8_t Variable::GetValueInt8() const {
+	assert(m_tid == TYPE_ID_INT8);
+	return m_value.value_int;
+}
+int16_t Variable::GetValueInt16() const {
+	assert(m_tid == TYPE_ID_INT16);
+	return m_value.value_int;
+}
+int32_t Variable::GetValueInt32() const {
+	assert(m_tid == TYPE_ID_INT32);
+	return m_value.value_int;
+}
+int64_t Variable::GetValueInt64() const {
+	assert(m_tid == TYPE_ID_INT64);
+	return m_value.value_int;
+}
+uint8_t Variable::GetValueUInt8() const {
+	assert(m_tid == TYPE_ID_UINT8);
+	return m_value.value_int;
+}
+uint16_t Variable::GetValueUInt16() const {
+	assert(m_tid == TYPE_ID_UINT16);
+	return m_value.value_int;
+}
+uint32_t Variable::GetValueUInt32() const {
+	assert(m_tid == TYPE_ID_UINT32);
+	return m_value.value_int;
+}
+uint64_t Variable::GetValueUInt64() const {
+	assert(m_tid == TYPE_ID_UINT64);
+	return m_value.value_int;
+}
+
 Variable::Variable(float value) {
 	m_tid				= TYPE_ID_FLOAT;
 	m_value.value_float = value;
@@ -124,8 +188,20 @@ std::string Variable::ToString() const {
 		snprintf(buf, sizeof(buf) - 1, "type(%d:%s)", m_value.value_tid, GET_TYPENAME_C(m_value.value_tid));
 		ret += buf;
 		break;
+	case TYPE_ID_INT8:
+		snprintf(buf, sizeof(buf) - 1, "int(%d)", int8_t(m_value.value_int));
+		ret += buf;
+		break;
+	case TYPE_ID_INT16:
+		snprintf(buf, sizeof(buf) - 1, "int(%d)", int16_t(m_value.value_int));
+		ret += buf;
+		break;
 	case TYPE_ID_INT32:
-		snprintf(buf, sizeof(buf) - 1, "int(%d)", m_value.value_int32);
+		snprintf(buf, sizeof(buf) - 1, "int(%d)", int32_t(m_value.value_int));
+		ret += buf;
+		break;
+	case TYPE_ID_INT64:
+		snprintf(buf, sizeof(buf) - 1, "int(%ld)", int64_t(m_value.value_int));
 		ret += buf;
 		break;
 	case TYPE_ID_STR:
@@ -150,14 +226,6 @@ std::string Variable::ToString() const {
 TypeId Variable::GetValueTid() const {
 	assert(m_tid == TYPE_ID_TYPE);
 	return m_value.value_tid;
-}
-int32_t Variable::GetValueInt32() const {
-	assert(m_tid == TYPE_ID_INT32);
-	return m_value.value_int32;
-}
-int64_t Variable::GetValueInt64() const {
-	assert(m_tid == TYPE_ID_INT64);
-	return m_value.value_int64;
 }
 float Variable::GetValueFloat() const {
 	assert(m_tid == TYPE_ID_FLOAT);
@@ -283,29 +351,27 @@ void Variable::set_default_value() {
 		// panicf("function can not have default value");
 		m_value_fnobj = nullptr;
 	} else {
-		switch (m_tid) {
-		case TYPE_ID_TYPE:
-			m_value.value_tid = TYPE_ID_NONE;
-			break;
-		case TYPE_ID_INT32:
-			m_value.value_int32 = 0;
-			break;
-		case TYPE_ID_INT64:
-			m_value.value_int64 = 0;
-			break;
-		case TYPE_ID_FLOAT:
-			m_value.value_float = 0.0;
-			break;
-		case TYPE_ID_BOOL:
-			m_value.value_bool = false;
-			break;
-		case TYPE_ID_STR:
-			m_value.value_str		   = new TypeInfoStr::MemStructure();
-			m_value.value_str->data	   = new uint8_t[1];
-			m_value.value_str->data[0] = '\0';
-			break;
-		default:
-			panicf("unknown type[%d:%s]", m_tid, GET_TYPENAME_C(m_tid));
+		if (is_integer_type(m_tid)) {
+			m_value.value_int = 0;
+		} else {
+			switch (m_tid) {
+			case TYPE_ID_TYPE:
+				m_value.value_tid = TYPE_ID_NONE;
+				break;
+			case TYPE_ID_FLOAT:
+				m_value.value_float = 0.0;
+				break;
+			case TYPE_ID_BOOL:
+				m_value.value_bool = false;
+				break;
+			case TYPE_ID_STR:
+				m_value.value_str		   = new TypeInfoStr::MemStructure();
+				m_value.value_str->data	   = new uint8_t[1];
+				m_value.value_str->data[0] = '\0';
+				break;
+			default:
+				panicf("unknown type[%d:%s]", m_tid, GET_TYPENAME_C(m_tid));
+			}
 		}
 	}
 }

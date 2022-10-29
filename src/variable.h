@@ -21,8 +21,6 @@ class AstNodeComplexFnDef;
 class Variable {
 public:
 	Variable(TypeId tid);
-	Variable(int32_t value);
-	Variable(int64_t value);
 	Variable(float value);
 	Variable(bool value);
 	Variable(std::string value);
@@ -37,12 +35,8 @@ public:
 	TypeId GetTypeId() const { return m_tid; }
 
 	TypeId				 GetValueTid() const;
-	int32_t				 GetValueInt32() const;
-	int64_t				 GetValueInt64() const;
 	float				 GetValueFloat() const;
 	bool				 GetValueBool() const;
-	char*				 GetValueStr();
-	int					 GetValueStrSize() const;
 	FunctionObj*		 GetValueFunctionObj() const;
 	AstNodeConstraint*	 GetValueConstraint() const;
 	AstNodeComplexFnDef* GetValueComplexFn() const;
@@ -50,6 +44,26 @@ public:
 	const int GetValueArraySize() const;
 	Variable* GetValueArrayElement(int idx);
 	void	  SetValueArrayElement(int idx, Variable* element);
+
+	Variable(int8_t value);
+	Variable(int16_t value);
+	Variable(int32_t value);
+	Variable(int64_t value);
+	Variable(uint8_t value);
+	Variable(uint16_t value);
+	Variable(uint32_t value);
+	Variable(uint64_t value);
+	int8_t	 GetValueInt8() const;
+	int16_t	 GetValueInt16() const;
+	int32_t	 GetValueInt32() const;
+	int64_t	 GetValueInt64() const;
+	uint8_t	 GetValueUInt8() const;
+	uint16_t GetValueUInt16() const;
+	uint32_t GetValueUInt32() const;
+	uint64_t GetValueUInt64() const;
+
+	char* GetValueStr();
+	int	  GetValueStrSize() const;
 
 	bool IsConst() const { return m_is_const; }
 
@@ -83,11 +97,12 @@ private:
 
 	union Value {
 		// value type
-		TypeId	value_tid;	 // type
-		int32_t value_int32; // i32
-		int64_t value_int64; // i64
-		float	value_float; // float
-		bool	value_bool;	 // bool
+		TypeId value_tid; // type
+
+		uint64_t value_int; // integer
+
+		float value_float; // float
+		bool  value_bool;  // bool
 
 		// reference type
 		TypeInfoArray::MemStructure* value_array;  // array

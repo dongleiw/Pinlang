@@ -29,19 +29,30 @@ enum TypeGroupId {
  * 每个类型都有一个唯一id
  */
 enum TypeId {
-	TYPE_ID_NONE			   = 0,
-	TYPE_ID_INFER			   = 1, // 推导类型. 在Verify阶段, 所有这种类型的变量都将变更为实际具体类型
-	TYPE_ID_TYPE			   = 2, // type类型.
-	TYPE_ID_INT32			   = 3,
-	TYPE_ID_INT64			   = 4,
-	TYPE_ID_FLOAT			   = 5,
-	TYPE_ID_BOOL			   = 6,
-	TYPE_ID_STR				   = 7,
-	TYPE_ID_GENERIC_CONSTRAINT = 8, // 泛型约束
-	TYPE_ID_COMPLEX_FN		   = 9, // 复杂函数
+	TYPE_ID_NONE  = 0,
+	TYPE_ID_INFER = 1, // 推导类型. 在Verify阶段, 所有这种类型的变量都将变更为实际具体类型
+	TYPE_ID_TYPE  = 2, // type类型.
+
+	TYPE_ID_INT8   = 3,
+	TYPE_ID_INT16  = 4,
+	TYPE_ID_INT32  = 5,
+	TYPE_ID_INT64  = 6,
+	TYPE_ID_UINT8  = 7,
+	TYPE_ID_UINT16 = 8,
+	TYPE_ID_UINT32 = 9,
+	TYPE_ID_UINT64 = 10,
+
+	TYPE_ID_FLOAT = 11,
+
+	TYPE_ID_BOOL			   = 12,
+	TYPE_ID_STR				   = 13,
+	TYPE_ID_GENERIC_CONSTRAINT = 14, // 泛型约束
+	TYPE_ID_COMPLEX_FN		   = 15, // 复杂函数
 };
 
 #define CONSTRAINT_ID_NONE ((TypeId)0)
+
+#define is_integer_type(tid) (TYPE_ID_INT8 <= (tid) && (tid) <= TYPE_ID_UINT64)
 
 class ExecuteContext;
 class Variable;

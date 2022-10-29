@@ -8,7 +8,7 @@
 #include "type_constraint.h"
 #include "type_float.h"
 #include "type_fn.h"
-#include "type_int32.h"
+#include "type_int.h"
 #include "type_int64.h"
 #include "type_mgr.h"
 #include "type_str.h"
@@ -22,6 +22,7 @@ TypeMgr::TypeMgr() {
 }
 
 void TypeMgr::InitTypes() {
+	TypeId tid;
 	{
 		TypeInfo* ti_none = new TypeInfo();
 		ti_none->SetTypeId(allocate_typeid());
@@ -41,16 +42,29 @@ void TypeMgr::InitTypes() {
 		assert(TYPE_ID_TYPE == ti_type->GetTypeId());
 	}
 	{
-		TypeInfoInt32* ti_int = new TypeInfoInt32();
-		ti_int->SetTypeId(allocate_typeid());
-		m_typeinfos.push_back(ti_int);
-		assert(TYPE_ID_INT32 == ti_int->GetTypeId());
-	}
-	{
-		TypeInfoInt64* ti_int = new TypeInfoInt64();
-		ti_int->SetTypeId(allocate_typeid());
-		m_typeinfos.push_back(ti_int);
-		assert(TYPE_ID_INT64 == ti_int->GetTypeId());
+		tid = add_type(new TypeInfoInt(TYPE_ID_INT8));
+		assert(TYPE_ID_INT8 == tid);
+
+		tid = add_type(new TypeInfoInt(TYPE_ID_INT16));
+		assert(TYPE_ID_INT16 == tid);
+
+		tid = add_type(new TypeInfoInt(TYPE_ID_INT32));
+		assert(TYPE_ID_INT32 == tid);
+
+		tid = add_type(new TypeInfoInt(TYPE_ID_INT64));
+		assert(TYPE_ID_INT64 == tid);
+
+		tid = add_type(new TypeInfoInt(TYPE_ID_UINT8));
+		assert(TYPE_ID_UINT8 == tid);
+
+		tid = add_type(new TypeInfoInt(TYPE_ID_UINT16));
+		assert(TYPE_ID_UINT16 == tid);
+
+		tid = add_type(new TypeInfoInt(TYPE_ID_UINT32));
+		assert(TYPE_ID_UINT32 == tid);
+
+		tid = add_type(new TypeInfoInt(TYPE_ID_UINT64));
+		assert(TYPE_ID_UINT64 == tid);
 	}
 	{
 		TypeInfoFloat* ti_float = new TypeInfoFloat();
@@ -96,8 +110,16 @@ void TypeMgr::InitTypes() {
 }
 void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods(ctx);
+
+	m_typeinfos.at(TYPE_ID_INT8)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_INT16)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_INT32)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_INT64)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_UINT8)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_UINT16)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_UINT32)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_UINT64)->InitBuiltinMethods(ctx);
+
 	m_typeinfos.at(TYPE_ID_FLOAT)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_BOOL)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods(ctx);
