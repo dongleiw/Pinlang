@@ -25,6 +25,7 @@ AstNodeFor::AstNodeFor(AstNode* init_expr, AstNode* cond_expr, AstNode* loop_exp
 }
 VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify for");
+	ctx.GetCurStack()->EnterBlock(new VariableTable());
 
 	if (m_init_expr != nullptr) {
 		m_init_expr->Verify(ctx, VerifyContextParam());
@@ -38,6 +39,8 @@ VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vp
 	}
 
 	m_body->Verify(ctx, VerifyContextParam().SetReturnTid(vparam.GetReturnTid()));
+
+	ctx.GetCurStack()->LeaveBlock();
 
 	m_result_typeid = TYPE_ID_NONE;
 	return VerifyContextResult(m_result_typeid);
@@ -62,6 +65,7 @@ Variable* AstNodeFor::Execute(ExecuteContext& ctx) {
 			m_loop_expr->Execute(ctx);
 		}
 	}
+	ctx.GetCurStack()->SetBreaked(false); // 清掉break
 	ctx.GetCurStack()->LeaveBlock();
 	return nullptr;
 }

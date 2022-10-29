@@ -7,6 +7,8 @@
 
 #include <cassert>
 
+class AstNodeBlockStmt;
+
 class VerifyContextParam {
 public:
 	VerifyContextParam() {
@@ -92,14 +94,15 @@ private:
 
 class VerifyContext {
 public:
-	VerifyContext();
-	void		   PushStack();
-	void		   PopSTack();
-	Stack*		   GetCurStack() { return m_top_stack; }
-	VariableTable* GetGlobalVt() { return &m_global_vt; }
+	VerifyContext(AstNodeBlockStmt* global_block);
+	void			  PushStack();
+	void			  PopSTack();
+	Stack*			  GetCurStack() { return m_top_stack; }
+	VariableTable*	  GetGlobalVt() { return &m_global_vt; }
+	AstNodeBlockStmt* GetGlobalBlock() { return m_global_block; }
 
 private:
-private:
-	Stack*		  m_top_stack;
-	VariableTable m_global_vt;
+	Stack*			  m_top_stack;
+	VariableTable	  m_global_vt;
+	AstNodeBlockStmt* m_global_block;
 };

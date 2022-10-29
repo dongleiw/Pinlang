@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include "astnode.h"
@@ -16,6 +17,7 @@
 class AstNodeBlockStmt : public AstNode {
 public:
 	AstNodeBlockStmt(const std::vector<AstNode*>& stmts);
+	AstNodeBlockStmt();
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
@@ -28,8 +30,13 @@ public:
 
 	void SetGlobalBlock(bool b) { m_global_block = b; }
 
+	void MergeAnother(AstNodeBlockStmt& another);
+
+	void VerifyIdentfier(AstNode* cur_node, std::string id, VerifyContext& ctx, VerifyContextParam vparam);
+
 private:
-	std::vector<AstNode*> m_predefine_stmts;
-	std::vector<AstNode*> m_stmts;
-	bool				  m_global_block;
+	std::vector<AstNode*>					   m_predefine_stmts;
+	std::vector<AstNode*>					   m_stmts;
+	bool									   m_global_block;
+	std::vector<std::pair<AstNode*, AstNode*>> m_dependency; // 依赖关系. first依赖second
 };

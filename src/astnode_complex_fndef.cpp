@@ -40,6 +40,7 @@ AstNodeComplexFnDef::Implement AstNodeComplexFnDef::Implement::DeepClone() {
 	return implement;
 }
 VerifyContextResult AstNodeComplexFnDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	verify_begin();
 	// 检查规则1: 如果有多个参数个数相同的定义, 这些定义必须都是非泛型定义
 	{
 		std::map<int, std::vector<const Implement*>> map_param_num_2_list;
@@ -73,6 +74,7 @@ VerifyContextResult AstNodeComplexFnDef::Verify(VerifyContext& ctx, VerifyContex
 
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_fnname, new Variable(this));
 
+	verify_end();
 	return VerifyContextResult(m_result_typeid);
 }
 Variable* AstNodeComplexFnDef::Execute(ExecuteContext& ctx) {

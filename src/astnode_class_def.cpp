@@ -20,9 +20,9 @@ VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextPar
 		panicf("conflict class name[%s]", m_class_name.c_str());
 	}
 
-	TypeInfoClass* ti = new TypeInfoClass(m_class_name);
-	m_result_typeid	  = g_typemgr.AddTypeInfo(ti);
-	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_class_name, Variable::CreateTypeVariable(m_result_typeid));
+	TypeId class_tid = g_typemgr.AddTypeInfo(new TypeInfoClass(m_class_name));
+	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_class_name, Variable::CreateTypeVariable(class_tid));
+	TypeInfoClass* ti = dynamic_cast<TypeInfoClass*>(g_typemgr.GetTypeInfo(class_tid));
 
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
 
@@ -63,7 +63,7 @@ VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextPar
 
 	ctx.GetCurStack()->LeaveBlock();
 
-	return VerifyContextResult(m_result_typeid);
+	return VerifyContextResult(TYPE_ID_NONE);
 }
 Variable* AstNodeClassDef::Execute(ExecuteContext& ctx) {
 	return nullptr;

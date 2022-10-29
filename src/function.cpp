@@ -47,6 +47,7 @@ TypeId Function::GetReturnTypeId() const {
 	return tifn->GetReturnTypeId();
 }
 Variable* Function::Call(ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
+	assert(m_params_name.size() == args.size());
 	if (m_builtin_callback != nullptr) {
 		// 构造block
 		VariableTable* vt_args = new VariableTable();

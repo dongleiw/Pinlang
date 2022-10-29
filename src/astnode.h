@@ -7,23 +7,36 @@
 
 class AstNode {
 public:
-	AstNode() : m_result_typeid(TYPE_ID_NONE), m_parent(nullptr) {
+	enum VerifyStatus {
+		NOT_VERIFIED,
+		IN_VERIFY,
+		VERIFIED
+	};
+
+public:
+	AstNode() : m_result_typeid(TYPE_ID_NONE), m_parent(nullptr), m_verify_status(NOT_VERIFIED) {
 	}
 	TypeId GetResultTypeId() { return m_result_typeid; }
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) = 0;
 	virtual Variable*			Execute(ExecuteContext& ctx)						  = 0;
 
-	void		   SetParent(AstNode* parent) { m_parent = parent; }
-	const AstNode* GetParent() const { return m_parent; }
+	void	 SetParent(AstNode* parent) { m_parent = parent; }
+	AstNode* GetParent() { return m_parent; }
 
 	virtual AstNode* DeepClone() = 0;
 
 	bool IsInFor() const;
+	bool IsVerified() const { return m_verify_status; }
 
 protected:
-	TypeId	 m_result_typeid;
-	AstNode* m_parent;
+	void verify_begin();
+	void verify_end();
+
+protected:
+	TypeId		 m_result_typeid;
+	AstNode*	 m_parent;
+	VerifyStatus m_verify_status; // 是否已经verify
 };
 
 #define M_DEEP_CLONE(node, type) (node == nullptr ? nullptr : dynamic_cast<type>(node->DeepClone()))

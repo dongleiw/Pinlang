@@ -1,0 +1,17 @@
+var a=b+1; 
+var c=d+1; 
+
+class Person{
+	id int;
+
+	impl constraint ToString{
+		fn tostring()str{
+			return "{id="+this.id.tostring() + "}";
+		}
+	}
+}
+
+fn main(args []str) int{
+	test();
+}
+

@@ -24,6 +24,7 @@ AstNodeVarDef::AstNodeVarDef(std::string var_name, AstNodeType* declared_type, A
 	}
 }
 VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	verify_begin();
 	log_debug("verify vardef: varname[%s]", m_varname.c_str());
 
 	TypeId declared_tid = TYPE_ID_INFER;
@@ -52,6 +53,7 @@ VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx, VerifyContextParam
 	}
 
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_varname, new Variable(m_result_typeid));
+	verify_end();
 	return VerifyContextResult();
 }
 Variable* AstNodeVarDef::Execute(ExecuteContext& ctx) {

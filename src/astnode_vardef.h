@@ -22,6 +22,8 @@ public:
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeVarDef*	 DeepCloneT();
 
+	std::string GetVarName() const { return m_varname; }
+
 private:
 	AstNodeVarDef() {
 		m_declared_type = nullptr;

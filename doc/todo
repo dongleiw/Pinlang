@@ -37,7 +37,10 @@ immutable
 	泛型
 闭包
 异步
+多文件
+main函数
 管道
+macro
 namespace
 module
 utf8

@@ -40,6 +40,8 @@ public:
 	void InitTypes();
 	void InitBuiltinMethods(VerifyContext& ctx);
 
+	TypeId GetMainFnTid() const { return m_main_fn_tid; }
+
 private:
 	/*
 	 * 增加类型
@@ -51,6 +53,7 @@ private:
 
 private:
 	std::vector<TypeInfo*> m_typeinfos;
+	TypeId				   m_main_fn_tid;
 };
 
 extern TypeMgr g_typemgr;

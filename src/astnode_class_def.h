@@ -29,6 +29,8 @@ public:
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeClassDef* DeepCloneT();
 
+	std::string GetClassName() const { return m_class_name; }
+
 private:
 	AstNodeClassDef() {}
 

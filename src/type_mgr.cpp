@@ -97,15 +97,6 @@ void TypeMgr::InitTypes() {
 		m_typeinfos.push_back(ti);
 		assert(TYPE_ID_COMPLEX_FN == ti->GetTypeId());
 	}
-
-	// 定义内置constraint
-	{
-		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_add());
-		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_sub());
-		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_mul());
-		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_div());
-		//AddGenericConstraint(TypeInfoGenericConstraint::create_constraint_mod());
-	}
 }
 void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods(ctx);
@@ -122,6 +113,10 @@ void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_FLOAT)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_BOOL)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods(ctx);
+
+	bool   added		 = false;
+	TypeId array_str_tid = GetOrAddTypeArray(ctx, TYPE_ID_STR, added);
+	m_main_fn_tid= GetOrAddTypeFn(ctx, std::vector<TypeId>{array_str_tid}, TYPE_ID_INT32);
 }
 
 TypeId TypeMgr::allocate_typeid() {
