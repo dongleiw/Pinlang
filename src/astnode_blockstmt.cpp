@@ -1,4 +1,5 @@
 #include "astnode_blockstmt.h"
+#include "astnode_break.h"
 #include "astnode_return.h"
 #include "type.h"
 #include "type_mgr.h"
@@ -53,7 +54,7 @@ Variable* AstNodeBlockStmt::Execute(ExecuteContext& ctx) {
 
 	for (auto n : m_stmts) {
 		n->Execute(ctx);
-		if (ctx.GetCurStack()->HasReturned()) {
+		if (ctx.GetCurStack()->HasReturned() || ctx.GetCurStack()->IsBreaked()) {
 			break;
 		}
 	}

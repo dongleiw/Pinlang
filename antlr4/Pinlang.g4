@@ -156,10 +156,10 @@ stmt_assignment
 	: expr ASSIGN expr
 	;
 
-//// dl import
-//stmt_dlimport
-//	: 'dlimport'
-//	;
+//// break
+stmt_break
+	: BREAK ';'
+	;
 
 statement
 	: expr ';'
@@ -173,6 +173,7 @@ statement
 	| stmt_while
 	| stmt_class_def
 	| stmt_assignment ';'
+	| stmt_break 
     ;
 
 literal

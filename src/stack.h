@@ -33,8 +33,12 @@ public:
 
 	VariableTable* GetVariableTableByVarName(std::string varname);
 
+	bool IsBreaked() const { return m_breaked; }
+	void SetBreaked(bool b) { m_breaked = b; }
+
 private:
 	Stack*					  m_next;	 // 下一层栈
 	std::list<VariableTable*> m_vt_list; // 变量表列表. 后面vt是前面vt的孩子
 	Variable*				  m_returned_value;
+	bool					  m_breaked;
 };

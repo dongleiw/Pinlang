@@ -9,7 +9,6 @@
 #include "type_float.h"
 #include "type_fn.h"
 #include "type_int.h"
-#include "type_int64.h"
 #include "type_mgr.h"
 #include "type_str.h"
 #include "type_tuple.h"

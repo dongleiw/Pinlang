@@ -5,6 +5,23 @@
 
 #include <cassert>
 
+AstNodeIf::AstNodeIf(std::vector<AstNode*> cond_expr_list, std::vector<AstNode*> cond_block_list, AstNode* else_cond_block) {
+
+	m_cond_expr_list = cond_expr_list;
+	for (auto& iter : m_cond_expr_list) {
+		iter->SetParent(this);
+	}
+
+	m_cond_block_list = cond_block_list;
+	for (auto& iter : m_cond_block_list) {
+		iter->SetParent(this);
+	}
+
+	m_else_cond_block = else_cond_block;
+	if (m_else_cond_block != nullptr) {
+		m_else_cond_block->SetParent(this);
+	}
+}
 VerifyContextResult AstNodeIf::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify if");
 	assert(m_cond_expr_list.size() == m_cond_block_list.size());
@@ -31,7 +48,7 @@ VerifyContextResult AstNodeIf::Verify(VerifyContext& ctx, VerifyContextParam vpa
 Variable* AstNodeIf::Execute(ExecuteContext& ctx) {
 	for (size_t i = 0; i < m_cond_expr_list.size(); i++) {
 		Variable* v = m_cond_expr_list.at(i)->Execute(ctx);
-		if (v->GetValueBool()==true) {
+		if (v->GetValueBool() == true) {
 			m_cond_block_list.at(i)->Execute(ctx);
 			return nullptr;
 		}

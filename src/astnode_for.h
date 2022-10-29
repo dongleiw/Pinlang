@@ -12,12 +12,7 @@
  */
 class AstNodeFor : public AstNode {
 public:
-	AstNodeFor(AstNode* init_expr, AstNode* cond_expr, AstNode* loop_expr, AstNode* body) {
-		m_init_expr = init_expr;
-		m_cond_expr = cond_expr;
-		m_loop_expr = loop_expr;
-		m_body		= body;
-	}
+	AstNodeFor(AstNode* init_expr, AstNode* cond_expr, AstNode* loop_expr, AstNode* body);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
@@ -29,8 +24,8 @@ private:
 	AstNodeFor() {}
 
 private:
-	AstNode* m_init_expr;
-	AstNode* m_cond_expr;
-	AstNode* m_loop_expr;
+	AstNode* m_init_expr; // 初始化部分, 可能为null
+	AstNode* m_cond_expr; // 条件部分, 可能为null
+	AstNode* m_loop_expr; // 循环部分, 可能为null
 	AstNode* m_body;
 };

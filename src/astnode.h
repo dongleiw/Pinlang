@@ -19,6 +19,8 @@ public:
 
 	virtual AstNode* DeepClone() = 0;
 
+	bool IsInFor() const;
+
 protected:
 	TypeId	 m_result_typeid;
 	AstNode* m_parent;

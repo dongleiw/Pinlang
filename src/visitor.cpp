@@ -5,6 +5,7 @@
 #include "astnode_access_attr.h"
 #include "astnode_assignment.h"
 #include "astnode_blockstmt.h"
+#include "astnode_break.h"
 #include "astnode_class_def.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
@@ -79,10 +80,11 @@ std::any Visitor::visitType_list(PinlangParser::Type_listContext* ctx) {
 	}
 	return type_list;
 }
+// TODO 根据返回来确定字面值是32bit/64bit
 std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalContext* ctx) {
 	auto literal = ctx->literal();
 	if (literal->IntegerLiteral() != nullptr) {
-		int value = str_to_int(literal->IntegerLiteral()->getText());
+		int32_t value = str_to_int(literal->IntegerLiteral()->getText());
 		return (AstNode*)new AstNodeLiteral(value);
 	} else if (literal->FloatLiteral() != nullptr) {
 		float value = str_to_float(literal->FloatLiteral()->getText());
@@ -258,6 +260,8 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_for()->accept(this);
 	} else if (ctx->stmt_while() != nullptr) {
 		return ctx->stmt_while()->accept(this);
+	} else if (ctx->stmt_break() != nullptr) {
+		return ctx->stmt_break()->accept(this);
 	} else {
 		panicf("bug");
 	}
@@ -692,4 +696,7 @@ std::any Visitor::visitStmt_while(PinlangParser::Stmt_whileContext* ctx) {
 	}
 	AstNode* body = std::any_cast<AstNode*>(ctx->stmt_block()->accept(this));
 	return (AstNode*)new AstNodeFor(nullptr, cond_expr, nullptr, body);
+}
+std::any Visitor::visitStmt_break(PinlangParser::Stmt_breakContext* ctx) {
+	return (AstNode*)new AstNodeBreak();
 }

@@ -6,7 +6,7 @@
 
 #include <assert.h>
 
-Stack::Stack(Stack* next) : m_next(next), m_returned_value(nullptr) {
+Stack::Stack(Stack* next) : m_next(next), m_returned_value(nullptr), m_breaked(false) {
 }
 
 void Stack::EnterBlock(VariableTable* vt) {

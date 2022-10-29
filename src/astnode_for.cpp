@@ -6,6 +6,23 @@
 
 #include <cassert>
 
+AstNodeFor::AstNodeFor(AstNode* init_expr, AstNode* cond_expr, AstNode* loop_expr, AstNode* body) {
+	m_init_expr = init_expr;
+	m_cond_expr = cond_expr;
+	m_loop_expr = loop_expr;
+	m_body		= body;
+
+	if (m_init_expr == nullptr) {
+		m_init_expr->SetParent(this);
+	}
+	if (m_cond_expr == nullptr) {
+		m_cond_expr->SetParent(this);
+	}
+	if (m_loop_expr == nullptr) {
+		m_loop_expr->SetParent(this);
+	}
+	m_body->SetParent(this);
+}
 VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify for");
 
@@ -37,7 +54,7 @@ Variable* AstNodeFor::Execute(ExecuteContext& ctx) {
 		}
 
 		m_body->Execute(ctx);
-		if (ctx.GetCurStack()->HasReturned()) {
+		if (ctx.GetCurStack()->HasReturned() || ctx.GetCurStack()->IsBreaked()) {
 			break;
 		}
 

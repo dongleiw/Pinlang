@@ -25,7 +25,7 @@
 	printf("fd={}\n", fd);
 
 	{
-		var read fn(int,str,i64)i64 = dl_getFn(dynlib_handler, "read");
+		var read fn(int,str,i64) i64 = dl_getFn(dynlib_handler, "read");
 		var s="123456789";
 		var c i64=8;
 		var read_byte_num = read(fd,s,c);

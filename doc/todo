@@ -1,7 +1,6 @@
 流程控制
 	foreach
 	switch
-	break
 	continue
 	return: 检查所有分支都return了
 function

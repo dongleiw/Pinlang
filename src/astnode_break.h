@@ -3,28 +3,24 @@
 #include <string>
 
 #include "astnode.h"
+#include "astnode_blockstmt.h"
 #include "execute_context.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
 
 /*
+ * break语句
  */
-class AstNodeIf : public AstNode {
+class AstNodeBreak : public AstNode {
 public:
-	AstNodeIf(std::vector<AstNode*> cond_expr_list, std::vector<AstNode*> cond_block_list, AstNode* else_cond_block);
+	AstNodeBreak();
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
-	AstNodeIf*		 DeepCloneT();
+	AstNodeBreak*	 DeepCloneT();
 
 private:
-	AstNodeIf() {}
-
-private:
-	std::vector<AstNode*> m_cond_expr_list;
-	std::vector<AstNode*> m_cond_block_list;
-	AstNode*			  m_else_cond_block; // optional
 };

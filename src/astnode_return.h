@@ -10,7 +10,7 @@
 #include "verify_context.h"
 
 /*
- * 变量定义
+ * return语句
  */
 class AstNodeReturn : public AstNode {
 public:

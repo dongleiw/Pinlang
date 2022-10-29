@@ -54,6 +54,21 @@ static Variable* builtin_fn_mul_int(ExecuteContext& ctx, Function* fn, Variable*
 	return new Variable(result);
 }
 
+#define make_builtin_fn_equal(int_type_id, fnname)                                                                                \
+	Variable* builtin_fn_equal_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                \
+		bool v = thisobj->fnname() == args.at(0)->fnname();                                                                       \
+		return new Variable(v);                                                                                                   \
+	}
+make_builtin_fn_equal(TYPE_ID_INT8, GetValueInt8);
+make_builtin_fn_equal(TYPE_ID_INT16, GetValueInt16);
+make_builtin_fn_equal(TYPE_ID_INT32, GetValueInt32);
+make_builtin_fn_equal(TYPE_ID_INT64, GetValueInt64);
+make_builtin_fn_equal(TYPE_ID_UINT8, GetValueUInt8);
+make_builtin_fn_equal(TYPE_ID_UINT16, GetValueUInt16);
+make_builtin_fn_equal(TYPE_ID_UINT32, GetValueUInt32);
+make_builtin_fn_equal(TYPE_ID_UINT64, GetValueUInt64);
+
 #define make_builtin_fn_lessThan(int_type_id, fnname)                                                                                \
 	Variable* builtin_fn_lessThan_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
 		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                   \
@@ -191,6 +206,7 @@ TypeInfoInt::TypeInfoInt(TypeId tid) {
 	}
 	m_typegroup_id = TYPE_GROUP_ID_PRIMARY;
 
+	memset(m_builtin_fn_list_tostring, 0, sizeof(m_builtin_fn_list_tostring));
 	m_builtin_fn_list_tostring[TYPE_ID_INT8]   = builtin_fn_tostring_TYPE_ID_INT8;
 	m_builtin_fn_list_tostring[TYPE_ID_INT16]  = builtin_fn_tostring_TYPE_ID_INT16;
 	m_builtin_fn_list_tostring[TYPE_ID_INT32]  = builtin_fn_tostring_TYPE_ID_INT32;
@@ -200,6 +216,7 @@ TypeInfoInt::TypeInfoInt(TypeId tid) {
 	m_builtin_fn_list_tostring[TYPE_ID_UINT32] = builtin_fn_tostring_TYPE_ID_UINT32;
 	m_builtin_fn_list_tostring[TYPE_ID_UINT64] = builtin_fn_tostring_TYPE_ID_UINT64;
 
+	memset(m_builtin_fn_list_add, 0, sizeof(m_builtin_fn_list_add));
 	m_builtin_fn_list_add[TYPE_ID_INT8]	  = builtin_fn_add_TYPE_ID_INT8;
 	m_builtin_fn_list_add[TYPE_ID_INT16]  = builtin_fn_add_TYPE_ID_INT16;
 	m_builtin_fn_list_add[TYPE_ID_INT32]  = builtin_fn_add_TYPE_ID_INT32;
@@ -209,6 +226,7 @@ TypeInfoInt::TypeInfoInt(TypeId tid) {
 	m_builtin_fn_list_add[TYPE_ID_UINT32] = builtin_fn_add_TYPE_ID_UINT32;
 	m_builtin_fn_list_add[TYPE_ID_UINT64] = builtin_fn_add_TYPE_ID_UINT64;
 
+	memset(m_builtin_fn_list_sub, 0, sizeof(m_builtin_fn_list_sub));
 	m_builtin_fn_list_sub[TYPE_ID_INT8]	  = builtin_fn_sub_TYPE_ID_INT8;
 	m_builtin_fn_list_sub[TYPE_ID_INT16]  = builtin_fn_sub_TYPE_ID_INT16;
 	m_builtin_fn_list_sub[TYPE_ID_INT32]  = builtin_fn_sub_TYPE_ID_INT32;
@@ -218,6 +236,17 @@ TypeInfoInt::TypeInfoInt(TypeId tid) {
 	m_builtin_fn_list_sub[TYPE_ID_UINT32] = builtin_fn_sub_TYPE_ID_UINT32;
 	m_builtin_fn_list_sub[TYPE_ID_UINT64] = builtin_fn_sub_TYPE_ID_UINT64;
 
+	memset(m_builtin_fn_list_equal, 0, sizeof(m_builtin_fn_list_equal));
+	m_builtin_fn_list_equal[TYPE_ID_INT8]	= builtin_fn_equal_TYPE_ID_INT8;
+	m_builtin_fn_list_equal[TYPE_ID_INT16]	= builtin_fn_equal_TYPE_ID_INT16;
+	m_builtin_fn_list_equal[TYPE_ID_INT32]	= builtin_fn_equal_TYPE_ID_INT32;
+	m_builtin_fn_list_equal[TYPE_ID_INT64]	= builtin_fn_equal_TYPE_ID_INT64;
+	m_builtin_fn_list_equal[TYPE_ID_UINT8]	= builtin_fn_equal_TYPE_ID_UINT8;
+	m_builtin_fn_list_equal[TYPE_ID_UINT16] = builtin_fn_equal_TYPE_ID_UINT16;
+	m_builtin_fn_list_equal[TYPE_ID_UINT32] = builtin_fn_equal_TYPE_ID_UINT32;
+	m_builtin_fn_list_equal[TYPE_ID_UINT64] = builtin_fn_equal_TYPE_ID_UINT64;
+
+	memset(m_builtin_fn_list_lessThan, 0, sizeof(m_builtin_fn_list_lessThan));
 	m_builtin_fn_list_lessThan[TYPE_ID_INT8]   = builtin_fn_lessThan_TYPE_ID_INT8;
 	m_builtin_fn_list_lessThan[TYPE_ID_INT16]  = builtin_fn_lessThan_TYPE_ID_INT16;
 	m_builtin_fn_list_lessThan[TYPE_ID_INT32]  = builtin_fn_lessThan_TYPE_ID_INT32;
@@ -227,6 +256,7 @@ TypeInfoInt::TypeInfoInt(TypeId tid) {
 	m_builtin_fn_list_lessThan[TYPE_ID_UINT32] = builtin_fn_lessThan_TYPE_ID_UINT32;
 	m_builtin_fn_list_lessThan[TYPE_ID_UINT64] = builtin_fn_lessThan_TYPE_ID_UINT64;
 
+	memset(m_builtin_fn_list_lessEqual, 0, sizeof(m_builtin_fn_list_lessEqual));
 	m_builtin_fn_list_lessEqual[TYPE_ID_INT8]	= builtin_fn_lessEqual_TYPE_ID_INT8;
 	m_builtin_fn_list_lessEqual[TYPE_ID_INT16]	= builtin_fn_lessEqual_TYPE_ID_INT16;
 	m_builtin_fn_list_lessEqual[TYPE_ID_INT32]	= builtin_fn_lessEqual_TYPE_ID_INT32;
@@ -236,6 +266,7 @@ TypeInfoInt::TypeInfoInt(TypeId tid) {
 	m_builtin_fn_list_lessEqual[TYPE_ID_UINT32] = builtin_fn_lessEqual_TYPE_ID_UINT32;
 	m_builtin_fn_list_lessEqual[TYPE_ID_UINT64] = builtin_fn_lessEqual_TYPE_ID_UINT64;
 
+	memset(m_builtin_fn_list_notEqual, 0, sizeof(m_builtin_fn_list_notEqual));
 	m_builtin_fn_list_notEqual[TYPE_ID_INT8]   = builtin_fn_notEqual_TYPE_ID_INT8;
 	m_builtin_fn_list_notEqual[TYPE_ID_INT16]  = builtin_fn_notEqual_TYPE_ID_INT16;
 	m_builtin_fn_list_notEqual[TYPE_ID_INT32]  = builtin_fn_notEqual_TYPE_ID_INT32;
@@ -245,6 +276,7 @@ TypeInfoInt::TypeInfoInt(TypeId tid) {
 	m_builtin_fn_list_notEqual[TYPE_ID_UINT32] = builtin_fn_notEqual_TYPE_ID_UINT32;
 	m_builtin_fn_list_notEqual[TYPE_ID_UINT64] = builtin_fn_notEqual_TYPE_ID_UINT64;
 
+	memset(m_builtin_fn_list_greaterThan, 0, sizeof(m_builtin_fn_list_greaterThan));
 	m_builtin_fn_list_greaterThan[TYPE_ID_INT8]	  = builtin_fn_greaterThan_TYPE_ID_INT8;
 	m_builtin_fn_list_greaterThan[TYPE_ID_INT16]  = builtin_fn_greaterThan_TYPE_ID_INT16;
 	m_builtin_fn_list_greaterThan[TYPE_ID_INT32]  = builtin_fn_greaterThan_TYPE_ID_INT32;
@@ -254,6 +286,7 @@ TypeInfoInt::TypeInfoInt(TypeId tid) {
 	m_builtin_fn_list_greaterThan[TYPE_ID_UINT32] = builtin_fn_greaterThan_TYPE_ID_UINT32;
 	m_builtin_fn_list_greaterThan[TYPE_ID_UINT64] = builtin_fn_greaterThan_TYPE_ID_UINT64;
 
+	memset(m_builtin_fn_list_greaterEqual, 0, sizeof(m_builtin_fn_list_greaterEqual));
 	m_builtin_fn_list_greaterEqual[TYPE_ID_INT8]   = builtin_fn_greaterEqual_TYPE_ID_INT8;
 	m_builtin_fn_list_greaterEqual[TYPE_ID_INT16]  = builtin_fn_greaterEqual_TYPE_ID_INT16;
 	m_builtin_fn_list_greaterEqual[TYPE_ID_INT32]  = builtin_fn_greaterEqual_TYPE_ID_INT32;
@@ -316,6 +349,35 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Add")->GetValueConstraint();
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{m_typeid, m_typeid});
+		AddConstraint(constraint_tid, fns);
+	}
+	// 手动实现Equal约束
+	{
+		std::vector<AstNodeComplexFnDef*> fns;
+		{
+			std::vector<AstNodeComplexFnDef::Implement> implements;
+			{
+				std::vector<ParserGenericParam> gparams;
+				std::vector<ParserParameter>	params;
+				{
+					AstNodeType* another_value_type = new AstNodeType();
+					another_value_type->InitWithIdentifier(m_name);
+					params.push_back({ParserParameter{
+						.name = "a",
+						.type = another_value_type,
+					}});
+				}
+				AstNodeType* return_type = new AstNodeType();
+				return_type->InitWithIdentifier("bool");
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_equal[m_typeid]));
+			}
+			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("equal", implements);
+			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+			fns.push_back(astnode_complex_fndef);
+		}
+
+		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Equal")->GetValueConstraint();
+		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{m_typeid});
 		AddConstraint(constraint_tid, fns);
 	}
 	// 手动实现Less约束

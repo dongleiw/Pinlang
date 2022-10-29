@@ -263,7 +263,7 @@ bool DynamicLoading::FnExist(int dynlib_instance_id, void* fn) const {
 }
 bool DynamicLoading::SupportType(TypeId tid) const {
 	// 目前只支持这三个类型
-	return (tid == TYPE_ID_INT32 || tid == TYPE_ID_FLOAT || tid == TYPE_ID_STR || tid==TYPE_ID_INT64);
+	return (tid == TYPE_ID_INT32 || tid == TYPE_ID_FLOAT || tid == TYPE_ID_STR || tid==TYPE_ID_INT64 || tid==TYPE_ID_UINT64);
 }
 BuiltinFnCallback DynamicLoading::GetBuiltinFnCallback(std::vector<TypeId> params_tid, TypeId return_tid) const {
 	/*
