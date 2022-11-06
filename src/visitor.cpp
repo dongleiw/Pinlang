@@ -334,7 +334,7 @@ std::any Visitor::visitStmt_simple_fndef(PinlangParser::Stmt_simple_fndefContext
 		return_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
 	}
 
-	AstNodeComplexFnDef::Implement				implement(std::vector<ParserGenericParam>(), params, return_type, body, nullptr);
+	AstNodeComplexFnDef::Implement				implement(std::vector<ParserGenericParam>(), params, return_type, body);
 	std::vector<AstNodeComplexFnDef::Implement> implements;
 	implements.push_back(implement);
 
@@ -451,7 +451,7 @@ std::any Visitor::visitStmt_generic_fndef(PinlangParser::Stmt_generic_fndefConte
 
 	AstNodeBlockStmt* body = dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
 
-	AstNodeComplexFnDef::Implement				implement(generic_params, params, return_type, body, nullptr);
+	AstNodeComplexFnDef::Implement				implement(generic_params, params, return_type, body);
 	std::vector<AstNodeComplexFnDef::Implement> implements;
 	implements.push_back(implement);
 	return (AstNode*)new AstNodeComplexFnDef(fn_name, implements);
@@ -504,7 +504,7 @@ std::any Visitor::visitStmt_complex_fndef_implement(PinlangParser::Stmt_complex_
 	}
 	AstNodeBlockStmt* body = dynamic_cast<AstNodeBlockStmt*>(std::any_cast<AstNode*>(ctx->stmt_block()->accept(this)));
 
-	AstNodeComplexFnDef::Implement implement(generic_params, params, return_type, body, nullptr);
+	AstNodeComplexFnDef::Implement implement(generic_params, params, return_type, body);
 
 	return implement;
 }

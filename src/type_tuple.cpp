@@ -9,8 +9,8 @@
 #include "astnode_constraint.h"
 #include "astnode_type.h"
 #include "define.h"
+#include "fntable.h"
 #include "execute_context.h"
-#include "function.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -19,27 +19,34 @@
 #include "variable_table.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
-	TypeInfoTuple*		ti_tuple	 = dynamic_cast<TypeInfoTuple*>(g_typemgr.GetTypeInfo(thisobj->GetTypeId()));
-	std::vector<TypeId> element_tids = ti_tuple->GetElementTids();
 
+	TypeInfoTuple*		ti_tuple		   = dynamic_cast<TypeInfoTuple*>(g_typemgr.GetTypeInfo(builtin_fn_info.obj_tid));
+	std::vector<TypeId> tuple_element_tids = ti_tuple->GetElementTids();
+	assert(tuple_element_tids.size() == builtin_fn_info.fn_list.size());
 	std::string s = "(";
-	for (size_t i = 0; i < element_tids.size(); i++) {
+	for (size_t i = 0; i < tuple_element_tids.size(); i++) {
 		std::string field_name = TypeInfoTuple::GetFieldName(i);
 		Variable*	element	   = thisobj->GetFieldValue(field_name);
-		// 调用tostring方法来转换为str
-		// TODO 目前得先获取MethodIndex然后调用
-		TypeInfo*	ti_element	 = g_typemgr.GetTypeInfo(element_tids.at(i));
-		MethodIndex method_index = ti_element->GetMethodIdx("tostring[]()str");
-		Variable*	str_e		 = element->CallMethod(ctx, method_index, std::vector<Variable*>());
+		FnAddr		fn_addr   = builtin_fn_info.fn_list.at(i);
+		Variable*	str_e	   = ctx.GetFnTable().CallFn(fn_addr, ctx, element, std::vector<Variable*>());
 		s += str_e->GetValueStr();
-		if (i + 1 < element_tids.size()) {
+		if (i + 1 < tuple_element_tids.size()) {
 			s += ",";
 		}
 	}
 	s += ")";
 	return new Variable(s);
+}
+static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	TypeInfoTuple* ti_tuple = dynamic_cast<TypeInfoTuple*>(g_typemgr.GetTypeInfo(builtin_fn_info.obj_tid));
+	for (auto tid : ti_tuple->GetElementTids()) {
+		TypeInfo*	ti_element	 = g_typemgr.GetTypeInfo(tid);
+		MethodIndex method_index = ti_element->GetMethodIdx("tostring[]()str");
+		FnAddr fn_addr= ti_element->GetMethodByIdx(method_index);
+		builtin_fn_info.fn_list.push_back(fn_addr);
+	}
 }
 
 TypeInfoTuple::TypeInfoTuple(std::vector<TypeId> element_tids) {
@@ -83,7 +90,7 @@ void TypeInfoTuple::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

@@ -1,7 +1,7 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "define.h"
-#include "function.h"
+#include "fntable.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
@@ -33,9 +33,11 @@ AstNodeComplexFnDef::Implement AstNodeComplexFnDef::Implement::DeepClone() {
 		params.push_back(iter.DeepClone());
 	}
 
-	return Implement(generic_params, params, m_return_type == nullptr ? nullptr : m_return_type->DeepCloneT(),
-					 m_body == nullptr ? nullptr : m_body->DeepCloneT(),
-					 m_builtin_callback);
+	if (m_body != nullptr) {
+		return Implement(generic_params, params, m_return_type == nullptr ? nullptr : m_return_type->DeepCloneT(), m_body->DeepCloneT());
+	} else {
+		return Implement(generic_params, params, m_return_type == nullptr ? nullptr : m_return_type->DeepCloneT(), m_verify_cb, m_execute_cb);
+	}
 }
 VerifyContextResult AstNodeComplexFnDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	verify_begin();
@@ -76,9 +78,10 @@ VerifyContextResult AstNodeComplexFnDef::Verify(VerifyContext& ctx, VerifyContex
 	return VerifyContextResult(m_result_typeid);
 }
 Variable* AstNodeComplexFnDef::Execute(ExecuteContext& ctx) {
-	for (auto instance : m_instances) {
-		ctx.GetCurStack()->GetCurVariableTable()->AddVariable(instance.instance_name, new Variable(instance.fnobj));
-	}
+	// verify节点得到的函数实例被保存到FnTable中, 在execute阶段, 不再需要根据函数名查找函数实例. 因此这里不再需要定义到vt中
+	//for (auto instance : m_instances) {
+	//	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(instance.instance_name, new Variable(instance.fnobj));
+	//}
 	return nullptr;
 }
 AstNodeComplexFnDef::Instance AstNodeComplexFnDef::Instantiate_param_return(VerifyContext& ctx, std::vector<TypeId> concrete_params_tid, TypeId concrete_return_tid) {
@@ -335,23 +338,20 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 	}
 
 	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instance.gparams_tid, instance.params_tid, instance.return_tid);
-	TypeId	  fn_tid	   = g_typemgr.GetOrAddTypeFn(ctx, instance.params_tid, instance.return_tid);
-	Function* fn		   = nullptr;
+	TypeId fn_tid		   = g_typemgr.GetOrAddTypeFn(ctx, instance.params_tid, instance.return_tid);
 	if (instance.implement->m_body != nullptr) {
-		fn = new Function(fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT());
+		instance.fn_addr = ctx.GetFnTable().AddUserDefineFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT());
 	} else {
-		fn = new Function(fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_builtin_callback);
+		instance.fn_addr = ctx.GetFnTable().AddBuiltinFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_verify_cb,
+														   instance.implement->m_execute_cb);
 	}
-	instance.fnobj = FunctionObj(nullptr, fn);
-
-	fn->Verify(ctx);
 
 	m_instances.push_back(instance);
-	add_instance_to_vt(ctx, instance.instance_name, instance.fnobj);
+	add_instance_to_vt(ctx, instance.instance_name, fn_tid, instance.fn_addr);
 
 	log_debug("instantiate fn: name[%s] instance_name[%s]", m_fnname.c_str(), instance.instance_name.c_str());
 }
-void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string name, FunctionObj fnobj) const {
+void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string name, TypeId fn_tid, FnAddr fn_addr) const {
 	if (m_obj_tid != TYPE_ID_NONE) {
 		// 如果是方法, 则跳过. 由TypeInfo来完成instance的保存
 		return;
@@ -360,7 +360,7 @@ void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string nam
 	if (vt == nullptr) {
 		panicf("generic_fn[%s] not found", m_fnname.c_str());
 	}
-	vt->AddVariable(name, new Variable(fnobj));
+	vt->AddVariable(name, new Variable(fn_tid, FunctionObj(nullptr, fn_addr)));
 }
 std::vector<std::string> AstNodeComplexFnDef::Implement::GetGParamsName() const {
 	std::vector<std::string> gparams_name;
@@ -378,9 +378,9 @@ AstNodeComplexFnDef::Instance AstNodeComplexFnDef::Instantiate(VerifyContext& ct
 	}
 	const Implement* implement = &m_implements.at(0);
 	Instance		 instance{
-				.implement	= implement,
-				.params_tid = implement->m_params_tid,
-				.return_tid = implement->m_return_tid,
+		.implement	= implement,
+		.params_tid = implement->m_params_tid,
+		.return_tid = implement->m_return_tid,
 	};
 	instantiate(ctx, instance);
 	return instance;

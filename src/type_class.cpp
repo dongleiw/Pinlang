@@ -7,7 +7,6 @@
 #include "astnode_constraint.h"
 #include "define.h"
 #include "execute_context.h"
-#include "function.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"

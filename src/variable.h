@@ -24,7 +24,7 @@ public:
 	Variable(float value);
 	Variable(bool value);
 	Variable(std::string value);
-	Variable(FunctionObj fnobj);
+	Variable(TypeId fn_tid, FunctionObj fnobj);
 	Variable(AstNodeConstraint* astnode);
 	Variable(AstNodeComplexFnDef* astnode);
 	Variable(TypeId array_tid, std::vector<Variable*> array); // array
@@ -70,14 +70,8 @@ public:
 	bool IsTmp() const { return m_is_tmp; }
 	void SetTmp(bool tmp) { m_is_tmp = tmp; }
 
-	/*
-	 * 找不到method, panic
-	 */
-	Variable* CallMethod(ExecuteContext& ctx, MethodIndex method_idx, std::vector<Variable*> args);
-
 	std::string ToString() const;
 
-	Variable* GetMethodValue(MethodIndex method_idx);
 	Variable* GetFieldValue(std::string field_name);
 	void	  SetFieldValue(std::string field_name, Variable* v);
 

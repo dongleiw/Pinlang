@@ -1,6 +1,7 @@
 #pragma once
 
 #include "define.h"
+#include "fntable.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -54,7 +55,7 @@ public:
 
 	bool SupportType(TypeId tid) const;
 
-	BuiltinFnCallback GetBuiltinFnCallback(std::vector<TypeId> params_tid, TypeId return_tid) const;
+	DynamicFnExecuteCallback GetBuiltinFnCallback(std::vector<TypeId> params_tid, TypeId return_tid) const;
 
 private:
 	static AstNodeComplexFnDef* create_astnode_fn_dl_open();

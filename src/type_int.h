@@ -1,6 +1,7 @@
 #pragma once
 
 #include "define.h"
+#include "fntable.h"
 #include "type.h"
 
 /*
@@ -12,13 +13,13 @@ public:
 	void InitBuiltinMethods(VerifyContext& ctx) override;
 
 private:
-	BuiltinFnCallback m_builtin_fn_list_tostring[64];
-	BuiltinFnCallback m_builtin_fn_list_add[64];
-	BuiltinFnCallback m_builtin_fn_list_sub[64];
-	BuiltinFnCallback m_builtin_fn_list_equal[64];
-	BuiltinFnCallback m_builtin_fn_list_lessThan[64];
-	BuiltinFnCallback m_builtin_fn_list_lessEqual[64];
-	BuiltinFnCallback m_builtin_fn_list_notEqual[64];
-	BuiltinFnCallback m_builtin_fn_list_greaterThan[64];
-	BuiltinFnCallback m_builtin_fn_list_greaterEqual[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_tostring[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_add[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_sub[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_equal[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_lessThan[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_lessEqual[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_notEqual[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_greaterThan[64];
+	BuiltinFnExecuteCallback m_builtin_fn_list_greaterEqual[64];
 };

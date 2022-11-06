@@ -2,25 +2,39 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "define.h"
-#include "function.h"
+#include "fntable.h"
 #include "type_mgr.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_equal(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_equal_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_TYPE);
 	return new Variable(thisobj->GetValueTid() == args.at(0)->GetValueTid());
 }
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static void builtin_fn_equal_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_TYPE);
+}
+
+static Variable* builtin_fn_tostring_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
 	return new Variable(GET_TYPENAME(thisobj->GetValueTid()));
 }
-static Variable* builtin_fn_getTypeName(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+}
+
+static Variable* builtin_fn_getTypeName_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
 	return new Variable(GET_TYPENAME(thisobj->GetValueTid()));
 }
-static Variable* builtin_fn_getTypeId(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static void builtin_fn_getTypeName_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_TYPE);
+}
+
+static Variable* builtin_fn_getTypeId_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
 	return new Variable(int(thisobj->GetValueTid()));
+}
+static void builtin_fn_getTypeId_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_TYPE);
 }
 
 TypeInfoType::TypeInfoType() {
@@ -39,7 +53,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -70,7 +84,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_equal));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_equal_verify, builtin_fn_equal_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("equal", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -92,7 +106,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_getTypeName));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_getTypeName_verify,builtin_fn_getTypeName_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("GetTypeName", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -106,7 +120,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("int");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_getTypeId));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_getTypeId_verify, builtin_fn_getTypeId_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("GetTypeId", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

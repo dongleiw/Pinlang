@@ -1,7 +1,6 @@
 #include "astnode_access_array_element.h"
 #include "astnode_constraint.h"
 #include "define.h"
-#include "function.h"
 #include "log.h"
 #include "type_array.h"
 #include "type_mgr.h"
@@ -29,9 +28,9 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 	} else {
 	}
 
-	m_method_index	= method_indexs.at(0);
-	Function* f		= ti->GetMethodByIdx(m_method_index);
-	m_result_typeid = f->GetReturnTypeId();
+	MethodIndex method_index = method_indexs.at(0);
+	m_fn_addr				 = ti->GetMethodByIdx(method_index);
+	m_result_typeid			 = ctx.GetFnTable().GetFnReturnTypeId(m_fn_addr);
 
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
@@ -47,7 +46,7 @@ Variable* AstNodeAccessArrayElement::Execute(ExecuteContext& ctx) {
 		return nullptr;
 	} else {
 		std::vector<Variable*> args{v_index};
-		return v_array->CallMethod(ctx, m_method_index, args);
+		return ctx.GetFnTable().CallFn(m_fn_addr, ctx, v_array, args);
 	}
 }
 AstNodeAccessArrayElement* AstNodeAccessArrayElement::DeepCloneT() {

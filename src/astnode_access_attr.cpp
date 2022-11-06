@@ -1,6 +1,5 @@
 #include "astnode_access_attr.h"
 #include "define.h"
-#include "function.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -29,14 +28,13 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 		// 是方法
 		if (vparam.HasFnCallArgs()) {
 			// 父节点传递过来了函数调用的参数类型
-			// 这说明该变量是函数
 			// 根据参数类型和结果类型来选择
 			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name, vparam.GetFnCallArgs(), vparam.GetResultTid());
 			if (!method_idx.IsValid()) {
 				panicf("type[%d:%s] doesn't have method[%s] with args[%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), g_typemgr.GetTypeName(vparam.GetFnCallArgs()).c_str());
 			}
-			m_method_idx	= method_idx;
-			m_result_typeid = ti->GetMethodByIdx(method_idx)->GetTypeId();
+			m_fn_addr		= ti->GetMethodByIdx(method_idx);
+			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 		} else if (vparam.GetResultTid() != TYPE_ID_INFER) {
 			// 父节点传递过来了期望的结果类型
 			// 使用该类型来选择合适的函数重载
@@ -44,16 +42,16 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			if (!method_idx.IsValid()) {
 				panicf("type[%d:%s] doesn't have method[%s] of type[%d:%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), vparam.GetResultTid(), GET_TYPENAME_C(vparam.GetResultTid()));
 			}
-			m_method_idx	= method_idx;
-			m_result_typeid = ti->GetMethodByIdx(method_idx)->GetTypeId();
+			m_fn_addr		= ti->GetMethodByIdx(method_idx);
+			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 		} else {
 			// 上下文不足无法推断. 最后尝试下只用方法名查找, 如果有多个重名方法, 则失败
 			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name);
 			if (!method_idx.IsValid()) {
 				panicf("type[%d:%s] doesn't have method[%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str());
 			}
-			m_method_idx	= method_idx;
-			m_result_typeid = ti->GetMethodByIdx(method_idx)->GetTypeId();
+			m_fn_addr		= ti->GetMethodByIdx(method_idx);
+			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 		}
 	}
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
@@ -74,7 +72,9 @@ Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
 		if (m_is_field) {
 			return v->GetFieldValue(m_attr_name);
 		} else {
-			return v->GetMethodValue(m_method_idx);
+			Variable* method_v = new Variable(m_result_typeid, FunctionObj(v, m_fn_addr));
+			method_v->SetTmp(false);
+			return method_v;
 		}
 	}
 }

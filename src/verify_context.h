@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fntable.h"
 #include "stack.h"
 #include "type.h"
 #include "variable.h"
@@ -100,9 +101,11 @@ public:
 	Stack*			  GetCurStack() { return m_top_stack; }
 	VariableTable*	  GetGlobalVt() { return &m_global_vt; }
 	AstNodeBlockStmt* GetGlobalBlock() { return m_global_block; }
+	FnTable&		  GetFnTable() { return m_fn_table; }
 
 private:
 	Stack*			  m_top_stack;
 	VariableTable	  m_global_vt;
 	AstNodeBlockStmt* m_global_block;
+	FnTable		  m_fn_table;
 };

@@ -1,7 +1,6 @@
 #include "astnode_identifier.h"
 #include "astnode_complex_fndef.h"
 #include "define.h"
-#include "function.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -26,6 +25,11 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 	}
 
 	if (v->GetTypeId() == TYPE_ID_COMPLEX_FN) {
+		/*
+		 * 该标识符是一个函数的名字, 可以在verify阶段确定函数地址(即静态分发)
+		 * 注意如果是普通的函数变量, 无法在verify阶段确定函数地址
+		 */
+		m_is_complex_fn = true;
 		// 这是一个复杂函数, 需要根据上下文实例化
 		AstNodeComplexFnDef* astnode_complex_fndef = v->GetValueComplexFn();
 		if (vparam.HasFnCallArgs()) {
@@ -33,21 +37,23 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 			// 这说明该变量是函数
 			// 根据参数类型和结果类型来实例化
 			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate_param_return(ctx, vparam.GetFnCallArgs(), vparam.GetResultTid());
-			log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
-			m_id			= instance.instance_name;
-			m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
+			m_fn_addr							   = instance.fn_addr;
+			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 		} else if (vparam.GetResultTid() != TYPE_ID_INFER) {
 			// 父节点传递过来了期望的结果类型
 			// 使用该类型来选择合适的函数重载
 			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate_type(ctx, vparam.GetResultTid());
-			log_info("change varname[%s] => [%s]", m_id.c_str(), instance.instance_name.c_str());
-			m_id			= instance.instance_name;
-			m_result_typeid = instance.fnobj.GetFunction()->GetTypeId();
+			m_fn_addr							   = instance.fn_addr;
+			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 
 		} else {
-			panicf("bug");
+			// 上下文不足无法推断. 最后尝试下只用方法名查找, 如果有多个重名方法, 则失败
+			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate(ctx);
+			m_fn_addr							   = instance.fn_addr;
+			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 		}
 	} else {
+		m_is_complex_fn = false;
 		m_result_typeid = v->GetTypeId();
 	}
 
@@ -56,10 +62,18 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 }
 Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 	if (ctx.IsAssign()) {
-		ctx.GetCurStack()->GetVariable(m_id)->Assign(ctx.GetAssignValue());
+		if (m_is_complex_fn) {
+			panicf("complex fn can not be assigned");
+		} else {
+			ctx.GetCurStack()->GetVariable(m_id)->Assign(ctx.GetAssignValue());
+		}
 		return nullptr;
 	} else {
-		return ctx.GetCurStack()->GetVariable(m_id);
+		if (m_is_complex_fn) {
+			return new Variable(m_result_typeid, FunctionObj(nullptr, m_fn_addr));
+		} else {
+			return ctx.GetCurStack()->GetVariable(m_id);
+		}
 	}
 }
 AstNodeIdentifier* AstNodeIdentifier::DeepCloneT() {

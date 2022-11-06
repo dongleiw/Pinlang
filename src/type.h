@@ -5,8 +5,8 @@
 #include <utility>
 
 #include "define.h"
+#include "fntable.h"
 
-class Function;
 class VerifyContext;
 class AstNodeComplexFnDef;
 
@@ -23,13 +23,13 @@ public:
 	// 类型的方法的一个具体实例
 	struct MethodInstance {
 		std::string method_name; // 方法名
-		Function*	fn;			 // 方法的实现
+		FnAddr		fn_addr;
 	};
 	struct Constraint {
 		TypeId						constraint_tid;
 		std::vector<Method>			methods;
 		std::vector<MethodInstance> concrete_methods;
-		MethodIndex					AddConcreteMethod(std::string method_name, Function* fn);
+		MethodIndex					AddConcreteMethod(std::string method_name, FnAddr fn_addr);
 	};
 	struct Field {
 		std::string name;
@@ -63,7 +63,7 @@ public:
 	 */
 	MethodIndex GetMethodIdx(std::string method_name) const;
 
-	Function* GetMethodByIdx(MethodIndex method_idx);
+	FnAddr GetMethodByIdx(MethodIndex method_idx);
 
 	virtual void InitBuiltinMethods(VerifyContext& ctx) {}
 

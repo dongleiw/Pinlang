@@ -12,6 +12,7 @@
 #include "astnode_complex_fndef.h"
 #include "define.h"
 #include "dynamic_loading.h"
+#include "fntable.h"
 #include "execute_context.h"
 #include "function_obj.h"
 #include "predefine.h"
@@ -90,9 +91,9 @@ void execute(std::string src_path, std::vector<std::string> str_args) {
 		global_block_stmt->MergeAnother(*block_stmt);
 	}
 
-	FunctionObj main_fn;
+	FnAddr		  main_fn_addr;
+	VerifyContext vctx(global_block_stmt);
 	{
-		VerifyContext vctx(global_block_stmt);
 		vctx.PushStack();
 		log_info("verify begin");
 		global_block_stmt->Verify(vctx, VerifyContextParam());
@@ -104,10 +105,11 @@ void execute(std::string src_path, std::vector<std::string> str_args) {
 		}
 		AstNodeComplexFnDef*		  astnode_complex_fn_def = main_complex_fn->GetValueComplexFn();
 		AstNodeComplexFnDef::Instance instance				 = astnode_complex_fn_def->Instantiate_type(vctx, g_typemgr.GetMainFnTid());
-		main_fn												 = instance.fnobj;
+		main_fn_addr										 = instance.fn_addr;
 	}
 
 	ExecuteContext ectx;
+	ectx.SetFnTable(vctx.GetFnTable());
 	ectx.PushStack();
 	log_info("execute begin");
 	global_block_stmt->Execute(ectx);
@@ -124,7 +126,7 @@ void execute(std::string src_path, std::vector<std::string> str_args) {
 		main_fn_arg = new Variable(main_fn_ti->GetParamType(0), str_var_array);
 	}
 
-	main_fn.Call(ectx, std::vector<Variable*>{main_fn_arg});
+	Variable* main_ret_v = ectx.GetFnTable().CallFn(main_fn_addr, ectx, nullptr, std::vector<Variable*>{main_fn_arg});
 	log_info("execute end");
 
 	printf("execute end. succ\n");

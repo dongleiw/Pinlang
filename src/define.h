@@ -54,14 +54,12 @@ enum TypeId {
 
 #define is_integer_type(tid) (TYPE_ID_INT8 <= (tid) && (tid) <= TYPE_ID_UINT64)
 
+class VerifyContext;
 class ExecuteContext;
 class Variable;
 class AstNode;
 class AstNodeComplexFnDef;
 class Function;
-
-// 指向内置函数的指针
-typedef Variable* (*BuiltinFnCallback)(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args);
 
 class AstNodeType;
 /*

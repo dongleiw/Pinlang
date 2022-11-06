@@ -4,6 +4,7 @@
 
 #include "astnode.h"
 #include "define.h"
+#include "fntable.h"
 #include "execute_context.h"
 #include "source_info.h"
 #include "type.h"
@@ -33,5 +34,5 @@ private:
 	AstNode*	m_right_expr;
 	SourceInfo	m_si_op;
 
-	MethodIndex m_method_idx;
+	FnAddr m_fn_addr;
 };

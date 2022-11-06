@@ -5,8 +5,8 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "define.h"
+#include "fntable.h"
 #include "execute_context.h"
-#include "function.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -15,25 +15,29 @@
 
 #include <cassert>
 
-static Variable* builtin_fn_add_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_add_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	float result = thisobj->GetValueFloat() + args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
+static void builtin_fn_add_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_FLOAT);
+}
 
-static Variable* builtin_fn_sub_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_sub_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	float result = thisobj->GetValueFloat() - args.at(0)->GetValueFloat();
 	return new Variable(result);
 }
-
-static Variable* builtin_fn_mul_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	float result = thisobj->GetValueFloat() * args.at(0)->GetValueFloat();
-	return new Variable(result);
+static void builtin_fn_sub_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_FLOAT);
 }
 
-static Variable* builtin_fn_greaterThan(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_greaterThan_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj->GetTypeId() == TYPE_ID_FLOAT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_FLOAT);
 	bool result = thisobj->GetValueFloat() > args.at(0)->GetValueFloat();
 	return new Variable(result);
+}
+static void builtin_fn_greaterThan_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_FLOAT);
 }
 
 static Variable* builtin_fn_div_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
@@ -41,11 +45,14 @@ static Variable* builtin_fn_div_float(ExecuteContext& ctx, Function* fn, Variabl
 	return new Variable(result);
 }
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
 	char buf[16];
 	snprintf(buf, sizeof(buf), "%f", thisobj->GetValueFloat());
 	return new Variable(std::string(buf));
+}
+static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_FLOAT);
 }
 
 TypeInfoFloat::TypeInfoFloat() {
@@ -67,7 +74,7 @@ void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -100,7 +107,7 @@ void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("float");
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_add_float));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_add_verify, builtin_fn_add_execute));
 			}
 
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
@@ -131,7 +138,7 @@ void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_greaterThan));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_greaterThan_verify, builtin_fn_greaterThan_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterThan", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

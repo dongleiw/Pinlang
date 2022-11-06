@@ -5,8 +5,9 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "define.h"
+#include "fntable.h"
 #include "execute_context.h"
-#include "function.h"
+#include "log.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -14,28 +15,43 @@
 
 #include <cassert>
 
-static Variable* builtin_fn_add_str(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_add_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	std::string result = thisobj->GetValueStr();
 	result += args.at(0)->GetValueStr();
 	return new Variable(result);
 }
+static void builtin_fn_add_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_STR);
+}
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_tostring(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(args.size() == 0);
 	return thisobj;
 }
-
-static Variable* builtin_fn_index(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
-	std::string value = thisobj->GetValueStr();
-	int32_t		index = args.at(0)->GetValueInt32();
-	return new Variable(int32_t(value.at(index)));
+static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_STR);
 }
 
-static Variable* builtin_fn_size(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 0);
+static Variable* builtin_fn_index_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	const char* value = thisobj->GetValueStr();
+	int32_t		index = args.at(0)->GetValueInt32();
+	if (index < 0 || index >= thisobj->GetValueStrSize()) {
+		panicf("wrong array index");
+	}
+	int32_t ch = value[index];
+	return new Variable(ch);
+}
+static void builtin_fn_index_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_STR);
+}
 
+static Variable* builtin_fn_size_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 0);
 	return new Variable(thisobj->GetValueStrSize());
+}
+static void builtin_fn_size_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_STR);
 }
 
 TypeInfoStr::TypeInfoStr() {
@@ -57,7 +73,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -90,7 +106,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_add_str));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_add_verify, builtin_fn_add_execute));
 			}
 
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
@@ -123,7 +139,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("int");
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_index));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_index_verify, builtin_fn_index_execute));
 			}
 
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("index", implements);
@@ -147,7 +163,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("i32");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_size));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_size_verify, builtin_fn_size_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("Size", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

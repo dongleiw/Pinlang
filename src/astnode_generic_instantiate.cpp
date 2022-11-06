@@ -1,12 +1,11 @@
 #include "astnode_generic_instantiate.h"
+#include "astnode_type.h"
 #include "define.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "variable.h"
-#include "function.h"
 #include "verify_context.h"
-#include "astnode_type.h"
 #include <cassert>
 
 AstNodeGenericInstantiate::AstNodeGenericInstantiate(std::string generic_name, std::vector<AstNodeType*> type_list) {
@@ -18,24 +17,21 @@ VerifyContextResult AstNodeGenericInstantiate::Verify(VerifyContext& ctx, Verify
 
 	// 得到泛参的实际类型
 	std::vector<TypeId> gparams_tid;
-	for(auto iter:m_type_list){
-		gparams_tid.push_back( iter->Verify(ctx,VerifyContextParam()).GetResultTypeId());
+	for (auto iter : m_type_list) {
+		gparams_tid.push_back(iter->Verify(ctx, VerifyContextParam()).GetResultTypeId());
 	}
 
-	Variable* v	 = ctx.GetCurStack()->GetVariable(m_generic_name);
-	TypeInfo* ti = g_typemgr.GetTypeInfo(v->GetTypeId());
-	// TODO
 	VerifyContextResult vr(m_result_typeid);
 	return vr;
 }
 Variable* AstNodeGenericInstantiate::Execute(ExecuteContext& ctx) {
 	return ctx.GetCurStack()->GetVariable(m_instance_name);
 }
-AstNodeGenericInstantiate* AstNodeGenericInstantiate::DeepCloneT(){
-	AstNodeGenericInstantiate * newone = new AstNodeGenericInstantiate();
+AstNodeGenericInstantiate* AstNodeGenericInstantiate::DeepCloneT() {
+	AstNodeGenericInstantiate* newone = new AstNodeGenericInstantiate();
 
 	newone->m_generic_name = m_generic_name;
-	for(auto iter:m_type_list){
+	for (auto iter : m_type_list) {
 		newone->m_type_list.push_back(iter->DeepCloneT());
 	}
 

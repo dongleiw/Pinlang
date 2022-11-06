@@ -6,6 +6,7 @@
 #include "astnode_blockstmt.h"
 #include "astnode_type.h"
 #include "define.h"
+#include "fntable.h"
 #include "execute_context.h"
 #include "type.h"
 #include "variable.h"
@@ -21,13 +22,23 @@ public:
 	class Instance;
 	// 函数的一个定义
 	struct Implement {
-		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body, BuiltinFnCallback builtin_callback) {
-			m_generic_params   = generic_params;
-			m_params		   = params;
-			m_return_type	   = return_type;
-			m_body			   = body;
-			m_builtin_callback = builtin_callback;
-			m_return_tid	   = TYPE_ID_NONE;
+		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body) {
+			m_generic_params = generic_params;
+			m_params		 = params;
+			m_return_type	 = return_type;
+			m_return_tid	 = TYPE_ID_NONE;
+			m_body			 = body;
+			m_verify_cb		 = nullptr;
+			m_execute_cb	 = nullptr;
+		}
+		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, BuiltinFnVerifyCallback verify_cb, BuiltinFnExecuteCallback execute_cb) {
+			m_generic_params = generic_params;
+			m_params		 = params;
+			m_return_type	 = return_type;
+			m_return_tid	 = TYPE_ID_NONE;
+			m_body			 = nullptr;
+			m_verify_cb		 = verify_cb;
+			m_execute_cb	 = execute_cb;
 		}
 
 		void					 Verify(VerifyContext& ctx);
@@ -39,15 +50,13 @@ public:
 		std::vector<std::string> GetGParamsName() const;
 		bool					 is_generic() const { return !m_generic_params.empty(); };
 
-	private:
-		Implement() {}
-
 	public:
 		std::vector<ParserGenericParam> m_generic_params;
 		std::vector<ParserParameter>	m_params;
 		AstNodeType*					m_return_type;
 		AstNodeBlockStmt*				m_body;
-		BuiltinFnCallback				m_builtin_callback;
+		BuiltinFnVerifyCallback			m_verify_cb;
+		BuiltinFnExecuteCallback		m_execute_cb;
 
 		// 如果该实现不是泛型(也就是参数类型和返回值类型是固定的), 则根据上下文推导出以下两个信息
 		std::vector<TypeId> m_params_tid;
@@ -60,7 +69,8 @@ public:
 		std::vector<TypeId> params_tid;
 		TypeId				return_tid;
 		std::string			instance_name;
-		FunctionObj			fnobj;
+		// Function*			fn;
+		FnAddr fn_addr;
 	};
 
 public:
@@ -114,7 +124,7 @@ private:
 	bool get_instance(Instance& instance) const;
 
 	// 将实例添加到vt的合适位置
-	void add_instance_to_vt(VerifyContext& ctx, std::string name, FunctionObj fnobj) const;
+	void add_instance_to_vt(VerifyContext& ctx, std::string name, TypeId fn_tid, FnAddr fn_addr) const;
 
 private:
 	std::string			   m_fnname;

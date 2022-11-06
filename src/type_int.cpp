@@ -8,8 +8,8 @@
 #include "astnode_constraint.h"
 #include "astnode_type.h"
 #include "define.h"
+#include "fntable.h"
 #include "execute_context.h"
-#include "function.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
@@ -19,11 +19,11 @@
 #include "variable_table.h"
 #include "verify_context.h"
 
-#define make_builtin_fn_add(result_type, int_type_id, fnname)                                                                   \
-	Variable* builtin_fn_add_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);              \
-		result_type result = thisobj->fnname() + args.at(0)->fnname();                                                          \
-		return new Variable(result);                                                                                            \
+#define make_builtin_fn_add(result_type, int_type_id, fnname)                                                                            \
+	Variable* builtin_fn_add_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                       \
+		result_type result = thisobj->fnname() + args.at(0)->fnname();                                                                   \
+		return new Variable(result);                                                                                                     \
 	}
 make_builtin_fn_add(int8_t, TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_add(int16_t, TYPE_ID_INT16, GetValueInt16);
@@ -34,11 +34,11 @@ make_builtin_fn_add(uint16_t, TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_add(uint32_t, TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_add(uint64_t, TYPE_ID_UINT64, GetValueUInt64);
 
-#define make_builtin_fn_sub(result_type, int_type_id, fnname)                                                                   \
-	Variable* builtin_fn_sub_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);              \
-		result_type result = thisobj->fnname() - args.at(0)->fnname();                                                          \
-		return new Variable(result);                                                                                            \
+#define make_builtin_fn_sub(result_type, int_type_id, fnname)                                                                            \
+	Variable* builtin_fn_sub_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                       \
+		result_type result = thisobj->fnname() - args.at(0)->fnname();                                                                   \
+		return new Variable(result);                                                                                                     \
 	}
 make_builtin_fn_sub(int8_t, TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_sub(int16_t, TYPE_ID_INT16, GetValueInt16);
@@ -49,16 +49,11 @@ make_builtin_fn_sub(uint16_t, TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_sub(uint32_t, TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_sub(uint64_t, TYPE_ID_UINT64, GetValueUInt64);
 
-static Variable* builtin_fn_mul_int(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	int32_t result = thisobj->GetValueInt32() * args.at(0)->GetValueInt32();
-	return new Variable(result);
-}
-
-#define make_builtin_fn_equal(int_type_id, fnname)                                                                                \
-	Variable* builtin_fn_equal_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                \
-		bool v = thisobj->fnname() == args.at(0)->fnname();                                                                       \
-		return new Variable(v);                                                                                                   \
+#define make_builtin_fn_equal(int_type_id, fnname)                                                                                         \
+	Variable* builtin_fn_equal_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                         \
+		bool v = thisobj->fnname() == args.at(0)->fnname();                                                                                \
+		return new Variable(v);                                                                                                            \
 	}
 make_builtin_fn_equal(TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_equal(TYPE_ID_INT16, GetValueInt16);
@@ -69,11 +64,11 @@ make_builtin_fn_equal(TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_equal(TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_equal(TYPE_ID_UINT64, GetValueUInt64);
 
-#define make_builtin_fn_lessThan(int_type_id, fnname)                                                                                \
-	Variable* builtin_fn_lessThan_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                   \
-		bool v = thisobj->fnname() < args.at(0)->fnname();                                                                           \
-		return new Variable(v);                                                                                                      \
+#define make_builtin_fn_lessThan(int_type_id, fnname)                                                                                         \
+	Variable* builtin_fn_lessThan_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                            \
+		bool v = thisobj->fnname() < args.at(0)->fnname();                                                                                    \
+		return new Variable(v);                                                                                                               \
 	}
 make_builtin_fn_lessThan(TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_lessThan(TYPE_ID_INT16, GetValueInt16);
@@ -84,11 +79,11 @@ make_builtin_fn_lessThan(TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_lessThan(TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_lessThan(TYPE_ID_UINT64, GetValueUInt64);
 
-#define make_builtin_fn_lessEqual(int_type_id, fnname)                                                                                \
-	Variable* builtin_fn_lessEqual_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                    \
-		bool v = thisobj->fnname() <= args.at(0)->fnname();                                                                           \
-		return new Variable(v);                                                                                                       \
+#define make_builtin_fn_lessEqual(int_type_id, fnname)                                                                                         \
+	Variable* builtin_fn_lessEqual_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                             \
+		bool v = thisobj->fnname() <= args.at(0)->fnname();                                                                                    \
+		return new Variable(v);                                                                                                                \
 	}
 make_builtin_fn_lessEqual(TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_lessEqual(TYPE_ID_INT16, GetValueInt16);
@@ -99,11 +94,11 @@ make_builtin_fn_lessEqual(TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_lessEqual(TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_lessEqual(TYPE_ID_UINT64, GetValueUInt64);
 
-#define make_builtin_fn_notEqual(int_type_id, fnname)                                                                                \
-	Variable* builtin_fn_notEqual_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                   \
-		bool v = thisobj->fnname() != args.at(0)->fnname();                                                                          \
-		return new Variable(v);                                                                                                      \
+#define make_builtin_fn_notEqual(int_type_id, fnname)                                                                                         \
+	Variable* builtin_fn_notEqual_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                            \
+		bool v = thisobj->fnname() != args.at(0)->fnname();                                                                                   \
+		return new Variable(v);                                                                                                               \
 	}
 make_builtin_fn_notEqual(TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_notEqual(TYPE_ID_INT16, GetValueInt16);
@@ -114,11 +109,11 @@ make_builtin_fn_notEqual(TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_notEqual(TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_notEqual(TYPE_ID_UINT64, GetValueUInt64);
 
-#define make_builtin_fn_greaterThan(int_type_id, fnname)                                                                                \
-	Variable* builtin_fn_greaterThan_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                      \
-		bool v = thisobj->fnname() > args.at(0)->fnname();                                                                              \
-		return new Variable(v);                                                                                                         \
+#define make_builtin_fn_greaterThan(int_type_id, fnname)                                                                                         \
+	Variable* builtin_fn_greaterThan_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                               \
+		bool v = thisobj->fnname() > args.at(0)->fnname();                                                                                       \
+		return new Variable(v);                                                                                                                  \
 	}
 make_builtin_fn_greaterThan(TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_greaterThan(TYPE_ID_INT16, GetValueInt16);
@@ -129,11 +124,11 @@ make_builtin_fn_greaterThan(TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_greaterThan(TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_greaterThan(TYPE_ID_UINT64, GetValueUInt64);
 
-#define make_builtin_fn_greaterEqual(int_type_id, fnname)                                                                                \
-	Variable* builtin_fn_greaterEqual_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                       \
-		bool v = thisobj->fnname() >= args.at(0)->fnname();                                                                              \
-		return new Variable(v);                                                                                                          \
+#define make_builtin_fn_greaterEqual(int_type_id, fnname)                                                                                         \
+	Variable* builtin_fn_greaterEqual_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 1 && args.at(0)->GetTypeId() == int_type_id);                                \
+		bool v = thisobj->fnname() >= args.at(0)->fnname();                                                                                       \
+		return new Variable(v);                                                                                                                   \
 	}
 make_builtin_fn_greaterEqual(TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_greaterEqual(TYPE_ID_INT16, GetValueInt16);
@@ -144,10 +139,10 @@ make_builtin_fn_greaterEqual(TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_greaterEqual(TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_greaterEqual(TYPE_ID_UINT64, GetValueUInt64);
 
-#define make_builtin_fn_tostring(int_type_id, fnname)                                                                                \
-	Variable* builtin_fn_tostring_##int_type_id(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) { \
-		assert(thisobj->GetTypeId() == int_type_id && args.size() == 0);                                                             \
-		return new Variable(int_to_str(thisobj->fnname()));                                                                          \
+#define make_builtin_fn_tostring(int_type_id, fnname)                                                                                         \
+	Variable* builtin_fn_tostring_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
+		assert(thisobj->GetTypeId() == int_type_id && args.size() == 0);                                                                      \
+		return new Variable(int_to_str(thisobj->fnname()));                                                                                   \
 	}
 make_builtin_fn_tostring(TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_tostring(TYPE_ID_INT16, GetValueInt16);
@@ -157,6 +152,9 @@ make_builtin_fn_tostring(TYPE_ID_UINT8, GetValueUInt8);
 make_builtin_fn_tostring(TYPE_ID_UINT16, GetValueUInt16);
 make_builtin_fn_tostring(TYPE_ID_UINT32, GetValueUInt32);
 make_builtin_fn_tostring(TYPE_ID_UINT64, GetValueUInt64);
+
+static void builtin_fn_verify_nop(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+}
 
 TypeInfoInt::TypeInfoInt(TypeId tid) {
 	switch (tid) {
@@ -309,7 +307,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_tostring[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_tostring[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -340,7 +338,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier(m_name);
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_add[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_add[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -369,7 +367,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_equal[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_equal[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("equal", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -398,7 +396,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_lessThan[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_lessThan[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("lessThan", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -427,7 +425,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_lessEqual[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_lessEqual[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("lessEqual", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -456,7 +454,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_notEqual[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_notEqual[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("notEqual", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -485,7 +483,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_greaterThan[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_greaterThan[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterThan", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -514,7 +512,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_greaterEqual[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_greaterEqual[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterEqual", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -543,7 +541,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier(m_name);
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, m_builtin_fn_list_sub[m_typeid]));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, m_builtin_fn_list_sub[m_typeid]));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("sub", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

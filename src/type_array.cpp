@@ -1,8 +1,9 @@
 #include "type_array.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
+#include "astnode_fncall.h"
 #include "define.h"
-#include "function.h"
+#include "fntable.h"
 #include "type_mgr.h"
 #include "variable.h"
 #include "variable_table.h"
@@ -10,19 +11,17 @@
 #include <assert.h>
 #include <vector>
 
-static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj != nullptr && args.size() == 0);
-	std::string	   s		  = "{";
-	TypeInfoArray* ti_array	  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(thisobj->GetTypeId()));
-	TypeInfo*	   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
+static Variable* builtin_fn_callback_tostring(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj != nullptr && args.size() == 0 && builtin_fn_info.fn_list.size() == 1);
+	std::string s = "{";
+
+	FnAddr element_tostring_method_addr = builtin_fn_info.fn_list.at(0);
 
 	int array_size = thisobj->GetValueArraySize();
 	for (int i = 0; i < array_size; i++) {
 		Variable* element = thisobj->GetValueArrayElement(i);
 		// 调用tostring方法来转换为str
-		// TODO 目前得先获取MethodIndex然后调用
-		MethodIndex method_index = ti_element->GetMethodIdx("tostring[]()str");
-		Variable*	str_e		 = element->CallMethod(ctx, method_index, std::vector<Variable*>());
+		Variable* str_e = ctx.GetFnTable().CallFn(element_tostring_method_addr, ctx, element, std::vector<Variable*>());
 		s += str_e->GetValueStr();
 		if (i + 1 < array_size) {
 			s += ",";
@@ -31,16 +30,28 @@ static Variable* builtin_fn_tostring(ExecuteContext& ctx, Function* fn, Variable
 	s += "}";
 	return new Variable(s);
 }
-static Variable* builtin_fn_size(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	TypeInfoArray* ti_array		= dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(builtin_fn_info.obj_tid));
+	TypeInfo*	   ti_element	= g_typemgr.GetTypeInfo(ti_array->GetElementType());
+	MethodIndex	   method_index = ti_element->GetMethodIdx("tostring[]()str");
+	FnAddr		   fn_addr		= ti_element->GetMethodByIdx(method_index);
+	builtin_fn_info.fn_list.push_back(fn_addr);
+}
+
+static Variable* builtin_fn_size_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj != nullptr && args.size() == 0);
 	return new Variable(thisobj->GetValueArraySize());
 }
+static void builtin_fn_size_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+}
 
-static Variable* builtin_fn_index(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_index_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj != nullptr && g_typemgr.GetTypeInfo(thisobj->GetTypeId())->IsArray() && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
 
 	int32_t index = args.at(0)->GetValueInt32();
 	return thisobj->GetValueArrayElement(index);
+}
+static void builtin_fn_index_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
 }
 
 TypeInfoArray::TypeInfoArray(TypeId element_tid) {
@@ -63,7 +74,7 @@ void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_tostring));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_callback_tostring));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -96,7 +107,7 @@ void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithTargetTypeId(m_element_tid);
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_index));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_index_verify, builtin_fn_index_execute));
 			}
 
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("index", implements);
@@ -120,7 +131,7 @@ void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("int");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_size));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_size_verify, builtin_fn_size_execute));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("Size", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

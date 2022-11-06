@@ -2,7 +2,6 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "define.h"
-#include "function.h"
 #include "log.h"
 #include "type.h"
 #include "type_class.h"

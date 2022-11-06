@@ -37,7 +37,6 @@ immutable
 	泛型
 闭包
 异步
-main函数
 管道
 macro
 namespace

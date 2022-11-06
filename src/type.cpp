@@ -2,7 +2,7 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
 #include "define.h"
-#include "function.h"
+#include "fntable.h"
 #include "function_obj.h"
 #include "log.h"
 #include "type_constraint.h"
@@ -30,15 +30,15 @@ MethodIndex TypeInfo::GetMethodIdx(std::string method_name) const {
 		return MethodIndex(constraint_tid, match_idx_list.at(0));
 	}
 }
-Function* TypeInfo::GetMethodByIdx(MethodIndex method_idx) {
+FnAddr TypeInfo::GetMethodByIdx(MethodIndex method_idx) {
 	assert(method_idx.IsValid());
 	for (auto constraint : m_constraints) {
 		if (constraint.constraint_tid != method_idx.constraint_tid)
 			continue;
-		return constraint.concrete_methods.at(method_idx.method_idx).fn;
+		return constraint.concrete_methods.at(method_idx.method_idx).fn_addr;
 	}
 	panicf("invalid method idx: constraint_tid[%d] method_idx[%d]", method_idx.constraint_tid, method_idx.method_idx);
-	return nullptr;
+	return FnAddr();
 }
 bool TypeInfo::MatchConstraint(TypeId tid) const {
 	for (auto constraint : m_constraints) {
@@ -118,7 +118,7 @@ MethodIndex TypeInfo::GetConcreteMethod(VerifyContext& ctx, std::string method_n
 			if (method.method_name == method_name) {
 				AstNodeComplexFnDef::Instance method_instance = method.method_node->Instantiate_param_return(ctx, args_tid, return_tid);
 
-				MethodIndex method_index = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fnobj.GetFunction());
+				MethodIndex method_index = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fn_addr);
 				return method_index;
 			}
 		}
@@ -150,14 +150,14 @@ MethodIndex TypeInfo::GetConcreteMethod(VerifyContext& ctx, std::string method_n
 			if (method.method_name == method_name) {
 				AstNodeComplexFnDef::Instance method_instance = method.method_node->Instantiate(ctx);
 
-				MethodIndex method_index = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fnobj.GetFunction());
+				MethodIndex method_index = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fn_addr);
 				return method_index;
 			}
 		}
 	}
 	return MethodIndex();
 }
-MethodIndex TypeInfo::Constraint::AddConcreteMethod(std::string method_name, Function* fn) {
+MethodIndex TypeInfo::Constraint::AddConcreteMethod(std::string method_name, FnAddr fn_addr) {
 	for (size_t i = 0; i < concrete_methods.size(); i++) {
 		if (concrete_methods.at(i).method_name == method_name) {
 			return MethodIndex(constraint_tid, i);
@@ -165,7 +165,7 @@ MethodIndex TypeInfo::Constraint::AddConcreteMethod(std::string method_name, Fun
 	}
 	concrete_methods.push_back(MethodInstance{
 		.method_name = method_name,
-		.fn			 = fn,
+		.fn_addr	 = fn_addr,
 	});
 
 	return MethodIndex(constraint_tid, concrete_methods.size() - 1);
@@ -183,7 +183,7 @@ std::vector<MethodIndex> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::
 				const Method& method = constraint.methods.at(i);
 				if (method.method_name == method_name) {
 					AstNodeComplexFnDef::Instance method_instance = method.method_node->Instantiate_param_return(ctx, method_params_tid, TYPE_ID_INFER);
-					MethodIndex					  method_index	  = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fnobj.GetFunction());
+					MethodIndex					  method_index	  = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fn_addr);
 					method_indexs.push_back(method_index);
 				}
 			}
@@ -200,7 +200,7 @@ void TypeInfo::align_field() {
 		uint32_t  field_mem_align_size = ti->GetMemAlignSize();
 
 		// 将当前地址补齐, 以满足当前字段对对齐的需求
-		total_mem_size = (total_mem_size + field_mem_align_size - 1) & (~(field_mem_align_size-1));
+		total_mem_size = (total_mem_size + field_mem_align_size - 1) & (~(field_mem_align_size - 1));
 		// 记录当前字段的起始偏移
 		iter.mem_offset = total_mem_size;
 		// 增加当前字段的内存长度
@@ -213,7 +213,7 @@ void TypeInfo::align_field() {
 
 	// 将整个类型的内存大小再进行一次对齐. 确保该元素后续可以
 	// TODO 应该可以省去这个对齐
-	total_mem_size = (total_mem_size + max_mem_align_size - 1) & (~(max_mem_align_size-1));
+	total_mem_size = (total_mem_size + max_mem_align_size - 1) & (~(max_mem_align_size - 1));
 
 	m_mem_size		 = total_mem_size;
 	m_mem_align_size = max_mem_align_size;

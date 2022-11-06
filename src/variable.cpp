@@ -1,6 +1,5 @@
 #include "variable.h"
 #include "define.h"
-#include "function.h"
 #include "function_obj.h"
 #include "log.h"
 #include "type.h"
@@ -113,11 +112,10 @@ Variable::Variable(std::string value) {
 	m_value.value_str->data[value.size()] = '\0';
 	m_is_tmp							  = true;
 }
-Variable::Variable(FunctionObj fnobj) {
-	m_tid		   = fnobj.GetFunction()->GetTypeId();
-	m_value_fnobj  = new FunctionObj();
-	*m_value_fnobj = fnobj;
-	m_is_tmp	   = true;
+Variable::Variable(TypeId fn_tid, FunctionObj fnobj) {
+	m_tid		  = fn_tid;
+	m_value_fnobj = new FunctionObj(fnobj);
+	m_is_tmp	  = true;
 }
 Variable::Variable(AstNodeConstraint* astnode) {
 	m_tid			   = TYPE_ID_GENERIC_CONSTRAINT;
@@ -174,11 +172,6 @@ Variable* Variable::CreateTypeTuple(TypeId tuple_tid, std::vector<Variable*> ele
 	v->m_is_tmp = true;
 	v->InitField(fields);
 	return v;
-}
-Variable* Variable::CallMethod(ExecuteContext& ctx, MethodIndex method_idx, std::vector<Variable*> args) {
-	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
-	Function* f	 = ti->GetMethodByIdx(method_idx);
-	return f->Call(ctx, this, args);
 }
 std::string Variable::ToString() const {
 	std::string ret;
@@ -275,13 +268,6 @@ void Variable::SetValueArrayElement(int idx, Variable* element) {
 	TypeInfoArray* ti_array	  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(m_tid));
 	TypeInfo*	   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
 	memcpy((void*)(m_value.value_array->data + idx * ti_element->GetMemSize()), (const void*)&element->m_value, ti_element->GetMemSize());
-}
-Variable* Variable::GetMethodValue(MethodIndex method_idx) {
-	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
-	Function* fn = ti->GetMethodByIdx(method_idx);
-	Variable* v	 = new Variable(FunctionObj(this, fn));
-	v->SetTmp(false);
-	return v;
 }
 Variable* Variable::GetFieldValue(std::string field_name) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);

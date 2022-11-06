@@ -1,17 +1,4 @@
-class Person{
-	id int;
-
-	impl constraint ToString{
-		fn tostring()str{
-			return "1";
-		}
-	}
-}
-
 fn main(args []str)int{
-	var p = Person{id:1};
-
-	printf("p={}\n", p);
-
+	printf("helloworld\n");
 	return 0;
 }

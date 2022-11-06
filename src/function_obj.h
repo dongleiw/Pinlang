@@ -1,6 +1,7 @@
 #pragma once
 
 #include "define.h"
+#include "fntable.h"
 #include "type.h"
 
 class Variable;
@@ -9,16 +10,16 @@ class Variable;
  */
 class FunctionObj {
 public:
-	FunctionObj() : m_obj(nullptr), m_fn(nullptr) {}
-	FunctionObj(Variable* obj, Function* fn) {
-		m_obj = obj;
-		m_fn  = fn;
+	FunctionObj(FunctionObj& another);
+	FunctionObj(Variable* obj, FnAddr fn_addr) {
+		m_obj	   = obj;
+		m_fn_addr = fn_addr;
 	}
 
-	Function* GetFunction() { return m_fn; }
+	FnAddr	  GetFnAddr() { return m_fn_addr; }
 	Variable* Call(ExecuteContext& ctx, std::vector<Variable*> args);
 
 private:
 	Variable* m_obj; // 所属对象. 普通函数则为null
-	Function* m_fn;
+	FnAddr	  m_fn_addr;
 };

@@ -3,7 +3,6 @@
 #include "astnode_literal.h"
 #include "define.h"
 #include "execute_context.h"
-#include "function.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"

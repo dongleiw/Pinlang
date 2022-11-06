@@ -1,7 +1,6 @@
 #include "astnode_init.h"
 #include "astnode_type.h"
 #include "define.h"
-#include "function.h"
 #include "log.h"
 #include "type.h"
 #include "type_array.h"

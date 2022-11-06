@@ -1,7 +1,7 @@
 #include "dynamic_loading.h"
 #include "astnode_complex_fndef.h"
 #include "define.h"
-#include "function.h"
+#include "fntable.h"
 #include "log.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static Variable* builtin_fn_dl_open(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static Variable* builtin_fn_dlOpen_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj == nullptr && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_STR);
 
 	DynamicLoading& dl					= ctx.GetDynamicLoading();
@@ -26,15 +26,17 @@ static Variable* builtin_fn_dl_open(ExecuteContext& ctx, Function* fn, Variable*
 	if (!dl.OpenSharedLibrary(shared_library_path, dynlib_instance_id, err)) {
 		panicf("failed to open shared library[%s]: %s", shared_library_path.c_str(), err.c_str());
 	}
-
 	return new Variable(dynlib_instance_id);
+}
+static void builtin_fn_dlOpen_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_NONE);
 }
 
 // 调用动态库加载得到的函数. fn()
-static Variable* builtin_fn_call_dynlib_fn_args_void_ret_void(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj == nullptr && fn->GetDynLibFn() != nullptr && args.empty());
-	void* dynlib_fn = fn->GetDynLibFn();
-	if (!ctx.GetDynamicLoading().FnExist(fn->GetDynLibInstanceId(), dynlib_fn)) {
+static Variable* builtin_fn_call_dynlib_fn_args_void_ret_void(DynamicFnInfo& dynamic_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj == nullptr && dynamic_fn_info.dynlib_fn != nullptr && args.empty());
+	void* dynlib_fn = dynamic_fn_info.dynlib_fn;
+	if (!ctx.GetDynamicLoading().FnExist(dynamic_fn_info.dynlib_instance_id, dynlib_fn)) {
 		panicf("dynlib_fn not exist. dynlib already closed?");
 	}
 	typedef void (*FnType)(void);
@@ -43,10 +45,10 @@ static Variable* builtin_fn_call_dynlib_fn_args_void_ret_void(ExecuteContext& ct
 }
 
 // 调用动态库加载得到的函数. fn(i32)
-static Variable* builtin_fn_call_dynlib_fn_args_int_ret_void(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj == nullptr && fn->GetDynLibFn() != nullptr && args.at(0)->GetTypeId() == TYPE_ID_INT32);
-	void* dynlib_fn = fn->GetDynLibFn();
-	if (!ctx.GetDynamicLoading().FnExist(fn->GetDynLibInstanceId(), dynlib_fn)) {
+static Variable* builtin_fn_call_dynlib_fn_args_int_ret_void(DynamicFnInfo& dynamic_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj == nullptr && dynamic_fn_info.dynlib_fn != nullptr && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	void* dynlib_fn = dynamic_fn_info.dynlib_fn;
+	if (!ctx.GetDynamicLoading().FnExist(dynamic_fn_info.dynlib_instance_id, dynlib_fn)) {
 		panicf("dynlib_fn not exist. dynlib already closed?");
 	}
 	typedef void (*FnType)(int32_t);
@@ -55,10 +57,10 @@ static Variable* builtin_fn_call_dynlib_fn_args_int_ret_void(ExecuteContext& ctx
 }
 
 // 调用动态库加载得到的函数. fn(i32,i32)
-static Variable* builtin_fn_call_dynlib_fn_args_int_int_ret_void(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj == nullptr && fn->GetDynLibFn() != nullptr && args.at(0)->GetTypeId() == TYPE_ID_INT32 && args.at(1)->GetTypeId() == TYPE_ID_INT32);
-	void* dynlib_fn = fn->GetDynLibFn();
-	if (!ctx.GetDynamicLoading().FnExist(fn->GetDynLibInstanceId(), dynlib_fn)) {
+static Variable* builtin_fn_call_dynlib_fn_args_int_int_ret_void(DynamicFnInfo& dynamic_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj == nullptr && dynamic_fn_info.dynlib_fn != nullptr && args.at(0)->GetTypeId() == TYPE_ID_INT32 && args.at(1)->GetTypeId() == TYPE_ID_INT32);
+	void* dynlib_fn = dynamic_fn_info.dynlib_fn;
+	if (!ctx.GetDynamicLoading().FnExist(dynamic_fn_info.dynlib_instance_id, dynlib_fn)) {
 		panicf("dynlib_fn not exist. dynlib already closed?");
 	}
 	typedef void (*FnType)(int32_t, int32_t);
@@ -67,12 +69,12 @@ static Variable* builtin_fn_call_dynlib_fn_args_int_int_ret_void(ExecuteContext&
 }
 
 // 调用动态库加载得到的函数. fn(const char*, i32) i32
-static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_ret_int(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj == nullptr && fn->GetDynLibFn() != nullptr);
+static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_ret_int(DynamicFnInfo& dynamic_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj == nullptr && dynamic_fn_info.dynlib_fn != nullptr);
 	assert(args.at(0)->GetTypeId() == TYPE_ID_STR);
 	assert(args.at(1)->GetTypeId() == TYPE_ID_INT32);
-	void* dynlib_fn = fn->GetDynLibFn();
-	if (!ctx.GetDynamicLoading().FnExist(fn->GetDynLibInstanceId(), dynlib_fn)) {
+	void* dynlib_fn = dynamic_fn_info.dynlib_fn;
+	if (!ctx.GetDynamicLoading().FnExist(dynamic_fn_info.dynlib_instance_id, dynlib_fn)) {
 		panicf("dynlib_fn not exist. dynlib already closed?");
 	}
 	typedef int32_t (*FnType)(const char*, int32_t);
@@ -81,13 +83,13 @@ static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_ret_int(Execute
 }
 
 // 调用动态库加载得到的函数. fn(const char*, i32, i32) i32
-static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_int_ret_int(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj == nullptr && fn->GetDynLibFn() != nullptr && args.size() == 3);
+static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_int_ret_int(DynamicFnInfo& dynamic_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj == nullptr && dynamic_fn_info.dynlib_fn != nullptr && args.size() == 3);
 	assert(args.at(0)->GetTypeId() == TYPE_ID_STR);
 	assert(args.at(1)->GetTypeId() == TYPE_ID_INT32);
 	assert(args.at(2)->GetTypeId() == TYPE_ID_INT32);
-	void* dynlib_fn = fn->GetDynLibFn();
-	if (!ctx.GetDynamicLoading().FnExist(fn->GetDynLibInstanceId(), dynlib_fn)) {
+	void* dynlib_fn = dynamic_fn_info.dynlib_fn;
+	if (!ctx.GetDynamicLoading().FnExist(dynamic_fn_info.dynlib_instance_id, dynlib_fn)) {
 		panicf("dynlib_fn not exist. dynlib already closed?");
 	}
 	typedef int32_t (*FnType)(const char*, int32_t, int32_t);
@@ -95,14 +97,14 @@ static Variable* builtin_fn_call_dynlib_fn_args_constcharptr_int_int_ret_int(Exe
 	return new Variable(ret);
 }
 // 调用动态库加载得到的函数. fn(i32,str,i64) i64
-static Variable* builtin_fn_call_dynlib_fn_args_i32_str_i64_ret_i64(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj == nullptr && fn->GetDynLibFn() != nullptr && args.size() == 3);
+static Variable* builtin_fn_call_dynlib_fn_args_i32_str_i64_ret_i64(DynamicFnInfo& dynamic_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
+	assert(thisobj == nullptr && dynamic_fn_info.dynlib_fn != nullptr && args.size() == 3);
 	assert(args.at(0)->GetTypeId() == TYPE_ID_INT32);
 	assert(args.at(1)->GetTypeId() == TYPE_ID_STR);
 	assert(args.at(2)->GetTypeId() == TYPE_ID_INT64);
 
-	void* dynlib_fn = fn->GetDynLibFn();
-	if (!ctx.GetDynamicLoading().FnExist(fn->GetDynLibInstanceId(), dynlib_fn)) {
+	void* dynlib_fn = dynamic_fn_info.dynlib_fn;
+	if (!ctx.GetDynamicLoading().FnExist(dynamic_fn_info.dynlib_instance_id, dynlib_fn)) {
 		panicf("dynlib_fn not exist. dynlib already closed?");
 	}
 	typedef int64_t (*FnType)(int32_t, const char*, int64_t);
@@ -110,7 +112,10 @@ static Variable* builtin_fn_call_dynlib_fn_args_i32_str_i64_ret_i64(ExecuteConte
 	return new Variable(ret);
 }
 
-static Variable* builtin_fn_dl_getFn(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
+static void builtin_fn_dlGetFn_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
+	assert(builtin_fn_info.obj_tid == TYPE_ID_NONE);
+}
+static Variable* builtin_fn_dlGetFn_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
 	assert(thisobj == nullptr && args.size() == 2 && args.at(0)->GetTypeId() == TYPE_ID_INT32 && args.at(1)->GetTypeId() == TYPE_ID_STR);
 
 	DynamicLoading& dl				   = ctx.GetDynamicLoading();
@@ -143,10 +148,13 @@ static Variable* builtin_fn_dl_getFn(ExecuteContext& ctx, Function* fn, Variable
 		params_name.push_back("arg_" + int_to_str(i));
 	}
 
-	BuiltinFnCallback fn_callback = dl.GetBuiltinFnCallback(ti_fn->GetParmsTid(), ti_fn->GetReturnTypeId());
-	Function*		  function	  = new Function(return_tid, TYPE_ID_NONE, std::vector<ConcreteGParam>(), params_name, fn_callback, dynlib_instance_id, dynlib_fn);
+	DynamicFnExecuteCallback callback = dl.GetBuiltinFnCallback(ti_fn->GetParmsTid(), ti_fn->GetReturnTypeId());
 
-	return new Variable(FunctionObj(nullptr, function));
+	// FnAddr AddDynamicFn(TypeId fn_tid, int dynlib_instance_id, void* dynlib_fn);
+	FnAddr addr = ctx.GetFnTable().AddDynamicFn(return_tid, dynlib_instance_id, dynlib_fn, callback);
+
+	// TODO 运行时, 动态生成的Function应该和静态函数区分开.
+	return new Variable(return_tid, FunctionObj(nullptr, addr));
 }
 
 DynamicLoading::DynamicLoading() {
@@ -171,7 +179,7 @@ AstNodeComplexFnDef* DynamicLoading::create_astnode_fn_dl_open() {
 		   .type = param_1_type,
 	   }};
 
-	AstNodeComplexFnDef::Implement implement(gparams, params, return_type, nullptr, builtin_fn_dl_open);
+	AstNodeComplexFnDef::Implement implement(gparams, params, return_type, builtin_fn_dlOpen_verify, builtin_fn_dlOpen_execute);
 	implements.push_back(implement);
 
 	AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("dl_open", implements);
@@ -205,7 +213,7 @@ AstNodeComplexFnDef* DynamicLoading::create_astnode_fn_dl_getFn() {
 	AstNodeType* return_type = new AstNodeType();
 	return_type->InitWithIdentifier("T");
 
-	implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, nullptr, builtin_fn_dl_getFn));
+	implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_dlGetFn_verify, builtin_fn_dlGetFn_execute));
 
 	AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("dl_getFn", implements);
 
@@ -263,9 +271,9 @@ bool DynamicLoading::FnExist(int dynlib_instance_id, void* fn) const {
 }
 bool DynamicLoading::SupportType(TypeId tid) const {
 	// 目前只支持这三个类型
-	return (tid == TYPE_ID_INT32 || tid == TYPE_ID_FLOAT || tid == TYPE_ID_STR || tid==TYPE_ID_INT64 || tid==TYPE_ID_UINT64);
+	return (tid == TYPE_ID_INT32 || tid == TYPE_ID_FLOAT || tid == TYPE_ID_STR || tid == TYPE_ID_INT64 || tid == TYPE_ID_UINT64);
 }
-BuiltinFnCallback DynamicLoading::GetBuiltinFnCallback(std::vector<TypeId> params_tid, TypeId return_tid) const {
+DynamicFnExecuteCallback DynamicLoading::GetBuiltinFnCallback(std::vector<TypeId> params_tid, TypeId return_tid) const {
 	/*
 	 * 枚举每一种函数签名, 生成对应处理函数.
 	 * 先把libc的几个io函数签名搞了.

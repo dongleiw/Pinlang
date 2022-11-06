@@ -3,7 +3,6 @@
 #include "astnode_literal.h"
 #include "define.h"
 #include "execute_context.h"
-#include "function.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
@@ -51,25 +50,21 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 	MethodIndex method_idx = method_indexs.at(0);
 
 	// 检查左表达式的operator对应方法
-	{
-		if (!method_idx.IsValid()) {
-			panicfi(m_si_op, "type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left,
-					ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
-		}
-		Function* f = ti->GetMethodByIdx(method_idx);
-
-		// 方法有返回值
-		TypeId return_tid = f->GetReturnTypeId();
-		if (return_tid == TYPE_ID_NONE) {
-			panicf("type[%d:%s] method[%s:%s] return none", tid_left, ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str());
-		}
-		m_result_typeid = return_tid;
-		vr.SetResultTypeId(m_result_typeid);
-
-		m_method_idx = method_idx;
-
-		log_debug("verify pass: type[%s] op[%s:%s] type[%s]", GET_TYPENAME_C(tid_left), m_constraint_name.c_str(), m_op.c_str(), GET_TYPENAME_C(tid_right));
+	if (!method_idx.IsValid()) {
+		panicfi(m_si_op, "type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left,
+				ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
 	}
+	m_fn_addr = ti->GetMethodByIdx(method_idx);
+
+	// 方法有返回值
+	TypeId return_tid = ctx.GetFnTable().GetFnReturnTypeId(m_fn_addr);
+	if (return_tid == TYPE_ID_NONE) {
+		panicf("type[%d:%s] method[%s:%s] return none", tid_left, ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str());
+	}
+	m_result_typeid = return_tid;
+	vr.SetResultTypeId(m_result_typeid);
+
+	log_debug("verify pass: type[%s] op[%s:%s] type[%s]", GET_TYPENAME_C(tid_left), m_constraint_name.c_str(), m_op.c_str(), GET_TYPENAME_C(tid_right));
 
 	// 处理编译期常量表达式
 	// 必须是基本类型. 否则是operator overloading. 目前没法确认是否是纯方法. 如果不是纯方法, `left op right`也不是编译期常量表达式
@@ -81,10 +76,11 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 	}
 	if (ti->IsPrimaryType() && vr_left.IsConst() && vr_right.IsConst()) {
 		// 这里临时搞了一个ExecuteContext用来调用方法. TODO 太丑陋了
-		ExecuteContext		   exe_ctx;
+		ExecuteContext exe_ctx;
+		exe_ctx.SetFnTable(ctx.GetFnTable());
 		Variable*			   v_left = vr_left.GetConstResult();
 		std::vector<Variable*> args{vr_right.GetConstResult()};
-		Variable*			   v_result = v_left->CallMethod(exe_ctx, method_idx, args);
+		Variable*			   v_result = exe_ctx.GetFnTable().CallFn(m_fn_addr, exe_ctx, v_left, args);
 		vr.SetConstResult(v_result);
 	}
 
@@ -95,7 +91,7 @@ Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
 	Variable*			   right_v = m_right_expr->Execute(ctx);
 	std::vector<Variable*> args;
 	args.push_back(right_v);
-	Variable* result = left_v->CallMethod(ctx, m_method_idx, args);
+	Variable* result = ctx.GetFnTable().CallFn(m_fn_addr, ctx, left_v, args);
 	log_debug("%s.%s(%s)=>%s", left_v->ToString().c_str(), m_op.c_str(), right_v->ToString().c_str(), result->ToString().c_str());
 	return result;
 }

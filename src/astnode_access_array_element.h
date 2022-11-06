@@ -4,6 +4,7 @@
 
 #include "astnode.h"
 #include "define.h"
+#include "fntable.h"
 #include "execute_context.h"
 #include "type.h"
 #include "variable.h"
@@ -32,5 +33,5 @@ private:
 	AstNode* m_array_expr;
 	AstNode* m_index_expr;
 
-	MethodIndex m_method_index;
+	FnAddr m_fn_addr;
 };

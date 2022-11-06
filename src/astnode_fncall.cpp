@@ -1,5 +1,4 @@
 #include "astnode_fncall.h"
-#include "function.h"
 #include "function_obj.h"
 #include "log.h"
 #include "type.h"

@@ -1,6 +1,5 @@
 #include "variable_table.h"
 #include "astnode_type.h"
-#include "builtin_fn.h"
 #include "define.h"
 #include "log.h"
 #include "type.h"
@@ -56,6 +55,4 @@ void VariableTable::InitAsGlobal() {
 	AddVariable("float", Variable::CreateTypeVariable(TYPE_ID_FLOAT));
 	AddVariable("str", Variable::CreateTypeVariable(TYPE_ID_STR));
 	AddVariable("bool", Variable::CreateTypeVariable(TYPE_ID_BOOL));
-
-	register_all_builtin_fn(*this);
 }
