@@ -1,6 +1,7 @@
 #pragma once
 
 #include "type.h"
+#include <assert.h>
 
 /*
  * 数组类型
@@ -17,11 +18,14 @@ public:
 	};
 
 public:
-	TypeInfoArray(TypeId element_tid);
+	TypeInfoArray(TypeId element_tid, uint64_t size);
 	void InitBuiltinMethods(VerifyContext& ctx) override;
 
-	TypeId GetElementType() const { return m_element_tid; }
+	TypeId	 GetElementType() const { return m_element_tid; }
+	bool	 IsStaticSize() const { return m_static_size > 0; }
+	uint64_t GetStaticSize() const { return m_static_size; }
 
 private:
-	TypeId m_element_tid;
+	TypeId	 m_element_tid;
+	uint64_t m_static_size; // 如果是编译期固定的数组, 该字段存放数组的元素个数, 否则为0
 };

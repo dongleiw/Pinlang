@@ -30,7 +30,12 @@ public:
 	void InitWithType();
 	void InitWithIdentifier(std::string id);
 	void InitWithFn(std::vector<ParserParameter> params, AstNodeType* return_type);
-	void InitWithArray(AstNodeType* element_type);
+	/*
+	 * 数组类型. 提供数组元素类型和数组大小. 
+	 * 如果size_expr为null, 则数组类型为dynamic-size array
+	 * 如果size_expr不为null, 则必须是一个编译期常量表达式, 此时数组类型为static-size array
+	 */
+	void InitWithArray(AstNodeType* element_type, AstNode* size_expr);
 	// 固定解析为特定类型id
 	// 目前只是为了手动构造AstNodeComplexFnDef
 	void InitWithTargetTypeId(TypeId tid);
@@ -58,8 +63,12 @@ private:
 	std::string					 m_id;
 	std::vector<ParserParameter> m_fn_params;
 	AstNodeType*				 m_fn_return_type;
-	AstNodeType*				 m_element_type;
-	TypeId						 m_target_tid;
+
+	// 数组
+	AstNodeType* m_array_element_type;
+	AstNode*	 m_array_size_expr;
+
+	TypeId m_target_tid;
 
 	// tuple
 	std::vector<AstNodeType*> m_tuple_element_types;

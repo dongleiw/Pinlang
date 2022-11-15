@@ -35,10 +35,13 @@
 #include <any>
 
 std::any Visitor::visitType_array(PinlangParser::Type_arrayContext* ctx) {
-	AstNodeType* r					= new AstNodeType();
-	AstNodeType* array_element_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
-	r->InitWithArray(array_element_type);
-	return r;
+	if (ctx->type_array_static_size() != nullptr) {
+		return ctx->type_array_static_size()->accept(this);
+	} else if (ctx->type_array_dynamic_size() != nullptr) {
+		return ctx->type_array_dynamic_size()->accept(this);
+	} else {
+		panicf("bug");
+	}
 }
 std::any Visitor::visitType_tuple(PinlangParser::Type_tupleContext* ctx) {
 	AstNodeType*			  r					  = new AstNodeType();
@@ -56,18 +59,100 @@ std::any Visitor::visitType_fn(PinlangParser::Type_fnContext* ctx) {
 	r->InitWithFn(params, return_type);
 	return r;
 }
-std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
+std::any Visitor::visitType_integer(PinlangParser::Type_integerContext* ctx) {
 	AstNodeType* r = new AstNodeType();
-	if (ctx->TYPE() != nullptr) {
-		r->InitWithType();
-	} else if (ctx->Identifier() != nullptr) {
-		r->InitWithIdentifier(ctx->Identifier()->getText());
-	} else if (ctx->type_fn() != nullptr) {
-		return ctx->type_fn()->accept(this);
-	} else if (ctx->type_array() != nullptr) {
-		return ctx->type_array()->accept(this);
+	if (ctx->INT_I8() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_INT8);
+	} else if (ctx->INT_I16() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_INT16);
+	} else if (ctx->INT_I32() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_INT32);
+	} else if (ctx->INT_I64() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_INT64);
+	} else if (ctx->INT_U8() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_UINT8);
+	} else if (ctx->INT_U16() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_UINT16);
+	} else if (ctx->INT_U32() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_UINT32);
+	} else if (ctx->INT_U64() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_UINT64);
+	} else {
+		panicf("bug");
+	}
+	return r;
+}
+std::any Visitor::visitType_float(PinlangParser::Type_floatContext* ctx) {
+	// TODO f32和f64区分开
+	AstNodeType* r = new AstNodeType();
+	if (ctx->FLOAT_F32() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_FLOAT);
+	} else if (ctx->FLOAT_F64() != nullptr) {
+		r->InitWithTargetTypeId(TYPE_ID_FLOAT);
+	} else {
+		panicf("bug");
+	}
+	return r;
+}
+std::any Visitor::visitType_bool(PinlangParser::Type_boolContext* ctx) {
+	AstNodeType* r = new AstNodeType();
+	r->InitWithTargetTypeId(TYPE_ID_BOOL);
+	return r;
+}
+std::any Visitor::visitType_str(PinlangParser::Type_strContext* ctx) {
+	AstNodeType* r = new AstNodeType();
+	r->InitWithTargetTypeId(TYPE_ID_STR);
+	return r;
+}
+std::any Visitor::visitType_array_static_size(PinlangParser::Type_array_static_sizeContext* ctx) {
+	AstNodeType* r			  = new AstNodeType();
+	AstNodeType* element_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	AstNode*	 size_expr	  = std::any_cast<AstNode*>(ctx->expr()->accept(this));
+	r->InitWithArray(element_type, size_expr);
+	return r;
+}
+std::any Visitor::visitType_reference(PinlangParser::Type_referenceContext* ctx) {
+	if (ctx->type_array_dynamic_size() != nullptr) {
+		return ctx->type_array_dynamic_size()->accept(this);
+	} else if (ctx->type_str() != nullptr) {
+		return ctx->type_str()->accept(this);
 	} else if (ctx->type_tuple() != nullptr) {
 		return ctx->type_tuple()->accept(this);
+	} else {
+		panicf("unknown type");
+	}
+}
+std::any Visitor::visitType_array_dynamic_size(PinlangParser::Type_array_dynamic_sizeContext* ctx) {
+	AstNodeType* r			  = new AstNodeType();
+	AstNodeType* element_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	r->InitWithArray(element_type, nullptr);
+	return r;
+}
+std::any Visitor::visitType_value(PinlangParser::Type_valueContext* ctx) {
+	if (ctx->TYPE() != nullptr) {
+		AstNodeType* r = new AstNodeType();
+		r->InitWithType();
+		return r;
+	} else if (ctx->type_integer() != nullptr) {
+		return ctx->type_integer()->accept(this);
+	} else if (ctx->type_float() != nullptr) {
+		return ctx->type_float()->accept(this);
+	} else if (ctx->type_bool() != nullptr) {
+		return ctx->type_bool()->accept(this);
+	} else if (ctx->type_array_static_size() != nullptr) {
+		return ctx->type_array_static_size()->accept(this);
+	} else {
+		panicf("unknown type");
+	}
+}
+std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
+	AstNodeType* r = new AstNodeType();
+	if (ctx->Identifier() != nullptr) {
+		r->InitWithIdentifier(ctx->Identifier()->getText());
+	} else if (ctx->type_value() != nullptr) {
+		return ctx->type_value()->accept(this);
+	} else if (ctx->type_reference() != nullptr) {
+		return ctx->type_reference()->accept(this);
 	} else {
 		panicf("unknown type");
 	}

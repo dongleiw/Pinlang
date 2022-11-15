@@ -1,6 +1,7 @@
 #include "type_fn.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
+#include "function_obj.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
@@ -10,7 +11,9 @@ TypeInfoFn::TypeInfoFn(std::vector<TypeId> params, TypeId return_tid) {
 	m_return_tid = return_tid;
 	set_name();
 	//set_uniq_fn_name_suffix();
-	m_typegroup_id = TYPE_GROUP_ID_FUNCTION;
+	m_typegroup_id	 = TYPE_GROUP_ID_FUNCTION;
+	m_mem_size		 = sizeof(FunctionObj);
+	m_mem_align_size = 8;
 }
 
 std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid, TypeId return_tid) {

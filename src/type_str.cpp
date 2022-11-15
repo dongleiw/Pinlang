@@ -57,8 +57,8 @@ static void builtin_fn_size_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext
 TypeInfoStr::TypeInfoStr() {
 	m_name			 = "str";
 	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;
-	m_mem_size		 = 8;
-	m_mem_align_size = 8;
+	m_mem_size		 = 16;
+	m_mem_align_size = 16;
 }
 void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();

@@ -50,3 +50,46 @@
 			2. 先做预处理, 将函数名字和类型信息加入vt. 
 			3. 然后按照顺序检查代码
 
+变量的内存结构
+	var a = 1;
+
+	1. 编译期大小固定且不变的数组
+		class Person{
+			field1 [4]int;
+			field2 []int;
+		}
+		类型Person中有两个字段
+		field1是编译期大小固定的, 在Person实例化时, 为field1分配(sizeof(int)*4)大小的内存
+		field2是编译期大小无法确定的, 本质是一个指针. 在Person实例化时, 仅为field2分配(sizeof(int*))大小的内存
+
+	2. 多维数组
+		var array = [][]int{ {1,2}, {4,5} };
+		第二维度的数组长度未知, 因此该数组的第二维度存储一个指针, 指向第二维度的数组实际数据
+
+		var array = [][2]int{ {1,2}, {4,5} };
+		第二维度的数组长度已知, 第二维度无需存储指针. 该数据是连续的一块内存.
+
+	总结
+		[3]int
+			value type
+		*[3]int
+			reference type
+		[]int
+			reference type
+		*int
+			reference type
+
+		value type
+			integer
+			float
+			bool
+			fn
+			static-size array
+		reference type
+			str
+			dynamic-size array
+			tuple
+			class
+		*T
+			T必须是value type
+			将T转换为reference type

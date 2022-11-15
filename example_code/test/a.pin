@@ -1,4 +1,38 @@
+class Person{
+	static_size_array [2]int;
+	dynamic_size_array []int;
+}
 fn main(args []str)int{
-	printf("helloworld\n");
+	var p = Person{
+		static_size_array: [2]int{1,2},
+		dynamic_size_array: []int{5,6},
+	};
+	var a = p.static_size_array;
+	var b = p.dynamic_size_array;
+
+	printf("a={} {}\n", a[0], a[1]);
+	printf("b={} {}\n", b[0], b[1]);
+	printf("p.static_size_array={} {}\n", p.static_size_array[0], p.static_size_array[1]);
+	printf("p.dynamic_size_array={} {}\n", p.dynamic_size_array[0], p.dynamic_size_array[1]);
+	printf("\n");
+
+	printf("modoify a b\n");
+	a[0]=11;
+	b[0]=111;
+	printf("a={} {}\n", a[0], a[1]);
+	printf("b={} {}\n", b[0], b[1]);
+	printf("p.static_size_array={} {}\n", p.static_size_array[0], p.static_size_array[1]);
+	printf("p.dynamic_size_array={} {}\n", p.dynamic_size_array[0], p.dynamic_size_array[1]);
+	printf("\n");
+
+	printf("modoify fields\n");
+	p.static_size_array[0]=33;
+	p.dynamic_size_array[0]=333;
+	printf("a={} {}\n", a[0], a[1]);
+	printf("b={} {}\n", b[0], b[1]);
+	printf("p.static_size_array={} {}\n", p.static_size_array[0], p.static_size_array[1]);
+	printf("p.dynamic_size_array={} {}\n", p.dynamic_size_array[0], p.dynamic_size_array[1]);
+	printf("\n");
+
 	return 0;
 }

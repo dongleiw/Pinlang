@@ -1,4 +1,5 @@
 #include "astnode_type.h"
+#include "astnode.h"
 #include "define.h"
 #include "log.h"
 #include "type.h"
@@ -23,9 +24,10 @@ void AstNodeType::InitWithFn(std::vector<ParserParameter> params, AstNodeType* r
 	m_fn_params		 = params;
 	m_fn_return_type = return_type;
 }
-void AstNodeType::InitWithArray(AstNodeType* element_type) {
-	m_type_kind	   = TYPE_KIND_ARRAY;
-	m_element_type = element_type;
+void AstNodeType::InitWithArray(AstNodeType* element_type, AstNode* size_expr) {
+	m_type_kind			 = TYPE_KIND_ARRAY;
+	m_array_element_type = element_type;
+	m_array_size_expr	 = size_expr;
 }
 void AstNodeType::InitWithTuple(std::vector<AstNodeType*> tuple_element_types) {
 	m_type_kind			  = TYPE_KIND_TUPLE;
@@ -70,9 +72,17 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam v
 	}
 	case TYPE_KIND_ARRAY:
 	{
-		TypeId element_tid = m_element_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
-		bool   added	   = false;
-		TypeId array_tid   = g_typemgr.GetOrAddTypeArray(ctx, element_tid, added);
+		TypeId	 element_tid = m_array_element_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
+		bool	 added		 = false;
+		uint64_t array_size	 = 0;
+		if (m_array_size_expr != nullptr) {
+			VerifyContextResult vr_result = m_array_size_expr->Verify(ctx, VerifyContextParam().SetResultTid(TYPE_ID_UINT64));
+			if (!vr_result.IsConst()) {
+				panicf("array size is not compile-time-constant");
+			}
+			array_size = vr_result.GetConstResult()->GetValueUInt64();
+		}
+		TypeId array_tid = g_typemgr.GetOrAddTypeArray(ctx, element_tid, array_size, added);
 		vr.SetResultTypeId(array_tid);
 		break;
 	}
@@ -135,7 +145,7 @@ std::map<std::string, TypeId> AstNodeType::InferType(TypeId target_tid) const {
 		// 已知[]T类型id为target_tid. 推导T
 		TypeInfoArray* ti				  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(target_tid));
 		TypeId		   element_target_tid = ti->GetElementType();
-		merge_infer_result(result, m_element_type->InferType(element_target_tid));
+		merge_infer_result(result, m_array_element_type->InferType(element_target_tid));
 		break;
 	}
 	case TYPE_KIND_TUPLE:
@@ -179,7 +189,8 @@ AstNodeType* AstNodeType::DeepCloneT() {
 		}
 		break;
 	case TYPE_KIND_ARRAY:
-		newone->m_element_type = m_element_type->DeepCloneT();
+		newone->m_array_element_type = m_array_element_type->DeepCloneT();
+		newone->m_array_size_expr	 = m_array_size_expr==nullptr? nullptr:m_array_size_expr->DeepClone();
 		break;
 	case TYPE_KIND_TUPLE:
 		for (auto iter : m_tuple_element_types) {

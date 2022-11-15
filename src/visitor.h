@@ -8,12 +8,23 @@ public:
 	 * 解析数组类型
 	 */
 	virtual std::any visitType_array(PinlangParser::Type_arrayContext* ctx) override;
-	virtual std::any visitType_tuple(PinlangParser::Type_tupleContext* ctx) override;
-	virtual std::any visitType_fn(PinlangParser::Type_fnContext* ctx) override;
 	/*
 	 * 解析类型. 返回AstNodeType*
 	 */
 	virtual std::any visitType(PinlangParser::TypeContext* ctx) override;
+
+	virtual std::any visitType_value(PinlangParser::Type_valueContext* ctx) override;
+	virtual std::any visitType_integer(PinlangParser::Type_integerContext* ctx) override;
+	virtual std::any visitType_float(PinlangParser::Type_floatContext* ctx) override;
+	virtual std::any visitType_bool(PinlangParser::Type_boolContext* ctx) override;
+	virtual std::any visitType_fn(PinlangParser::Type_fnContext* ctx) override;
+	virtual std::any visitType_array_static_size(PinlangParser::Type_array_static_sizeContext* ctx) override;
+
+	virtual std::any visitType_reference(PinlangParser::Type_referenceContext* ctx) override;
+	virtual std::any visitType_array_dynamic_size(PinlangParser::Type_array_dynamic_sizeContext* ctx) override;
+	virtual std::any visitType_str(PinlangParser::Type_strContext* ctx) override;
+	virtual std::any visitType_tuple(PinlangParser::Type_tupleContext* ctx) override;
+
 	/*
 	 * 解析类型列表: int, float, str
 	 * return: std::vector<AstNodeType*>
