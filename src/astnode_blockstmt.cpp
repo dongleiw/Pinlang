@@ -5,11 +5,13 @@
 #include "astnode_return.h"
 #include "astnode_vardef.h"
 #include "define.h"
+#include "instruction.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "variable_table.h"
 #include "verify_context.h"
+#include <cassert>
 #include <utility>
 
 AstNodeBlockStmt::AstNodeBlockStmt() {
@@ -24,7 +26,7 @@ AstNodeBlockStmt::AstNodeBlockStmt(const std::vector<AstNode*>& stmts) {
 }
 VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	verify_begin();
-	
+
 	VerifyContextResult vr(m_result_typeid);
 
 	if (!m_predefine_stmts.empty()) {
@@ -96,7 +98,7 @@ void AstNodeBlockStmt::AddPreDefine(AstNodeBlockStmt& another) {
 	another.m_stmts.clear();
 }
 AstNodeBlockStmt* AstNodeBlockStmt::DeepCloneT() {
-	assert(m_predefine_stmts.empty() && m_global_block==false);
+	assert(m_predefine_stmts.empty() && m_global_block == false);
 
 	std::vector<AstNode*> stmts;
 	for (auto iter : m_stmts) {
@@ -149,5 +151,14 @@ void AstNodeBlockStmt::VerifyIdentfier(AstNode* cur_node, std::string id, Verify
 			return;
 		}
 	}
-	//panicf("global identifier[%s] not exists", id.c_str());
+	// panicf("global identifier[%s] not exists", id.c_str());
+}
+void AstNodeBlockStmt::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
+	for (auto node : m_stmts) {
+		Var tmpv;
+		node->Compile(vm, maker, tmpv.mem_addr);
+	}
+	for (auto iter = m_stmts.rbegin(); iter != m_stmts.rend(); iter++) {
+		(*iter)->BlockEnd(vm, maker, nullptr);
+	}
 }

@@ -1,0 +1,167 @@
+将代码翻译成基本的指令, 类似于机器指令, 但是模拟的. 
+原因:
+	不翻译也可以实现"代码执行", 只要按照ast树执行即可. 但是这样有两个问题
+	1. 执行时, 要获取类型信息
+		比如获取某个字段的memory-offset, 来计算字段的数据的起始内存地址.
+		比如获取数组元素的memory-size. 来计算第i个元素的起始内存地址.
+		这些信息在运行时是固定的, 因此可以硬编码到生成的机器码中
+	2. 直接执行ast, 会导致"执行"阶段和"解析"阶段严重耦合. 
+	3. 比较好玩
+
+	因此决定增加一些基础的指令. 来模拟机器指令. 只是做一些探索, 不考虑性能,兼容性,扩展性
+
+寄存器:
+	- stack address register 栈地址寄存器
+		sar
+	- memory-address-register 多个通用内存地址寄存器
+		mar
+	- instruction-address-register 指令地址寄存器
+		iar
+	- return_address_register 函数返回值的内存地址寄存器
+		rar
+	
+基础指令:
+	- 加载内存地址到寄存器
+		// 从 (stack_top_pointer+stack_offset)处读取一个指针长度的数据, 存储到id为register_id的寄存器
+		mar_load_from_stack(register_id, stack_offset)
+		// 从常量区域获取一个地址, 存储到某个寄存器中
+		mar_load_from_const(register_id, const_offset)
+		mar_load_from_mar(register_id_dst, register_id_src)
+	- 修改地址寄存器中的地址
+		mar_add(mar_id, memory_address_offset)
+	- add sub mul div
+		add(register_id_result, register_id_left, register_id_right, bytes)
+		sub(register_id_result, register_id_left, register_id_right, bytes)
+		mul(register_id_result, register_id_left, register_id_right, bytes)
+		div(register_id_result, register_id_left, register_id_right, bytes)
+
+		register_id_result中存储了结果值的内存地址
+		register_id_left中存储了左操作数的内存地址
+		register_id_right中存储了右操作数的内存地址
+		bytes为值的字节数
+		将两个值求和/差/乘/除, 并将结果存储到指定内存地址
+
+	- 拷贝src的内存到dst 
+		memcpy(register_id_dst, register_id_src, bytes)
+	- 分配内存
+		void* alloc(bytes)
+	- 调用函数
+		call(instruction_address, return_var_stack_offset)
+		参数由caller压栈
+		将ir当前值压入栈, 然后将其值修改为fo
+		将sr当前值压入栈, 然后将其值修改为当前栈顶
+	- ret 函数退出
+		ret(return_var_stack_offset)
+		恢复caller的iar, sar
+
+实现:
+	- 一个manager类保存所有指令, 提供执行功能
+	- 每个基础指令一个类
+	- 基类Instruction提供Execute接口
+	- 提供一些高级的接口, 可以将抽象的功能转译成多个指令
+		- 获取数组某个元素的值的地址
+		- 设置数组某个元素的值
+		- 克隆某个值
+		- 加载某个字段的地址到mar
+			mar_load_field_from_stack(obj_stack_offset, field_offset)
+		...
+
+
+例子:
+	- var e = array[i+3];
+		1. i
+			AstNodeIdentifier
+		2. i+3
+			AstNodeOperator
+		3. array[i+3]
+			AstNodeAccessArrayElement
+	- stack上的variable的赋值
+		var i=1;
+
+		字面值1被保存到常量区域, 假设offset为s1
+		i的数据存储在stack上, 假设offset为si
+
+		load_memory_address_from_stack(1, si)
+		load_memory_address_from_const(2, s1)
+		memcpy(1,2,4);
+
+	- stack上的variable的赋值
+		var m = p.v;
+
+		假设p的stack-offset为so_p, v在p中的field-offset为fo_v
+		假设m的stack-offset为so_m
+
+		load_memory_address_from_stack(1, so_p)
+		mar_add(1, fo_v)
+		load_memory_address_from_const(2, so_m)
+		memcpy(2,1, sizoef(m) );
+
+	- 获取reference type数组元素的值
+		var m = arr[3];
+
+		假设arr是引用类型, stack-offset为so_p, 
+		假设m的stack-offset为so_m
+
+		mar_load_from_stack(1, so_p)
+		mar_load_from_mar(1, 1) // arr是引用类型, 其stack上保存的是一个指向实际数据的内存地址, 将该内存地址加载到mar中
+		mar_add(1, 3*sizeof(arr[0])) // 修改mar中的内存地址, 指向第4个元素
+		mar_load_from_stack(2, so_m)
+		memcpy(2, 1, sizeof(m) );
+
+	- 修改reference type数组元素的值
+		arr[3] = m;
+
+		假设arr是引用类型, stack-offset为so_p, 
+		假设m的stack-offset为so_m
+
+		mar_load_from_stack(1, so_p)
+		mar_load_from_mar(1, 1) // arr是引用类型, 其stack上保存的是一个指向实际数据的内存地址, 将该内存地址加载到mar中
+		mar_add(1, 3*sizeof(arr[0])) // 修改mar中的内存地址, 指向第4个元素
+		mar_load_from_stack(2, so_m)
+		memcpy(1, 2, sizeof(m) );
+
+	- 元素求和
+		var i = 1;
+		var j = 1;
+		var r = i+j;
+
+		假设i,j,r的stack-offset分别为so_i, so_j, so_r, 
+
+		mar_load_from_stack(1, so_i)
+		mar_load_from_stack(2, so_j)
+		mar_load_from_stack(3, so_r)
+		add(3, 1, 2, 4)
+
+	- 函数
+		函数访问参数
+			fn f(a int, b int) int{
+				return a+b;
+			}
+
+			函数参数都保存到stack上. 假设a,b的stack-offset分别是so_a, so_b
+
+			mar_load_from_stack(1, so_a)
+			mar_load_from_stack(2, so_b)
+			mar_add(1, 2, 3, 4);
+
+
+		函数调用
+			var r = f(a,b);
+
+			假设foo的fn-offset是fo_f
+			a的stack-offset是so_a
+			b的stack-offset是so_b
+			r的stack-offset是so_r
+
+			rar_push_and_load_from_stack(so_r) // 将现在的返回值内存地址压入栈, 将rar更改为(sar+so_r)
+			// 从左到右将所有参数压栈
+			mar_load_from_stack(1, so_a)
+			push_mar(1)
+			mar_load_from_stack(1, so_b)
+			push_mar(1)
+			call(fo_f) // 调用函数. 将stack_top_pointer压入栈
+			// 弹出两个之前压入栈的参数
+			pop(4)
+			pop(4)
+			// 弹出之前压入栈的rar
+			pop(4)

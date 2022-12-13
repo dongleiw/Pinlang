@@ -23,7 +23,6 @@ Variable* AstNodeTuple::Execute(ExecuteContext& ctx) {
 	std::vector<Variable*> tuple_elements;
 	for (auto iter : m_expr_list) {
 		Variable* e = iter->Execute(ctx);
-		e->SetTmp(false);
 		tuple_elements.push_back(e);
 	}
 	Variable* v = Variable::CreateTypeTuple(m_result_typeid, tuple_elements);

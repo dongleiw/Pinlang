@@ -79,3 +79,7 @@ Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 AstNodeIdentifier* AstNodeIdentifier::DeepCloneT() {
 	return new AstNodeIdentifier(m_id);
 }
+void AstNodeIdentifier::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
+	const Var v = maker.GetVar(m_id);
+	target_addr = v.mem_addr;
+}

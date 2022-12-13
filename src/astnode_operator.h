@@ -4,8 +4,8 @@
 
 #include "astnode.h"
 #include "define.h"
-#include "fntable.h"
 #include "execute_context.h"
+#include "fntable.h"
 #include "source_info.h"
 #include "type.h"
 #include "variable.h"
@@ -21,6 +21,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
+	virtual void				Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) override;
 
 	AstNodeOperator* DeepCloneT();
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
@@ -33,6 +34,9 @@ private:
 	std::string m_op;
 	AstNode*	m_right_expr;
 	SourceInfo	m_si_op;
+
+	TypeId m_left_expr_tid;
+	TypeId m_right_expr_tid;
 
 	FnAddr m_fn_addr;
 };

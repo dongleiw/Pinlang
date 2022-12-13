@@ -12,9 +12,10 @@
 #include "astnode_complex_fndef.h"
 #include "define.h"
 #include "dynamic_loading.h"
-#include "fntable.h"
 #include "execute_context.h"
+#include "fntable.h"
 #include "function_obj.h"
+#include "instruction.h"
 #include "predefine.h"
 #include "support/Declarations.h"
 #include "type_fn.h"
@@ -46,6 +47,82 @@ std::vector<std::string> list_src_files(std::string src_path) {
 		panicf("unexpected src_path[%s]", src_path.c_str());
 	}
 	return files;
+}
+void compile(std::string src_path, std::vector<std::string> str_args) {
+	log_info("execute src_path[%s]", src_path.c_str());
+
+	std::vector<std::string> src_files = list_src_files(src_path);
+
+	g_typemgr.InitTypes();
+
+	// 加载predefine
+	AstNodeBlockStmt* predefine_block_stmts;
+	{
+		const std::string predefine_filename = "../example_code/predefine.pin";
+		ANTLRFileStream	  input;
+		input.loadFromFile(predefine_filename);
+		std::string		  ss = input.getSourceName();
+		PinlangLexer	  lexer(&input);
+		CommonTokenStream tokens(&lexer);
+
+		PinlangParser	 parser(&tokens);
+		tree::ParseTree* tree = parser.start();
+
+		Visitor visitor;
+		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
+		register_predefine(*predefine_block_stmts);
+		DynamicLoading::RegisterFn(*predefine_block_stmts);
+	}
+
+	Visitor			  visitor;
+	AstNodeBlockStmt* global_block_stmt = new AstNodeBlockStmt();
+	global_block_stmt->SetGlobalBlock(true);
+	global_block_stmt->AddPreDefine(*predefine_block_stmts);
+	for (auto src_file : src_files) {
+		log_info("load src file[%s]", src_file.c_str());
+		ANTLRFileStream input;
+		input.loadFromFile(src_file);
+		PinlangLexer	  lexer(&input);
+		CommonTokenStream tokens(&lexer);
+
+		PinlangParser	 parser(&tokens);
+		tree::ParseTree* tree = parser.start();
+
+		AstNodeBlockStmt* block_stmt = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
+		global_block_stmt->MergeAnother(*block_stmt);
+	}
+
+	VerifyContext vctx(global_block_stmt);
+	{
+		vctx.PushStack();
+		log_info("verify begin");
+		global_block_stmt->Verify(vctx, VerifyContextParam());
+		log_info("verify end");
+	}
+
+	// 实例化出main函数
+	std::string main_fn_name;
+	{
+		Variable* main_complex_fn = vctx.GetGlobalVt()->GetVariableOrNull("main");
+		if (main_complex_fn == nullptr) {
+			panicf("main function not found");
+		}
+		AstNodeComplexFnDef*		  astnode_complex_fn_def = main_complex_fn->GetValueComplexFn();
+		AstNodeComplexFnDef::Instance instance				 = astnode_complex_fn_def->Instantiate_type(vctx, g_typemgr.GetMainFnTid());
+		main_fn_name										 = instance.instance_name;
+	}
+
+	log_info("compile begin");
+	VM vm(main_fn_name);
+	vctx.GetFnTable().Compile(vm);
+	vm.Finish();
+
+	vm.PrintInstructions();
+
+	vm.Start();
+
+	log_info("compile end");
+	printf("execute end. succ\n");
 }
 void execute(std::string src_path, std::vector<std::string> str_args) {
 	log_info("execute src_path[%s]", src_path.c_str());
@@ -135,6 +212,14 @@ void execute(std::string src_path, std::vector<std::string> str_args) {
 int main(int argc, char* argv[]) {
 	init_log("./run.log");
 
+	////
+	// VM vm;
+	// vm.test1();
+	// vm.PrintInstructions();
+	// vm.Start();
+	// return 0;
+	////
+
 	std::string				 src_path = "../example_code/test/a.pin";
 	std::vector<std::string> main_fn_args{std::string("run")};
 
@@ -157,6 +242,6 @@ int main(int argc, char* argv[]) {
 		main_fn_args.push_back(std::string(argv[main_fn_arg_idx]));
 	}
 
-	execute(src_path, main_fn_args);
+	compile(src_path, main_fn_args);
 	return 0;
 }

@@ -96,12 +96,10 @@ Variable::Variable(TypeId fn_tid, FunctionObj fnobj) {
 Variable::Variable(AstNodeConstraint* astnode) {
 	m_tid			   = TYPE_ID_GENERIC_CONSTRAINT;
 	m_value_constraint = astnode;
-	m_is_tmp		   = true;
 }
 Variable::Variable(AstNodeComplexFnDef* astnode) {
 	m_tid			   = TYPE_ID_COMPLEX_FN;
 	m_value_complex_fn = astnode;
-	m_is_tmp		   = true;
 }
 Variable::Variable(TypeId array_tid, std::vector<Variable*> array) {
 	construct_init(array_tid, nullptr);
@@ -234,7 +232,6 @@ Variable* Variable::GetValueArrayElement(int idx) {
 	TypeInfoArray* ti_array	  = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(m_tid));
 	TypeInfo*	   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
 	Variable*	   element	  = new Variable(ti_element->GetTypeId());
-	element->SetTmp(false);
 	const uint8_t* array_data = nullptr;
 	if (ti_array->IsStaticSize()) {
 		array_data = m_data;
@@ -290,7 +287,6 @@ void Variable::SetFieldValue(std::string field_name, Variable* v) {
 	panicf("field[%s] not exists", field_name.c_str());
 }
 void Variable::Assign(Variable* tmp) {
-	assert(!IsTmp());
 	assert(m_tid == tmp->GetTypeId());
 
 	//TypeId tmp_tid = m_tid;
@@ -303,7 +299,6 @@ void Variable::Assign(Variable* tmp) {
 	memcpy(m_data, tmp->m_data, ti->GetMemSize());
 
 	//m_tid	 = tmp_tid;
-	m_is_tmp = false;
 }
 void Variable::InitField(std::map<std::string, Variable*> fields) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
@@ -367,7 +362,6 @@ void Variable::set_default_value() {
 }
 void Variable::construct_init(TypeId tid, const void* data) {
 	m_tid	 = tid;
-	m_is_tmp = true;
 
 	TypeInfo* ti = g_typemgr.GetTypeInfo(tid);
 	m_data		 = (uint8_t*)std::aligned_alloc(ti->GetMemAlignSize(), ti->GetMemSize());

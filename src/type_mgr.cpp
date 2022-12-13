@@ -117,7 +117,8 @@ void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 
 	bool   added		 = false;
 	TypeId array_str_tid = GetOrAddTypeArray(ctx, TYPE_ID_STR, 0, added);
-	m_main_fn_tid		 = GetOrAddTypeFn(ctx, std::vector<TypeId>{array_str_tid}, TYPE_ID_INT32);
+	//m_main_fn_tid		 = GetOrAddTypeFn(ctx, std::vector<TypeId>{array_str_tid}, TYPE_ID_INT32);
+	m_main_fn_tid		 = GetOrAddTypeFn(ctx, std::vector<TypeId>{}, TYPE_ID_INT32);
 }
 
 TypeId TypeMgr::allocate_typeid() {

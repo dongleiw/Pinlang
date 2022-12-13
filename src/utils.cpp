@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <cstdarg>
 
 int str_to_int(const std::string& s) {
 	return std::stoi(s.c_str());
@@ -96,4 +97,12 @@ std::vector<std::string> split_to_args(std::string s){
 				break;
 		}
 	}
+}
+std::string sprintf_to_stdstr(const char* fmt, ...){
+	va_list ap;
+	va_start(ap, fmt);
+	char buf[256];
+	vsnprintf(buf, sizeof(buf), fmt,ap);
+	va_end(ap);
+	return std::string(buf);
 }

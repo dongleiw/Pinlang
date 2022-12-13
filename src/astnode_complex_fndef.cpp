@@ -340,7 +340,7 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instance.gparams_tid, instance.params_tid, instance.return_tid);
 	TypeId fn_tid		   = g_typemgr.GetOrAddTypeFn(ctx, instance.params_tid, instance.return_tid);
 	if (instance.implement->m_body != nullptr) {
-		instance.fn_addr = ctx.GetFnTable().AddUserDefineFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT());
+		instance.fn_addr = ctx.GetFnTable().AddUserDefineFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT(), instance.instance_name);
 	} else {
 		instance.fn_addr = ctx.GetFnTable().AddBuiltinFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_verify_cb,
 														   instance.implement->m_execute_cb);

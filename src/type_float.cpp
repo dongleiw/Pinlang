@@ -60,6 +60,7 @@ TypeInfoFloat::TypeInfoFloat() {
 	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;
 	m_mem_size		 = 4;
 	m_mem_align_size = 4;
+	m_is_value_type	 = true;
 }
 void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();
