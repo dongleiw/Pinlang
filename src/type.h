@@ -1,11 +1,13 @@
 #pragma once
 
+#include <llvm-12/llvm/IR/Type.h>
 #include <map>
 #include <string>
 #include <utility>
 
 #include "define.h"
 #include "fntable.h"
+#include "llvm_ir.h"
 
 class VerifyContext;
 class AstNodeComplexFnDef;
@@ -95,6 +97,8 @@ public:
 
 	int GetMemSize() const { return m_mem_size; }
 	int GetMemAlignSize() const { return m_mem_align_size; }
+
+	virtual llvm::Type* GetLLVMIRType(LLVMIR& llvm_ir);
 
 protected:
 	/*

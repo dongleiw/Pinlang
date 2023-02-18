@@ -2,12 +2,15 @@
 #include "astnode_blockstmt.h"
 #include "define.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "utils.h"
 #include "variable_table.h"
+#include <llvm-12/llvm/IR/DerivedTypes.h>
+#include <llvm-12/llvm/IR/Type.h>
 
 Variable* FnTable::CallFn(FnAddr addr, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
 	switch (addr.fn_kind) {
@@ -173,27 +176,67 @@ TypeId FnTable::GetFnReturnTypeId(FnAddr addr) const {
 	TypeInfoFn* tifn   = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
 	return tifn->GetReturnTypeId();
 }
-void FnTable::Compile(VM& vm) {
-	for (const UserDefFnInfo& fn : m_userdef_fn_table) {
-		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn.fn_tid));
+void FnTable::Compile(LLVMIR& llvm_ir) {
+	// 构建fn,
+	for (UserDefFnInfo& fn_info : m_userdef_fn_table) {
+		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_info.fn_tid));
 
-		FnInstructionMaker maker(fn.fnname);
+		// 如果是main函数, 不增加参数类型和返回值类型信息. 否则没法调用了
+		std::string fn_name = fn_info.fnname;
+		if (fn_info.fnname == "main[]()i32") {
+			fn_name = "main";
+		}
 
-		// 声明参数
-		int64_t cur_offset = 0;
-		assert(fn.params_name.size() == tifn->GetParamNum());
+		// 构建fn type
+		llvm::Type* fn_return_type = nullptr;
+		if (tifn->GetReturnTypeId() != TYPE_ID_NONE) {
+			TypeInfo* ti_return = g_typemgr.GetTypeInfo(tifn->GetReturnTypeId());
+			fn_return_type		= ti_return->GetLLVMIRType(llvm_ir);
+		} else {
+			fn_return_type = llvm::Type::getVoidTy(IRC);
+		}
+		std::vector<llvm::Type*> fn_arg_types;
 		for (size_t i = tifn->GetParamNum(); i > 0; i--) {
 			TypeId	  arg_tid = tifn->GetParamType(i - 1);
 			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
 
-			cur_offset -= arg_ti->GetMemSize();
+			fn_arg_types.push_back(arg_ti->GetLLVMIRType(llvm_ir));
+		}
+		llvm::FunctionType* fn_type = llvm::FunctionType::get(fn_return_type, fn_arg_types, false);
 
-			maker.SetArg(fn.params_name.at(i - 1), arg_ti->GetMemSize(), MemAddr(MemAddr::RELATIVE_TO_STACK_AREA, cur_offset));
+		// 构建fn
+		fn_info.llvm_ir_fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage, fn_name, IRM);
+		assert(fn_info.params_name.size() == fn_info.llvm_ir_fn->arg_size());
+		for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
+			fn_info.llvm_ir_fn->getArg(i)->setName(fn_info.params_name.at(i));
 		}
 
-		maker.SetFnComment(InstructionComment(0, sprintf_to_stdstr("fn name[%s]", fn.fnname.c_str())));
-		fn.body->Compile(vm, maker);
-		maker.Finish();
-		vm.AddFn(maker);
+		llvm_ir.AddNamedValue(fn_name, fn_info.llvm_ir_fn);
+	}
+	for (const UserDefFnInfo& fn_info : m_userdef_fn_table) {
+		llvm_ir.SetCurFn(fn_info.llvm_ir_fn);
+
+		llvm_ir.EnterBlock();
+
+		// 声明参数到符号表
+		assert(fn_info.params_name.size() == fn_info.llvm_ir_fn->arg_size());
+		for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
+			llvm_ir.AddNamedValue(fn_info.params_name.at(i), fn_info.llvm_ir_fn->getArg(i));
+		}
+		llvm::BasicBlock* entry_block = llvm::BasicBlock::Create(IRC, "entry", fn_info.llvm_ir_fn);
+		//llvm_ir.SetExitBlock(llvm::BasicBlock::Create(IRC, "exit", fn_info.llvm_ir_fn));
+		IRB.SetInsertPoint(entry_block);
+
+		fn_info.body->Compile(llvm_ir);
+
+		// 处理返回值
+		if (fn_info.llvm_ir_fn->getReturnType()->isVoidTy()) {
+			IRB.CreateRetVoid();
+		}
+
+		llvm_ir.LeaveBlock();
+
+		llvm_ir.SetCurFn(nullptr);
+		llvm_ir.SetExitBlock(nullptr);
 	}
 }

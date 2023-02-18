@@ -53,6 +53,8 @@ enum TypeId {
 #define CONSTRAINT_ID_NONE ((TypeId)0)
 
 #define is_integer_type(tid) (TYPE_ID_INT8 <= (tid) && (tid) <= TYPE_ID_UINT64)
+#define is_unsigned_integer_type(tid) (TYPE_ID_UINT8 <= (tid) && (tid) <= TYPE_ID_UINT64)
+#define is_signed_integer_type(tid) (TYPE_ID_INT8 <= (tid) && (tid) <= TYPE_ID_INT64)
 
 class VerifyContext;
 class ExecuteContext;

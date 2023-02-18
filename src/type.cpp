@@ -4,6 +4,7 @@
 #include "define.h"
 #include "fntable.h"
 #include "function_obj.h"
+#include "llvm_ir.h"
 #include "log.h"
 #include "type_constraint.h"
 #include "type_fn.h"
@@ -217,4 +218,8 @@ void TypeInfo::align_field() {
 
 	m_mem_size		 = total_mem_size;
 	m_mem_align_size = max_mem_align_size;
+}
+llvm::Type* TypeInfo::GetLLVMIRType(LLVMIR& llvm_ir) {
+	panicf("not implemented");
+	return nullptr;
 }

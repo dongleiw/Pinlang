@@ -16,6 +16,7 @@
 #include "fntable.h"
 #include "function_obj.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "predefine.h"
 #include "support/Declarations.h"
 #include "type_fn.h"
@@ -113,16 +114,11 @@ void compile(std::string src_path, std::vector<std::string> str_args) {
 	}
 
 	log_info("compile begin");
-	VM vm(main_fn_name);
-	vctx.GetFnTable().Compile(vm);
-	vm.Finish();
-
-	vm.PrintInstructions();
-
-	vm.Start();
-
+	LLVMIR llvm_ir;
+	llvm_ir.Init();
+	vctx.GetFnTable().Compile(llvm_ir);
+	llvm_ir.GetModule().print(llvm::outs(), nullptr);;
 	log_info("compile end");
-	printf("execute end. succ\n");
 }
 void execute(std::string src_path, std::vector<std::string> str_args) {
 	log_info("execute src_path[%s]", src_path.c_str());

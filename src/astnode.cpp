@@ -2,6 +2,7 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_for.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "log.h"
 
 bool AstNode::IsInFor() const {
@@ -31,8 +32,6 @@ void AstNode::verify_end() {
 		m_verify_status = VERIFIED;
 	}
 }
-CompileResult AstNode::Compile(VM& vm, FnInstructionMaker& maker) {
+llvm::Value* AstNode::Compile(LLVMIR& llvm_ir) {
 	panicf("not implemented");
-}
-void AstNode::BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr) {
 }

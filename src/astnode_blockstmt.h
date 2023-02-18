@@ -1,11 +1,13 @@
 #pragma once
 
+#include <llvm-12/llvm/IR/Value.h>
 #include <utility>
 #include <vector>
 
 #include "astnode.h"
 #include "execute_context.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -22,7 +24,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
-	virtual CompileResult		Compile(VM& vm, FnInstructionMaker& maker) override;
+	virtual llvm::Value*		Compile(LLVMIR& llvm_ir) override;
 
 	void AddPreDefine(AstNodeBlockStmt& another);
 	void AddChildStmt(AstNode* node);

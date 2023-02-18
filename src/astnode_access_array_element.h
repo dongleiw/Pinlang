@@ -23,7 +23,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
-	virtual CompileResult		Compile(VM& vm, FnInstructionMaker& maker) override;
+	virtual llvm::Value*		Compile(LLVMIR& llvm_ir) override;
 
 	virtual AstNode*		   DeepClone() override { return DeepCloneT(); }
 	AstNodeAccessArrayElement* DeepCloneT();

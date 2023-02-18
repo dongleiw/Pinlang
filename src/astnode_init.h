@@ -29,7 +29,6 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
-	virtual CompileResult		Compile(VM& vm, FnInstructionMaker& maker) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeInit*	 DeepCloneT();

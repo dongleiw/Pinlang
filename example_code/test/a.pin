@@ -1,10 +1,69 @@
-fn add(a i32, b i32) i32{
-	return a+b+4;
+/*fn main() i32 {
+	var i = 1;
+	return i+1;
+}*/
+
+/*fn main() i32 {
+	var i = 1;
+	var j = 1;
+	return i+j;
+}*/
+
+/*fn main() i32 {
+	var i = 1;
+	var j = 1;
+	return i+j+1;
+}*/
+
+/*fn main() i32 {
+	var i = 1;
+	var j = i;
+	return j;
+}*/
+
+fn main() i32 {
+	var i = 4;
+	var j = 2;
+
+	var a1 = i+j;
+	var a2 = i-j;
+	var a3 = i*j;
+	var a4 = i/j;
+
+	var icmp1 = i<j;
+	var icmp2 = i<=j;
+	var icmp3 = i==j;
+	var icmp4 = i>=j;
+	var icmp5 = i>j;
+	var icmp6 = i!=j;
+
+	if(icmp6){
+		return 90;
+	}
+	return 10;
+}
+
+/*fn add(a i32, b i32) i32{
+	return a+b;
 }
 fn main() i32 {
-	var array = [3]int{1,2,3};
-	var i u64 = 0;
-	var j u64 = 1;
-	var e = add(array[i], array[j]);
-	return e;
+	var a = 1;
+	var b = 1;
+	var s = add(a,b);
+	return s;
+}*/
+
+/*fn test(a bool, b bool) i32{
+	if(a){
+		if(b){
+			return 1;
+		}
+		return 99;
+	}else{
+		return 0;
+	}
 }
+fn main() i32 {
+	var i = test(true,true);
+	return i;
+}*/

@@ -5,6 +5,12 @@ constraint Add[AnotherT,ReturnT]{
 constraint Sub[AnotherT,ReturnT]{
 	fn sub(another AnotherT) ReturnT;
 }
+constraint Mul[AnotherT,ReturnT]{
+	fn sub(another AnotherT) ReturnT;
+}
+constraint Div[AnotherT,ReturnT]{
+	fn sub(another AnotherT) ReturnT;
+}
 constraint Equal[AnotherT]{
 	fn equal(another AnotherT) bool;
 }

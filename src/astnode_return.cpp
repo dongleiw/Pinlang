@@ -1,9 +1,12 @@
 #include "astnode_return.h"
 #include "define.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "log.h"
+#include "type.h"
 #include "type_mgr.h"
 #include "verify_context.h"
+#include <llvm-12/llvm/IR/Value.h>
 
 AstNodeReturn::AstNodeReturn(AstNode* returned_expr) {
 	m_returned_expr		= returned_expr;
@@ -15,6 +18,7 @@ AstNodeReturn::AstNodeReturn(AstNode* returned_expr) {
 }
 
 VerifyContextResult AstNodeReturn::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	m_is_exit_node = true;
 	if (m_returned_expr != nullptr) {
 		// 期望表达式的结果的类型 == return的类型
 		VerifyContextParam vparam_return;
@@ -46,28 +50,22 @@ AstNodeReturn* AstNodeReturn::DeepCloneT() {
 
 	return newone;
 }
-CompileResult AstNodeReturn::Compile(VM& vm, FnInstructionMaker& maker) {
+llvm::Value* AstNodeReturn::Compile(LLVMIR& llvm_ir) {
 	if (m_returned_expr == nullptr) {
-		maker.AddInstruction(new Instruction_ret<false>());
-		maker.AddComment(InstructionComment(0, sprintf_to_stdstr("return;")));
+		//IRB.CreateBr(llvm_ir.GetExitBlock());
+		IRB.CreateRetVoid();
 	} else {
-		maker.AddComment(InstructionComment(sprintf_to_stdstr("return xxx;")));
-		TypeInfo* ti = g_typemgr.GetTypeInfo(m_returned_expr_tid);
+		TypeInfo*	 ti_return = g_typemgr.GetTypeInfo(m_returned_expr_tid);
+		llvm::Value* ret_value = m_returned_expr->Compile(llvm_ir);
 
-		CompileResult cr_returned_expr = m_returned_expr->Compile(vm, maker);
-		if (cr_returned_expr.IsFnId()) {
-			panicf("not supported yet");
+		if (ret_value->getType()->isPointerTy()) {
+			//llvm_ir.SetRetValue(IRB.CreateLoad(ti_return->GetLLVMIRType(llvm_ir), ret_value, "ret"));
+			IRB.CreateRet(IRB.CreateLoad(ti_return->GetLLVMIRType(llvm_ir), ret_value, "ret"));
 		} else {
-			if (cr_returned_expr.IsValue()) {
-				maker.AddInstruction(new Instruction_ret<true>(maker, cr_returned_expr.GetRegisterId(), ti->GetMemSize()));
-			} else {
-				maker.AddInstruction(new Instruction_ret<false>(maker, cr_returned_expr.GetRegisterId(), ti->GetMemSize()));
-			}
-			vm.ReleaseGeneralRegister(cr_returned_expr.GetRegisterId());
-			if (!cr_returned_expr.GetStackVarName().empty()) {
-				maker.VarEnd(cr_returned_expr.GetStackVarName());
-			}
+			//llvm_ir.SetRetValue(ret_value);
+			IRB.CreateRet(ret_value);
 		}
+		//IRB.CreateBr(llvm_ir.GetExitBlock());
 	}
-	return CompileResult();
+	return nullptr;
 }

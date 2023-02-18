@@ -10,16 +10,6 @@
 class TypeInfoInt : public TypeInfo {
 public:
 	TypeInfoInt(TypeId tid);
-	void InitBuiltinMethods(VerifyContext& ctx) override;
-
-private:
-	BuiltinFnExecuteCallback m_builtin_fn_list_tostring[64];
-	BuiltinFnExecuteCallback m_builtin_fn_list_add[64];
-	BuiltinFnExecuteCallback m_builtin_fn_list_sub[64];
-	BuiltinFnExecuteCallback m_builtin_fn_list_equal[64];
-	BuiltinFnExecuteCallback m_builtin_fn_list_lessThan[64];
-	BuiltinFnExecuteCallback m_builtin_fn_list_lessEqual[64];
-	BuiltinFnExecuteCallback m_builtin_fn_list_notEqual[64];
-	BuiltinFnExecuteCallback m_builtin_fn_list_greaterThan[64];
-	BuiltinFnExecuteCallback m_builtin_fn_list_greaterEqual[64];
+	void				InitBuiltinMethods(VerifyContext& ctx) override;
+	virtual llvm::Type* GetLLVMIRType(LLVMIR& llvm_ir) override;
 };

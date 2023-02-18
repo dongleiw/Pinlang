@@ -1,12 +1,15 @@
 #include <cstdlib>
 #include <ios>
 #include <iterator>
+#include <llvm-12/llvm/IR/Instructions.h>
+#include <llvm-12/llvm/IR/Type.h>
 
 #include "astnode_literal.h"
 #include "astnode_type.h"
 #include "astnode_vardef.h"
 #include "define.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "log.h"
 #include "support/CPPUtils.h"
 #include "type.h"
@@ -78,43 +81,22 @@ AstNodeVarDef* AstNodeVarDef::DeepCloneT() {
 
 	return newone;
 }
-CompileResult AstNodeVarDef::Compile(VM& vm, FnInstructionMaker& maker) {
-	TypeInfo* ti	  = g_typemgr.GetTypeInfo(m_result_typeid);
-	Var		  new_var = maker.VarBegin(m_varname, ti->GetMemSize());
+llvm::Value* AstNodeVarDef::Compile(LLVMIR& llvm_ir) {
+	TypeInfo*		  ti		  = g_typemgr.GetTypeInfo(m_result_typeid);
+	llvm::Type*		  type		  = ti->GetLLVMIRType(llvm_ir);
+	llvm::AllocaInst* alloca_inst = IRB.CreateAlloca(type, nullptr, m_varname);
 
-	// 申请一个寄存器, 存放变量的内存地址
-	RegisterId register_var_addr = vm.AllocGeneralRegister();
-
-	CompileResult cr_init_expr;
-	if (m_init_expr != nullptr) {
-		cr_init_expr = m_init_expr->Compile(vm, maker);
-	}
-	maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, register_var_addr, REGISTER_ID_STACK_FRAME, new_var.mem_addr.relative_addr,
-																		 sprintf_to_stdstr("get addr of var[%s]", m_varname.c_str())));
+	llvm_ir.AddNamedValue(m_varname, alloca_inst);
 
 	if (m_init_expr != nullptr) {
-		if (cr_init_expr.IsFnId()) {
-			panicf("not supported yet");
-		} else {
-			if (cr_init_expr.IsValue()) {
-				// init_expr返回的寄存器中保存的是一个值. 将该值保存到变量对应的内存
-				maker.AddInstruction(new Instruction_store_register(maker, register_var_addr, cr_init_expr.GetRegisterId(), ti->GetMemSize()));
-			} else {
-				// init_expr返回的寄存器中保存的是一个内存地址. 将该内存地址指向的值拷贝到变量对应的内存
-				maker.AddInstruction(new Instruction_memcpy(maker, register_var_addr, cr_init_expr.GetRegisterId(), ti->GetMemSize(),
-															sprintf_to_stdstr("copy init value to var[%s]", m_varname.c_str())));
-			}
-			vm.ReleaseGeneralRegister(cr_init_expr.GetRegisterId());
-			if (!cr_init_expr.GetStackVarName().empty()) {
-				// 如果这个地址是初始化表达式自己申请的临时内存块, 这里释放掉
-				maker.VarEnd(cr_init_expr.GetStackVarName());
-			}
+		llvm::Value* init_value = m_init_expr->Compile(llvm_ir);
+		if (init_value->getType() == type) {
+			// 初始化值的类型和类型相同, 直接store过去
+		} else if (init_value->getType() == type->getPointerTo()) {
+			// 初始化值的类型是变量类型的指针类型, 需要先load出来
+			init_value = IRB.CreateLoad(type, init_value, "load_init_value");
 		}
+		IRB.CreateStore(init_value, alloca_inst);
 	}
-
-	vm.ReleaseGeneralRegister(register_var_addr);
-	return CompileResult();
-}
-void AstNodeVarDef::BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr) {
-	maker.VarEnd(m_varname);
+	return alloca_inst;
 }

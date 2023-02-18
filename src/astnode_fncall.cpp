@@ -2,10 +2,13 @@
 #include "define.h"
 #include "function_obj.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "utils.h"
+#include <llvm-12/llvm/IR/Function.h>
+#include <llvm-12/llvm/IR/Value.h>
 
 AstNodeFnCall::AstNodeFnCall(AstNode* fn_expr, std::vector<AstNode*> args) {
 	m_fn_expr = fn_expr;
@@ -66,77 +69,24 @@ AstNodeFnCall* AstNodeFnCall::DeepCloneT() {
 
 	return newone;
 }
-CompileResult AstNodeFnCall::Compile(VM& vm, FnInstructionMaker& maker) {
-	CompileResult cr_fn = m_fn_expr->Compile(vm, maker);
-	if (!cr_fn.IsFnId()) {
-		panicf("not supported yet");
-	}
-	std::string fn_id = cr_fn.GetFnId();
-	maker.AddComment(InstructionComment(sprintf_to_stdstr("call %s", fn_id.c_str())));
-
-	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_fn_tid));
-
-	Var ret_var;
-	if (m_result_typeid != TYPE_ID_NONE) {
-		TypeInfo* ret_ti = g_typemgr.GetTypeInfo(m_result_typeid);
-		ret_var			 = maker.TmpVarBegin("fn_return", ret_ti->GetMemSize());
-	}
-
-	// 压入参数
-	std::vector<Var> push_arg_list;
+llvm::Value* AstNodeFnCall::Compile(LLVMIR& llvm_ir) {
+	llvm::Function* fn = (llvm::Function*)m_fn_expr->Compile(llvm_ir);
+	assert(fn->arg_size() == m_args.size());
+	std::vector<llvm::Value*> args;
 	for (size_t i = 0; i < m_args.size(); i++) {
-		TypeId	  arg_tid = tifn->GetParamType(i);
-		TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
-
-		// 申请一块内存, 作为callee的参数
-		Var var_arg = maker.TmpVarBegin("fn_arg", arg_ti->GetMemSize());
-		maker.AddComment(InstructionComment(sprintf_to_stdstr("push arg %s", to_str(i).c_str())));
-
-		RegisterId register_arg_addr = vm.AllocGeneralRegister();
-		maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, register_arg_addr, REGISTER_ID_STACK_FRAME, var_arg.mem_addr.relative_addr,
-																			 sprintf_to_stdstr("get addr of arg[%d]", i)));
-
-		// 编译第i个参数, 得到一个内存地址, 该内存地址对应内存块保存了该参数的值
-		CompileResult cr_arg = m_args.at(i)->Compile(vm, maker);
-		if (cr_arg.IsFnId()) {
-			panicf("not implemented yet");
+		llvm::Value* arg_value = m_args.at(i)->Compile(llvm_ir);
+		if (arg_value->getType() == fn->getArg(i)->getType()) {
+			args.push_back(arg_value);
+		} else if (arg_value->getType() == fn->getArg(i)->getType()->getPointerTo()) {
+			args.push_back(IRB.CreateLoad(fn->getArg(i)->getType(), arg_value, sprintf_to_stdstr("load_arg_%lu", i)));
 		} else {
-			if (cr_arg.IsValue()) {
-				maker.AddInstruction(new Instruction_store_register(maker, register_arg_addr, cr_arg.GetRegisterId(), arg_ti->GetMemSize(),
-																	sprintf_to_stdstr("push value of arg-expr to stack: arg-idx[%d]", i)));
-			} else {
-				maker.AddInstruction(new Instruction_memcpy(maker, register_arg_addr, cr_arg.GetRegisterId(), arg_ti->GetMemSize(),
-															sprintf_to_stdstr("push value of arg-expr to stack: arg-idx[%d]", i)));
-			}
-			vm.ReleaseGeneralRegister(cr_arg.GetRegisterId());
-			if (!cr_arg.GetStackVarName().empty()) {
-				maker.VarEnd(cr_arg.GetStackVarName());
-			}
+			panicf("bug");
 		}
-
-		vm.ReleaseGeneralRegister(register_arg_addr);
-
-		push_arg_list.push_back(var_arg);
 	}
-
-	if (m_result_typeid == TYPE_ID_NONE) {
-		// 函数没有返回值. 传递一个无效的return-var-memaddr
-		maker.AddInstruction(new Instruction_call(maker, fn_id, 0));
+	if (fn->getReturnType()->isVoidTy()) {
+		IRB.CreateCall((llvm::Function*)fn, args); // return void 的情况下名字必须为空
+		return nullptr;
 	} else {
-		// 函数有返回值. 函数调用的结果是临时变量, 将函数执行的结果保存到外层提供的target_addr
-		maker.AddInstruction(new Instruction_call(maker, fn_id, ret_var.mem_addr.relative_addr));
-	}
-
-	// 参数弹出栈
-	for (size_t i = push_arg_list.size(); i > 0; i--) {
-		maker.VarEnd(push_arg_list.at(i - 1).var_name);
-	}
-
-	RegisterId register_returned_var_addr = vm.AllocGeneralRegister();
-	maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, register_returned_var_addr, REGISTER_ID_STACK_FRAME, ret_var.mem_addr.relative_addr));
-	if (m_result_typeid != TYPE_ID_NONE) {
-		return CompileResult(register_returned_var_addr, false, ret_var.var_name);
-	} else {
-		return CompileResult();
+		return IRB.CreateCall((llvm::Function*)fn, args, "fn_call_ret");
 	}
 }

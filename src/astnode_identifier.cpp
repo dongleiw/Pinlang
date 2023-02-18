@@ -84,16 +84,15 @@ Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 AstNodeIdentifier* AstNodeIdentifier::DeepCloneT() {
 	return new AstNodeIdentifier(m_id);
 }
-CompileResult AstNodeIdentifier::Compile(VM& vm, FnInstructionMaker& maker) {
+llvm::Value* AstNodeIdentifier::Compile(LLVMIR& llvm_ir) {
 	if (m_is_complex_fn) {
 		// 是一个静态函数 (目前只支持静态函数)
 		// 返回函数id
-		return CompileResult(m_fn_id);
+		if (!llvm_ir.HasNamedValue(m_fn_id)) {
+			panicf("fn[%s] not defined", m_fn_id.c_str());
+		}
+		return llvm_ir.GetNamedValue(m_fn_id);
 	} else {
-		// 是一个变量, 使用寄存器返回这个变量的内存地址
-		RegisterId rid = vm.AllocGeneralRegister();
-		maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, rid, REGISTER_ID_STACK_FRAME, maker.GetVar(m_id).mem_addr.relative_addr,
-																			 sprintf_to_stdstr("get addr of identifier[%s]", m_id.c_str())));
-		return CompileResult(rid, false, "");
+		return llvm_ir.GetNamedValue(m_id);
 	}
 }

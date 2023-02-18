@@ -4,6 +4,7 @@
 #include "define.h"
 #include "execute_context.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
@@ -106,54 +107,75 @@ AstNodeOperator* AstNodeOperator::DeepCloneT() {
 	AstNodeOperator* newone = new AstNodeOperator(m_left_expr->DeepClone(), m_constraint_name, m_op, m_right_expr->DeepClone());
 	return newone;
 }
-CompileResult AstNodeOperator::Compile(VM& vm, FnInstructionMaker& maker) {
-	if ((m_left_expr_tid == TYPE_ID_INT32 && m_right_expr_tid == TYPE_ID_INT32) || (m_left_expr_tid == TYPE_ID_INT64 && m_right_expr_tid == TYPE_ID_INT64) ||
-		(m_left_expr_tid == TYPE_ID_UINT32 && m_right_expr_tid == TYPE_ID_UINT32) ||
-		(m_left_expr_tid == TYPE_ID_UINT64 && m_right_expr_tid == TYPE_ID_UINT64)) {
-		//TypeInfo* ti = g_typemgr.GetTypeInfo(TYPE_ID_INT32);
+llvm::Value* AstNodeOperator::Compile(LLVMIR& llvm_ir) {
+	llvm::Value* left_value	 = m_left_expr->Compile(llvm_ir);
+	llvm::Value* right_value = m_right_expr->Compile(llvm_ir);
 
-		maker.AddComment(InstructionComment(sprintf_to_stdstr("xx + xx")));
-		RegisterId register_result = vm.AllocGeneralRegister();
-
-		CompileResult cr_left  = m_left_expr->Compile(vm, maker);
-		CompileResult cr_right = m_right_expr->Compile(vm, maker);
-
-		if (cr_left.IsFnId() || cr_right.IsFnId()) {
-			panicf("not implemented yet");
-		} else {
-
-#define _generate_add_instruction(tid, result_is_value, left_is_value, right_is_value)                                                                                                  \
-	if (tid == TYPE_ID_INT32 || tid == TYPE_ID_UINT32) {                                                                                                                                \
-		maker.AddInstruction(new Instruction_add<uint32_t, result_is_value, left_is_value, right_is_value>(maker, register_result, cr_left.GetRegisterId(), cr_right.GetRegisterId())); \
-	} else if (tid == TYPE_ID_INT64 || tid == TYPE_ID_UINT64) {                                                                                                                         \
-		maker.AddInstruction(new Instruction_add<uint64_t, result_is_value, left_is_value, right_is_value>(maker, register_result, cr_left.GetRegisterId(), cr_right.GetRegisterId())); \
+	if (left_value->getType()->isPointerTy()) {
+		TypeInfo* ti_left = g_typemgr.GetTypeInfo(m_left_expr_tid);
+		left_value		  = IRB.CreateLoad(ti_left->GetLLVMIRType(llvm_ir), left_value, "left_operand");
 	}
 
-			if (cr_left.IsValue()) {
-				if (cr_right.IsValue()) {
-					_generate_add_instruction(m_left_expr_tid, true, true, true);
-				} else {
-					_generate_add_instruction(m_left_expr_tid, true, true, false);
-				}
+	if (right_value->getType()->isPointerTy()) {
+		TypeInfo* ti_right = g_typemgr.GetTypeInfo(m_right_expr_tid);
+		right_value		   = IRB.CreateLoad(ti_right->GetLLVMIRType(llvm_ir), right_value, "right_operand");
+	}
+
+	if (is_integer_type(m_left_expr_tid)) {
+		assert(m_left_expr_tid == m_right_expr_tid);
+		if (m_op == "add") {
+			return IRB.CreateAdd(left_value, right_value, "add_result");
+		} else if (m_op == "sub") {
+			return IRB.CreateSub(left_value, right_value, "sub_result");
+		} else if (m_op == "mul") {
+			return IRB.CreateMul(left_value, right_value, "mul_result");
+		} else if (m_op == "div") {
+			if (is_unsigned_integer_type(m_left_expr_tid)) {
+				return IRB.CreateUDiv(left_value, right_value, "div_result");
+			} else if (is_signed_integer_type(m_left_expr_tid)) {
+				return IRB.CreateSDiv(left_value, right_value, "div_result");
 			} else {
-				if (cr_right.IsValue()) {
-					_generate_add_instruction(m_left_expr_tid, true, false, true);
-				} else {
-					_generate_add_instruction(m_left_expr_tid, true, false, false);
-				}
+				panicf("not implemented yet");
 			}
+		} else if (m_op == "equal") {
+			return IRB.CreateICmpEQ(left_value, right_value, "eq_result");
+		} else if (m_op == "notEqual") {
+			return IRB.CreateICmpNE(left_value, right_value, "ne_result");
+		} else if (m_op == "lessThan") {
+			if (is_unsigned_integer_type(m_left_expr_tid)) {
+				return IRB.CreateICmpULT(left_value, right_value, "lt_result");
+			} else if (is_signed_integer_type(m_left_expr_tid)) {
+				return IRB.CreateICmpSLT(left_value, right_value, "lt_result");
+			} else {
+				panicf("not implemented yet");
+			}
+		} else if (m_op == "lessEqual") {
+			if (is_unsigned_integer_type(m_left_expr_tid)) {
+				return IRB.CreateICmpULE(left_value, right_value, "le_result");
+			} else if (is_signed_integer_type(m_left_expr_tid)) {
+				return IRB.CreateICmpSLE(left_value, right_value, "le_result");
+			} else {
+				panicf("not implemented yet");
+			}
+		} else if (m_op == "greaterThan") {
+			if (is_unsigned_integer_type(m_left_expr_tid)) {
+				return IRB.CreateICmpUGT(left_value, right_value, "gt_result");
+			} else if (is_signed_integer_type(m_left_expr_tid)) {
+				return IRB.CreateICmpSGT(left_value, right_value, "gt_result");
+			} else {
+				panicf("not implemented yet");
+			}
+		} else if (m_op == "greaterEqual") {
+			if (is_unsigned_integer_type(m_left_expr_tid)) {
+				return IRB.CreateICmpUGE(left_value, right_value, "ge_result");
+			} else if (is_signed_integer_type(m_left_expr_tid)) {
+				return IRB.CreateICmpSGE(left_value, right_value, "ge_result");
+			} else {
+				panicf("not implemented yet");
+			}
+		} else {
+			panicf("not implemented yet");
 		}
-
-		vm.ReleaseGeneralRegister(cr_left.GetRegisterId());
-		vm.ReleaseGeneralRegister(cr_right.GetRegisterId());
-
-		if (!cr_left.GetStackVarName().empty()) {
-			maker.VarEnd(cr_left.GetStackVarName());
-		}
-		if (!cr_right.GetStackVarName().empty()) {
-			maker.VarEnd(cr_right.GetStackVarName());
-		}
-		return CompileResult(register_result, true, "");
 	} else {
 		panicf("not implemented yet");
 	}

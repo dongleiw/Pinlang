@@ -19,7 +19,7 @@
  */
 class AstNodeComplexFnDef : public AstNode {
 public:
-	class Instance;
+	struct Instance;
 	// 函数的一个定义
 	struct Implement {
 		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body) {

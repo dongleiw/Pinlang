@@ -16,6 +16,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
+	virtual llvm::Value*		Compile(LLVMIR& llvm_ir) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeIf*		 DeepCloneT();

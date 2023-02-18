@@ -66,6 +66,11 @@ VerifyContextResult AstNodeBlockStmt::Verify(VerifyContext& ctx, VerifyContextPa
 	}
 	ctx.GetCurStack()->LeaveBlock();
 
+	// 确定该blockstatement是否是exitnode
+	if (!m_stmts.empty() && (*m_stmts.rbegin())->IsExitNode()) {
+		m_is_exit_node = true;
+	}
+
 	verify_end();
 	return vr;
 }
@@ -153,12 +158,9 @@ void AstNodeBlockStmt::VerifyIdentfier(AstNode* cur_node, std::string id, Verify
 	}
 	// panicf("global identifier[%s] not exists", id.c_str());
 }
-CompileResult AstNodeBlockStmt::Compile(VM& vm, FnInstructionMaker& maker) {
+llvm::Value* AstNodeBlockStmt::Compile(LLVMIR& llvm_ir) {
 	for (auto node : m_stmts) {
-		node->Compile(vm, maker);
+		node->Compile(llvm_ir);
 	}
-	for (auto iter = m_stmts.rbegin(); iter != m_stmts.rend(); iter++) {
-		(*iter)->BlockEnd(vm, maker, nullptr);
-	}
-	return CompileResult();
+	return nullptr;
 }

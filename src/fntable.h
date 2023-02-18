@@ -2,7 +2,9 @@
 
 #include "define.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 
+#include <llvm-12/llvm/IR/Function.h>
 #include <vector>
 
 class AstNodeBlockStmt;
@@ -41,6 +43,7 @@ struct UserDefFnInfo {
 	std::vector<ConcreteGParam> gparams;
 	std::vector<std::string>	params_name;
 	AstNodeBlockStmt*			body;
+	llvm::Function*				llvm_ir_fn;
 };
 // 编译器内置函数
 struct BuiltinFnInfo {
@@ -86,7 +89,7 @@ private:
 	Variable* call_dynamic_fn(DynamicFnInfo& info, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args);
 
 public:
-	void Compile(VM& vm);
+	void Compile(LLVMIR& llvm_ir);
 
 private:
 	std::vector<UserDefFnInfo> m_userdef_fn_table;

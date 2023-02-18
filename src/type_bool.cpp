@@ -3,6 +3,7 @@
 #include "astnode_constraint.h"
 #include "define.h"
 #include "fntable.h"
+#include "llvm_ir.h"
 #include "type_mgr.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -55,4 +56,7 @@ void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
 		GetConstraintMethod(ctx, "ToString", "tostring", std::vector<TypeId>()); // 触发tostring函数的实例化
 	}
 	ctx.PopSTack();
+}
+llvm::Type* TypeInfoBool::GetLLVMIRType(LLVMIR& llvm_ir) {
+	return llvm::Type::getInt1Ty(IRC);
 }

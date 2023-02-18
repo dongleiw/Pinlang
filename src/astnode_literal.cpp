@@ -1,12 +1,16 @@
 #include "astnode_literal.h"
 #include "define.h"
 #include "instruction.h"
+#include "llvm_ir.h"
 #include "log.h"
 #include "type.h"
 #include "utils.h"
 #include "variable.h"
 #include "verify_context.h"
 #include <cstdint>
+#include <llvm-12/llvm/ADT/APFloat.h>
+#include <llvm-12/llvm/ADT/APInt.h>
+#include <llvm-12/llvm/IR/Constants.h>
 
 AstNodeLiteral::AstNodeLiteral(int32_t value) {
 	m_value_int		= value;
@@ -138,53 +142,28 @@ void AstNodeLiteral::CastToInt64() {
 	assert(m_result_typeid == TYPE_ID_INT32);
 	m_result_typeid = TYPE_ID_INT64;
 }
-CompileResult AstNodeLiteral::Compile(VM& vm, FnInstructionMaker& maker) {
-	RegisterId rid = vm.AllocGeneralRegister();
+llvm::Value* AstNodeLiteral::Compile(LLVMIR& llvm_ir) {
 	switch (m_result_typeid) {
 	case TYPE_ID_INT8:
+		return llvm::ConstantInt::get(IRC, llvm::APInt(8, m_value_int, true));
 	case TYPE_ID_UINT8:
-	{
-		uint8_t data = uint8_t(m_value_int);
-		maker.AddInstruction(new Instruction_load_register_const<uint8_t>(maker, rid, data, sprintf_to_stdstr("literal u8 %u", uint32_t(data))));
-		return CompileResult(rid, true, "");
-		break;
-	}
+		return llvm::ConstantInt::get(IRC, llvm::APInt(8, m_value_int, false));
 	case TYPE_ID_INT16:
+		return llvm::ConstantInt::get(IRC, llvm::APInt(16, m_value_int, true));
 	case TYPE_ID_UINT16:
-	{
-		uint16_t data = uint16_t(m_value_int);
-		maker.AddInstruction(new Instruction_load_register_const<uint16_t>(maker, rid, data, sprintf_to_stdstr("literal u16 %u", uint32_t(data))));
-		return CompileResult(rid, true, "");
-		break;
-	}
+		return llvm::ConstantInt::get(IRC, llvm::APInt(16, m_value_int, false));
 	case TYPE_ID_INT32:
+		return llvm::ConstantInt::get(IRC, llvm::APInt(32, m_value_int, true));
 	case TYPE_ID_UINT32:
-	{
-		uint32_t data = uint32_t(m_value_int);
-		maker.AddInstruction(new Instruction_load_register_const<uint32_t>(maker, rid, data, sprintf_to_stdstr("literal u32 %u", uint32_t(data))));
-		return CompileResult(rid, true, "");
-		break;
-	}
+		return llvm::ConstantInt::get(IRC, llvm::APInt(32, m_value_int, false));
 	case TYPE_ID_INT64:
+		return llvm::ConstantInt::get(IRC, llvm::APInt(64, m_value_int, true));
 	case TYPE_ID_UINT64:
-	{
-		uint64_t data = uint64_t(m_value_int);
-		maker.AddInstruction(new Instruction_load_register_const<uint64_t>(maker, rid, data, sprintf_to_stdstr("literal u32 %u", uint64_t(data))));
-		return CompileResult(rid, true, "");
-		break;
-	}
+		return llvm::ConstantInt::get(IRC, llvm::APInt(64, m_value_int, false));
 	case TYPE_ID_FLOAT:
-	{
-		maker.AddInstruction(new Instruction_load_register_const<float>(maker, rid, m_value_float, sprintf_to_stdstr("literal float %f", m_value_float)));
-		return CompileResult(rid, true, "");
-		break;
-	}
+		return llvm::ConstantFP::get(IRC, llvm::APFloat(m_value_float));
 	case TYPE_ID_BOOL:
-	{
-		maker.AddInstruction(new Instruction_load_register_const<bool>(maker, rid, m_value_bool, sprintf_to_stdstr("literal bool %s", m_value_bool ? "true" : "false")));
-		return CompileResult(rid, true, "");
-		break;
-	}
+		return llvm::ConstantInt::get(IRC, llvm::APInt(1, m_value_bool ? 1 : 0, false));
 	case TYPE_ID_STR: // str是reference type, 真实数据在堆上, 栈上只是一个指针
 	{
 		panicf("not implemented yet");

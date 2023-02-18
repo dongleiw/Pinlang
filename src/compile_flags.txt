@@ -4,3 +4,5 @@
 ../antlr4/cpp_runtime/
 -I
 ../src_parser/
+-I
+/usr/lib/llvm-12/include
