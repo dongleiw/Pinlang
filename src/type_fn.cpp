@@ -1,10 +1,12 @@
 #include "type_fn.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
+#include "define.h"
 #include "function_obj.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
+#include "utils.h"
 
 TypeInfoFn::TypeInfoFn(std::vector<TypeId> params, TypeId return_tid) {
 	m_params	 = params;
@@ -16,33 +18,36 @@ TypeInfoFn::TypeInfoFn(std::vector<TypeId> params, TypeId return_tid) {
 	m_mem_align_size = 8;
 }
 
-std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid, TypeId return_tid) {
-	std::string s = fnname + "[";
-	char		buf[8];
+std::string TypeInfoFn::GetUniqFnName(TypeId obj_tid, std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid, TypeId return_tid) {
+	std::string fnid;
+	if (obj_tid != TYPE_ID_NONE) {
+		fnid = sprintf_to_stdstr("%d:%s::", obj_tid, GET_TYPENAME_C(obj_tid));
+	}
+	fnid += fnname + "[";
 	for (size_t i = 0; i < concrete_generic_params.size(); i++) {
-		snprintf(buf, sizeof(buf), "%d", concrete_generic_params.at(i));
-		s = s + buf + ":" + GET_TYPENAME(concrete_generic_params.at(i));
+		fnid = fnid + sprintf_to_stdstr("%d:%s", concrete_generic_params.at(i), GET_TYPENAME_C(concrete_generic_params.at(i)));
 		if (i + 1 != concrete_generic_params.size()) {
-			s += ",";
+			fnid += ",";
 		}
 	}
-	s += "](";
+	fnid += "](";
 	for (size_t i = 0; i < params_tid.size(); i++) {
-		snprintf(buf, sizeof(buf), "%d", params_tid.at(i));
-		s = s + buf + ":" + GET_TYPENAME(params_tid.at(i));
+		fnid = fnid + sprintf_to_stdstr("%d:%s", params_tid.at(i), GET_TYPENAME_C(params_tid.at(i)));
 		if (i + 1 != params_tid.size()) {
-			s += ",";
+			fnid += ",";
 		}
 	}
-	s += ")";
-	s += GET_TYPENAME(return_tid);
-	return s;
+	fnid += ")";
+	if (return_tid != TYPE_ID_NONE) {
+		fnid += sprintf_to_stdstr("%d:%s", return_tid, GET_TYPENAME_C(return_tid));
+	}
+	return fnid;
 }
-std::string TypeInfoFn::GetUniqFnName(std::string fnname, std::vector<TypeId> params_tid, TypeId return_tid) {
-	return GetUniqFnName(fnname, std::vector<TypeId>(), params_tid, return_tid);
+std::string TypeInfoFn::GetUniqFnName(TypeId obj_tid, std::string fnname, std::vector<TypeId> params_tid, TypeId return_tid) {
+	return GetUniqFnName(obj_tid, fnname, std::vector<TypeId>(), params_tid, return_tid);
 }
 void TypeInfoFn::set_name() {
-	m_name = "fn" + GetUniqFnName("", m_params, GetReturnTypeId());
+	m_name = "fn" + GetUniqFnName(TYPE_ID_NONE, "", m_params, GetReturnTypeId());
 }
 bool TypeInfoFn::VerifyArgsType(std::vector<TypeId> args_type) {
 	if (args_type.size() != m_params.size()) {

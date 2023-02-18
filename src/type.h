@@ -7,8 +7,8 @@
 
 #include "define.h"
 #include "fntable.h"
-#include "llvm_ir.h"
 
+class CompileContext;
 class VerifyContext;
 class AstNodeComplexFnDef;
 
@@ -81,6 +81,7 @@ public:
 	bool IsPrimaryType() const { return m_typegroup_id == TYPE_GROUP_ID_PRIMARY; }
 	bool IsClass() const { return m_typegroup_id == TYPE_GROUP_ID_CLASS; }
 	bool IsTuple() const { return m_typegroup_id == TYPE_GROUP_ID_TUPLE; }
+	bool IsPointer() const { return m_typegroup_id == TYPE_GROUP_ID_POINTER; }
 
 	void AddConstraint(TypeId constraint_tid, std::vector<AstNodeComplexFnDef*> methods);
 	bool MatchConstraint(TypeId tid) const;
@@ -98,7 +99,7 @@ public:
 	int GetMemSize() const { return m_mem_size; }
 	int GetMemAlignSize() const { return m_mem_align_size; }
 
-	virtual llvm::Type* GetLLVMIRType(LLVMIR& llvm_ir);
+	virtual llvm::Type* GetLLVMIRType(CompileContext& cctx);
 
 protected:
 	/*

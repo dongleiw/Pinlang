@@ -1,5 +1,6 @@
 #pragma once
 
+#include <llvm-12/llvm/IR/Type.h>
 #include <string>
 #include <vector>
 
@@ -55,3 +56,5 @@ template <>
 const char* get_type_name<double>();
 template <>
 const char* get_type_name<bool>();
+
+std::string get_string_of_llvm_ir_type(llvm::Type* ty);

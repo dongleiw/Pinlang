@@ -4,8 +4,8 @@
 
 #include "astnode.h"
 #include "define.h"
-#include "fntable.h"
 #include "execute_context.h"
+#include "fntable.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -21,6 +21,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
+	virtual llvm::Value*		Compile(CompileContext& cctx) override;
 
 	AstNodeAccessAttr* DeepCloneT();
 	virtual AstNode*   DeepClone() override { return DeepCloneT(); }
@@ -29,6 +30,7 @@ private:
 	AstNode*	m_obj_expr;
 	std::string m_attr_name;
 
-	bool	m_is_field;
-	FnAddr m_fn_addr;
+	bool		m_is_field;
+	FnAddr		m_fn_addr;
+	std::string m_fnid;
 };

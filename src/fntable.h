@@ -2,7 +2,7 @@
 
 #include "define.h"
 #include "instruction.h"
-#include "llvm_ir.h"
+#include "compile_context.h"
 
 #include <llvm-12/llvm/IR/Function.h>
 #include <vector>
@@ -47,13 +47,14 @@ struct UserDefFnInfo {
 };
 // 编译器内置函数
 struct BuiltinFnInfo {
+	std::string					fnid;
 	TypeId						fn_tid;
 	TypeId						obj_tid;
 	std::vector<ConcreteGParam> gparams;
 	std::vector<std::string>	params_name;
 	std::vector<FnAddr>			fn_list; // 存放verify阶段确定的函数地址
 	BuiltinFnVerifyCallback		verify_cb;
-	BuiltinFnExecuteCallback	execute_cb;
+	llvm::Function*				llvm_ir_fn;
 };
 // 运行时动态导入函数
 struct DynamicFnInfo {
@@ -76,11 +77,12 @@ public:
 
 	Variable* CallFn(FnAddr addr, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args);
 
-	TypeId GetFnTypeId(FnAddr addr) const;
-	TypeId GetFnReturnTypeId(FnAddr addr) const;
+	TypeId		GetFnTypeId(FnAddr addr) const;
+	TypeId		GetFnReturnTypeId(FnAddr addr) const;
+	std::string GetFnId(FnAddr addr) const;
 
 	FnAddr AddUserDefineFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body, std::string fnname);
-	FnAddr AddBuiltinFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnVerifyCallback verify_cb, BuiltinFnExecuteCallback exeute_cb);
+	FnAddr AddBuiltinFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnVerifyCallback verify_cb, std::string fnid);
 	FnAddr AddDynamicFn(TypeId fn_tid, int dynlib_instance_id, void* dynlib_fn, DynamicFnExecuteCallback cb);
 
 private:
@@ -89,7 +91,11 @@ private:
 	Variable* call_dynamic_fn(DynamicFnInfo& info, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args);
 
 public:
-	void Compile(LLVMIR& llvm_ir);
+	void Compile(CompileContext& cctx);
+
+private:
+	void compile_user_define_fn(CompileContext& cctx);
+	void compile_builtin_fn(CompileContext& cctx);
 
 private:
 	std::vector<UserDefFnInfo> m_userdef_fn_table;

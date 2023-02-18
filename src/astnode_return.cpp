@@ -1,7 +1,6 @@
 #include "astnode_return.h"
 #include "define.h"
 #include "instruction.h"
-#include "llvm_ir.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
@@ -50,22 +49,20 @@ AstNodeReturn* AstNodeReturn::DeepCloneT() {
 
 	return newone;
 }
-llvm::Value* AstNodeReturn::Compile(LLVMIR& llvm_ir) {
+llvm::Value* AstNodeReturn::Compile(CompileContext& cctx) {
 	if (m_returned_expr == nullptr) {
-		//IRB.CreateBr(llvm_ir.GetExitBlock());
 		IRB.CreateRetVoid();
 	} else {
 		TypeInfo*	 ti_return = g_typemgr.GetTypeInfo(m_returned_expr_tid);
-		llvm::Value* ret_value = m_returned_expr->Compile(llvm_ir);
+		llvm::Value* ret_value = m_returned_expr->Compile(cctx);
 
 		if (ret_value->getType()->isPointerTy()) {
-			//llvm_ir.SetRetValue(IRB.CreateLoad(ti_return->GetLLVMIRType(llvm_ir), ret_value, "ret"));
-			IRB.CreateRet(IRB.CreateLoad(ti_return->GetLLVMIRType(llvm_ir), ret_value, "ret"));
+			//cctx.SetRetValue(IRB.CreateLoad(ti_return->GetLLVMIRType(cctx), ret_value, "ret"));
+			IRB.CreateRet(IRB.CreateLoad(ti_return->GetLLVMIRType(cctx), ret_value, "ret"));
 		} else {
-			//llvm_ir.SetRetValue(ret_value);
+			//cctx.SetRetValue(ret_value);
 			IRB.CreateRet(ret_value);
 		}
-		//IRB.CreateBr(llvm_ir.GetExitBlock());
 	}
 	return nullptr;
 }

@@ -3,33 +3,32 @@
 #include <string>
 
 #include "astnode.h"
-#include "astnode_blockstmt.h"
 #include "define.h"
 #include "execute_context.h"
+#include "fntable.h"
 #include "instruction.h"
+#include "source_info.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
 
 /*
- * return语句
+ * &value
+ * get address of value
  */
-class AstNodeReturn : public AstNode {
+class AstNodeDereference : public AstNode {
 public:
-	AstNodeReturn(AstNode* returned_expr);
+	AstNodeDereference(AstNode* value_expr);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 	virtual llvm::Value*		Compile(CompileContext& cctx) override;
 
-	virtual AstNode* DeepClone() override { return DeepCloneT(); }
-	AstNodeReturn*	 DeepCloneT();
+	AstNodeDereference* DeepCloneT();
+	virtual AstNode*	DeepClone() override { return DeepCloneT(); }
 
 private:
-	AstNodeReturn() {}
-
+	AstNodeDereference(){}
 private:
-	AstNode* m_returned_expr;
-	TypeId	 m_returned_expr_tid;
-	bool	 m_returned_expr_is_tmp;
+	AstNode*	m_value_expr;
 };

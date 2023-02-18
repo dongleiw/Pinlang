@@ -10,13 +10,13 @@
 #include "antlr4-runtime.h"
 #include "astnode_blockstmt.h"
 #include "astnode_complex_fndef.h"
+#include "compile_context.h"
 #include "define.h"
 #include "dynamic_loading.h"
 #include "execute_context.h"
 #include "fntable.h"
 #include "function_obj.h"
 #include "instruction.h"
-#include "llvm_ir.h"
 #include "predefine.h"
 #include "support/Declarations.h"
 #include "type_fn.h"
@@ -114,10 +114,10 @@ void compile(std::string src_path, std::vector<std::string> str_args) {
 	}
 
 	log_info("compile begin");
-	LLVMIR llvm_ir;
-	llvm_ir.Init();
-	vctx.GetFnTable().Compile(llvm_ir);
-	llvm_ir.GetModule().print(llvm::outs(), nullptr);;
+	CompileContext cctx;
+	cctx.Init();
+	vctx.GetFnTable().Compile(cctx);
+	cctx.GetModule().print(llvm::outs(), nullptr);
 	log_info("compile end");
 }
 void execute(std::string src_path, std::vector<std::string> str_args) {

@@ -264,7 +264,7 @@ Variable* Variable::GetFieldValue(std::string field_name) {
 			TypeInfo* ti_field	  = g_typemgr.GetTypeInfo(field.tid);
 			Variable* field_value = new Variable(field.tid);
 			// 这里生成了一个临时变量. 如果克隆一份数据, 那么对临时变量的修改就无法影响该对象的该字段的值
-			// 因此这里将m_data指向该对象的该字段的值. 
+			// 因此这里将m_data指向该对象的该字段的值.
 			field_value->m_data = m_data + field.mem_offset;
 			//memcpy((void*)field_value->m_data, (const void*)(m_data + field.mem_offset), ti_field->GetMemSize());
 			return field_value;
@@ -293,7 +293,7 @@ void Variable::Assign(Variable* tmp) {
 
 	uint8_t* this_m_data = m_data;
 	*this				 = *tmp;
-	m_data			 = this_m_data;
+	m_data				 = this_m_data;
 
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_tid);
 	memcpy(m_data, tmp->m_data, ti->GetMemSize());
@@ -334,6 +334,8 @@ void Variable::set_default_value() {
 	} else if (ti->IsFn()) {
 		// panicf("function can not have default value");
 		memset(m_data, 0, ti->GetMemSize());
+	} else if (ti->IsPointer()) {
+		memset(m_data, 0, ti->GetMemSize());
 	} else {
 		if (is_integer_type(m_tid)) {
 			*(uint64_t*)m_data = 0;
@@ -361,7 +363,7 @@ void Variable::set_default_value() {
 	}
 }
 void Variable::construct_init(TypeId tid, const void* data) {
-	m_tid	 = tid;
+	m_tid = tid;
 
 	TypeInfo* ti = g_typemgr.GetTypeInfo(tid);
 	m_data		 = (uint8_t*)std::aligned_alloc(ti->GetMemAlignSize(), ti->GetMemSize());

@@ -23,6 +23,7 @@ public:
 		TYPE_KIND_ARRAY,
 		TYPE_KIND_TUPLE,
 		TYPE_KIND_TARGET_TYPE_ID,
+		TYPE_KIND_POINTER,
 	};
 
 public:
@@ -36,6 +37,7 @@ public:
 	 * 如果size_expr不为null, 则必须是一个编译期常量表达式, 此时数组类型为static-size array
 	 */
 	void InitWithArray(AstNodeType* element_type, AstNode* size_expr);
+	void InitWithPointer(AstNodeType* pointee_type);
 	// 固定解析为特定类型id
 	// 目前只是为了手动构造AstNodeComplexFnDef
 	void InitWithTargetTypeId(TypeId tid);
@@ -72,4 +74,7 @@ private:
 
 	// tuple
 	std::vector<AstNodeType*> m_tuple_element_types;
+
+	// pointer
+	AstNodeType* m_pointee_type;
 };

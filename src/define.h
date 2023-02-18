@@ -22,6 +22,7 @@ enum TypeGroupId {
 	TYPE_GROUP_ID_CONSTRAINT	= 5,
 	TYPE_GROUP_ID_VIRTUAL_GTYPE = 6,
 	TYPE_GROUP_ID_TUPLE			= 7, // 元组
+	TYPE_GROUP_ID_POINTER		= 8, // 指针
 };
 
 /*
@@ -48,6 +49,7 @@ enum TypeId {
 	TYPE_ID_STR				   = 13,
 	TYPE_ID_GENERIC_CONSTRAINT = 14, // 泛型约束
 	TYPE_ID_COMPLEX_FN		   = 15, // 复杂函数
+	TYPE_ID_NULL			   = 16, // null指针
 };
 
 #define CONSTRAINT_ID_NONE ((TypeId)0)

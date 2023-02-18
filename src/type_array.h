@@ -20,6 +20,7 @@ public:
 public:
 	TypeInfoArray(TypeId element_tid, uint64_t size);
 	void InitBuiltinMethods(VerifyContext& ctx) override;
+	virtual llvm::Type* GetLLVMIRType(CompileContext& cctx) override;
 
 	TypeId	 GetElementType() const { return m_element_tid; }
 	bool	 IsStaticSize() const { return m_static_size > 0; }

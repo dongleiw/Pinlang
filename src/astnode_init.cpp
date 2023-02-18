@@ -11,6 +11,7 @@
 #include "utils.h"
 #include "variable.h"
 #include "verify_context.h"
+#include <llvm-12/llvm/IR/Type.h>
 
 VerifyContextResult AstNodeInit::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify init");
@@ -105,4 +106,36 @@ AstNodeInit* AstNodeInit::DeepCloneT() {
 		newone->m_elements.push_back(iter.DeepClone());
 	}
 	return newone;
+}
+llvm::Value* AstNodeInit::Compile(CompileContext& cctx) {
+	// 获取类型
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
+	if (ti->IsArray()) {
+		TypeInfoArray* ti_array		   = dynamic_cast<TypeInfoArray*>(ti);
+		TypeInfo*	   ti_element	   = g_typemgr.GetTypeInfo(ti_array->GetElementType());
+		llvm::Type*	   ir_type_array   = ti_array->GetLLVMIRType(cctx);
+		llvm::Type*	   ir_type_element = ti_element->GetLLVMIRType(cctx);
+		if (ti_array->IsStaticSize()) {
+			// 静态大小数组是一个value type, 直接分配在stack上.
+			llvm::Value* pv_array = IRB.CreateAlloca(ti_array->GetLLVMIRType(cctx));
+			for (size_t i = 0; i < m_elements.size(); i++) {
+				llvm::Value* element_value = m_elements.at(i).attr_value->Compile(cctx);
+				if (element_value->getType() == ir_type_element) {
+				} else if (element_value->getType() == ir_type_element->getPointerTo()) {
+					// 返回的是一个指向数组元素数据的指针, 需要load出来
+					element_value = IRB.CreateLoad(ir_type_element, element_value);
+				} else {
+					panicf("bug");
+				}
+				llvm::Value* pv_array_element = IRB.CreateConstGEP2_64(ir_type_array, pv_array, 0, i); // 获取第`i`个数组元素的地址
+				IRB.CreateStore(element_value, pv_array_element);									   // 将初始化的值存储到数组元素位置
+			}
+			return pv_array;
+		} else {
+			// 数组大小是动态的. 是一个reference type, 需要在heap上分配内存. 还不支持
+			panicf("not implemented yet");
+		}
+	} else {
+		panicf("not implemented yet");
+	}
 }

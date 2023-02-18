@@ -9,6 +9,7 @@
 #include "astnode_class_def.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
+#include "astnode_dereference.h"
 #include "astnode_fncall.h"
 #include "astnode_for.h"
 #include "astnode_generic_instantiate.h"
@@ -18,6 +19,7 @@
 #include "astnode_literal.h"
 #include "astnode_logical_operator.h"
 #include "astnode_operator.h"
+#include "astnode_reference.h"
 #include "astnode_return.h"
 #include "astnode_tuple.h"
 #include "astnode_type.h"
@@ -145,18 +147,26 @@ std::any Visitor::visitType_value(PinlangParser::Type_valueContext* ctx) {
 		panicf("unknown type");
 	}
 }
+std::any Visitor::visitType_pointer(PinlangParser::Type_pointerContext* ctx) {
+	AstNodeType* pointee_type = std::any_cast<AstNodeType*>(ctx->type()->accept(this));
+	AstNodeType* r			  = new AstNodeType();
+	r->InitWithPointer(pointee_type);
+	return r;
+}
 std::any Visitor::visitType(PinlangParser::TypeContext* ctx) {
-	AstNodeType* r = new AstNodeType();
 	if (ctx->Identifier() != nullptr) {
+		AstNodeType* r = new AstNodeType();
 		r->InitWithIdentifier(ctx->Identifier()->getText());
+		return r;
 	} else if (ctx->type_value() != nullptr) {
 		return ctx->type_value()->accept(this);
 	} else if (ctx->type_reference() != nullptr) {
 		return ctx->type_reference()->accept(this);
+	} else if (ctx->type_pointer() != nullptr) {
+		return ctx->type_pointer()->accept(this);
 	} else {
 		panicf("unknown type");
 	}
-	return r;
 }
 std::any Visitor::visitType_list(PinlangParser::Type_listContext* ctx) {
 	std::vector<AstNodeType*> type_list;
@@ -185,6 +195,10 @@ std::any Visitor::visitExpr_primary_literal(PinlangParser::Expr_primary_literalC
 		replace_str(value, "\\t", "\t");
 		replace_str(value, "\\\"", "\"");
 		return (AstNode*)new AstNodeLiteral(value);
+	} else if (literal->PointerLiteral() != nullptr) {
+		AstNodeLiteral* n = new AstNodeLiteral();
+		n->SetNullPointer();
+		return (AstNode*)n;
 	} else {
 		panicf("unknown literal");
 	}
@@ -559,6 +573,16 @@ std::any Visitor::visitExpr_primary_access_attr(PinlangParser::Expr_primary_acce
 	AstNode*	expr	  = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
 	std::string attr_name = ctx->Identifier()->getText();
 	return (AstNode*)new AstNodeAccessAttr(expr, attr_name);
+}
+std::any Visitor::visitExpr_dereference(PinlangParser::Expr_dereferenceContext* ctx) {
+	AstNode*			value_expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
+	AstNodeDereference* n		   = new AstNodeDereference(value_expr);
+	return (AstNode*)n;
+}
+std::any Visitor::visitExpr_reference(PinlangParser::Expr_referenceContext* ctx) {
+	AstNode*		  value_expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
+	AstNodeReference* n			 = new AstNodeReference(value_expr);
+	return (AstNode*)n;
 }
 std::any Visitor::visitStmt_if(PinlangParser::Stmt_ifContext* ctx) {
 	std::vector<AstNode*> cond_exprs;

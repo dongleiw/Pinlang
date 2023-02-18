@@ -15,10 +15,10 @@ class TypeInfoFn : public TypeInfo {
 public:
 	/* 
 	 * 函数名可以对应多个实现. 该函数用于给每一个实现生成唯一名字
-	 *	= fnname + 泛参信息 + 参数类型信息 + 返回类型信息
+	 *	= 类型信息(如果是方法) + fnname + 泛参信息 + 参数类型信息 + 返回类型信息
 	*/
-	static std::string GetUniqFnName(std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid, TypeId return_tid);
-	static std::string GetUniqFnName(std::string fnname, std::vector<TypeId> params_tid, TypeId return_tid);
+	static std::string GetUniqFnName(TypeId obj_tid, std::string fnname, std::vector<TypeId> concrete_generic_params, std::vector<TypeId> params_tid, TypeId return_tid);
+	static std::string GetUniqFnName(TypeId obj_tid, std::string fnname, std::vector<TypeId> params_tid, TypeId return_tid);
 
 public:
 	TypeInfoFn(std::vector<TypeId> params, TypeId return_tid);

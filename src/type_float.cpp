@@ -75,7 +75,7 @@ void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -108,7 +108,7 @@ void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("float");
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_add_verify, builtin_fn_add_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_add_verify));
 			}
 
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
@@ -139,7 +139,7 @@ void TypeInfoFloat::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_greaterThan_verify, builtin_fn_greaterThan_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_greaterThan_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterThan", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

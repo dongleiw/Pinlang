@@ -1,8 +1,8 @@
 #include "predefine.h"
 #include "astnode_complex_fndef.h"
 #include "define.h"
-#include "fntable.h"
 #include "execute_context.h"
+#include "fntable.h"
 #include "log.h"
 #include "type_fn.h"
 #include "type_mgr.h"
@@ -29,7 +29,7 @@ std::string format_string(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, s
 			Variable* arg = args.at(arg_count);
 
 			FnAddr	  fn_addr = builtin_fn_info.fn_list.at(arg_count - 1);
-			Variable* str_v	   = ctx.GetFnTable().CallFn(fn_addr, ctx, arg, std::vector<Variable*>());
+			Variable* str_v	  = ctx.GetFnTable().CallFn(fn_addr, ctx, arg, std::vector<Variable*>());
 
 			value += str_v->GetValueStr();
 
@@ -91,7 +91,7 @@ static AstNodeComplexFnDef::Implement create_implement_of_printf(int args_num) {
 			.type = value_type,
 		}});
 	}
-	return AstNodeComplexFnDef::Implement(gparams, params, nullptr, builtin_fn_printf_verify, builtin_fn_printf);
+	return AstNodeComplexFnDef::Implement(gparams, params, nullptr, builtin_fn_printf_verify);
 }
 static AstNodeComplexFnDef* create_astnode_printf() {
 	std::vector<AstNodeComplexFnDef::Implement> implements;
@@ -104,6 +104,32 @@ static AstNodeComplexFnDef* create_astnode_printf() {
 	return astnode_complex_fndef;
 }
 
+// void* malloc(uint64_t size);
+// libc
+//static AstNodeComplexFnDef* define_builin_fn_malloc() {
+//	std::vector<AstNodeComplexFnDef::Implement> implements;
+//
+//	AstNodeType* param0_type = new AstNodeType();
+//	param0_type->InitWithTargetTypeId(TYPE_ID_UINT64);
+//
+//	std::vector<ParserGenericParam> gparams;
+//	std::vector<ParserParameter>	params{ParserParameter{
+//		   .name = "size",
+//		   .type = param0_type,
+//	   }};
+//
+//	AstNodeType* return_type = new AstNodeType();
+//	return_type->InitWithIdentifier("T" + idx);
+//	params.push_back({ParserParameter{
+//		.name = "a" + idx,
+//		.type = value_type,
+//	}});
+//	return AstNodeComplexFnDef::Implement(gparams, params, nullptr, builtin_fn_printf_verify);
+//
+//	AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("printf", implements);
+//
+//	return astnode_complex_fndef;
+//}
 void register_predefine(AstNodeBlockStmt& astnode_block_stmt) {
 	astnode_block_stmt.AddChildStmt(create_astnode_printf());
 }

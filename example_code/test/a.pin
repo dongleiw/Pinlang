@@ -6,12 +6,6 @@
 /*fn main() i32 {
 	var i = 1;
 	var j = 1;
-	return i+j;
-}*/
-
-/*fn main() i32 {
-	var i = 1;
-	var j = 1;
 	return i+j+1;
 }*/
 
@@ -21,7 +15,7 @@
 	return j;
 }*/
 
-fn main() i32 {
+/*fn main() i32 {
 	var i = 4;
 	var j = 2;
 
@@ -41,7 +35,7 @@ fn main() i32 {
 		return 90;
 	}
 	return 10;
-}
+}*/
 
 /*fn add(a i32, b i32) i32{
 	return a+b;
@@ -67,3 +61,50 @@ fn main() i32 {
 	var i = test(true,true);
 	return i;
 }*/
+
+
+/*fn get_array_element(array [2]i32, idx u64) i32{
+	return array[idx];
+}
+fn main() i32 {
+	var array = [2]i32{1,2};
+	var idx u64 = 1;
+	var e = get_array_element(array, idx);
+	return e;
+}*/
+
+
+// // 指针
+// fn main() i32 {
+// 	var i = 100;
+// 	var pi *int = &i;
+// 	*pi = 200;
+// 	return *pi;
+// }
+
+//================== 数组
+fn get_array_element(array [2]i32, idx u64) i32{
+	return array[idx];
+}
+fn modify_array_element(array *[2]i32){
+	(*array)[0]=100;
+}
+fn main() i32 {
+	var array = [2]i32{1,2};
+
+	//var idx u64 = 1;
+	//return array[idx];
+
+	//var sum = array[0] + array[1];
+	//return sum;
+
+	//array[0] = 100;
+	//return array[0];
+
+	var idx u64 = 1;
+	var e = get_array_element(array, idx);
+	return e;
+
+	//modify_array_element(&array);
+	//return array[0];
+}

@@ -73,7 +73,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -106,7 +106,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_add_verify, builtin_fn_add_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_add_verify));
 			}
 
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
@@ -139,7 +139,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("int");
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_index_verify, builtin_fn_index_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_index_verify));
 			}
 
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("index", implements);
@@ -163,7 +163,7 @@ void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("i32");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_size_verify, builtin_fn_size_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_size_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("Size", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

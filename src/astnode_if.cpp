@@ -2,7 +2,6 @@
 #include "astnode_blockstmt.h"
 #include "define.h"
 #include "fntable.h"
-#include "llvm_ir.h"
 #include "log.h"
 #include "utils.h"
 #include "verify_context.h"
@@ -127,21 +126,21 @@ AstNodeIf* AstNodeIf::DeepCloneT() {
  *		}
  * }
  */
-llvm::Value* AstNodeIf::Compile(LLVMIR& llvm_ir) {
+llvm::Value* AstNodeIf::Compile(CompileContext& cctx) {
 	std::vector<llvm::BasicBlock*> branchs;
 	llvm::BasicBlock*			   block_after_if = nullptr;
 	if (!m_is_exit_node) {
-		block_after_if = llvm::BasicBlock::Create(IRC, "block_after_if", llvm_ir.GetCurFn());
+		block_after_if = llvm::BasicBlock::Create(IRC, "block_after_if", cctx.GetCurFn());
 	}
 
 	const int cond_num = m_cond_block_list.size() + (m_else_cond_block == nullptr ? 0 : 1);
 	for (size_t i = 0; i < m_cond_expr_list.size(); i++) {
-		llvm::Value* cond_value = m_cond_expr_list.at(i)->Compile(llvm_ir);
+		llvm::Value* cond_value = m_cond_expr_list.at(i)->Compile(cctx);
 
-		llvm::BasicBlock* true_block = llvm::BasicBlock::Create(IRC, sprintf_to_stdstr("if_branch_%lu", i), llvm_ir.GetCurFn());
+		llvm::BasicBlock* true_block = llvm::BasicBlock::Create(IRC, sprintf_to_stdstr("if_branch_%lu", i), cctx.GetCurFn());
 		branchs.push_back(true_block);
 
-		llvm::BasicBlock* false_block = llvm::BasicBlock::Create(IRC, sprintf_to_stdstr("if_branch_%lu", i + 1), llvm_ir.GetCurFn());
+		llvm::BasicBlock* false_block = llvm::BasicBlock::Create(IRC, sprintf_to_stdstr("if_branch_%lu", i + 1), cctx.GetCurFn());
 		branchs.push_back(false_block);
 
 		if (cond_value->getType() != IRB.getInt1Ty()) {
@@ -155,7 +154,7 @@ llvm::Value* AstNodeIf::Compile(LLVMIR& llvm_ir) {
 	}
 	for (size_t i = 0; i < m_cond_block_list.size(); i++) {
 		IRB.SetInsertPoint(branchs.at(2 * i));
-		m_cond_block_list.at(i)->Compile(llvm_ir);
+		m_cond_block_list.at(i)->Compile(cctx);
 
 		if (m_cond_block_list.at(i)->IsExitNode()) {
 			// 该分支为exitnode, 所以不需要再跳转了
@@ -167,7 +166,7 @@ llvm::Value* AstNodeIf::Compile(LLVMIR& llvm_ir) {
 	if (m_else_cond_block == nullptr) {
 		IRB.CreateBr(block_after_if);
 	} else {
-		m_else_cond_block->Compile(llvm_ir);
+		m_else_cond_block->Compile(cctx);
 		if (m_else_cond_block->IsExitNode()) {
 			// 该分支为exitnode, 所以不需要再跳转了
 		} else {

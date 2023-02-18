@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <cstdarg>
+#include <llvm-12/llvm/Support/raw_ostream.h>
 
 int str_to_int(const std::string& s) {
 	return std::stoi(s.c_str());
@@ -149,14 +150,21 @@ const char* get_type_name<uint64_t>() {
 	return "uint64_t";
 }
 template <>
-const char* get_type_name<float>(){
+const char* get_type_name<float>() {
 	return "float";
 }
 template <>
-const char* get_type_name<double>(){
+const char* get_type_name<double>() {
 	return "double";
 }
 template <>
-const char* get_type_name<bool>(){
+const char* get_type_name<bool>() {
 	return "bool";
+}
+
+std::string get_string_of_llvm_ir_type(llvm::Type* ty) {
+	std::string				 ret;
+	llvm::raw_string_ostream os = llvm::raw_string_ostream(ret);
+	ty->print(os);
+	return ret;
 }

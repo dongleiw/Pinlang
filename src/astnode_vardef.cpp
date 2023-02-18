@@ -9,7 +9,6 @@
 #include "astnode_vardef.h"
 #include "define.h"
 #include "instruction.h"
-#include "llvm_ir.h"
 #include "log.h"
 #include "support/CPPUtils.h"
 #include "type.h"
@@ -81,15 +80,15 @@ AstNodeVarDef* AstNodeVarDef::DeepCloneT() {
 
 	return newone;
 }
-llvm::Value* AstNodeVarDef::Compile(LLVMIR& llvm_ir) {
+llvm::Value* AstNodeVarDef::Compile(CompileContext& cctx) {
 	TypeInfo*		  ti		  = g_typemgr.GetTypeInfo(m_result_typeid);
-	llvm::Type*		  type		  = ti->GetLLVMIRType(llvm_ir);
+	llvm::Type*		  type		  = ti->GetLLVMIRType(cctx);
 	llvm::AllocaInst* alloca_inst = IRB.CreateAlloca(type, nullptr, m_varname);
 
-	llvm_ir.AddNamedValue(m_varname, alloca_inst);
+	cctx.AddNamedValue(m_varname, alloca_inst);
 
 	if (m_init_expr != nullptr) {
-		llvm::Value* init_value = m_init_expr->Compile(llvm_ir);
+		llvm::Value* init_value = m_init_expr->Compile(cctx);
 		if (init_value->getType() == type) {
 			// 初始化值的类型和类型相同, 直接store过去
 		} else if (init_value->getType() == type->getPointerTo()) {

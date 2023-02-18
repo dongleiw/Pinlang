@@ -2,13 +2,14 @@
 #include "define.h"
 #include "function_obj.h"
 #include "instruction.h"
-#include "llvm_ir.h"
 #include "log.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "utils.h"
 #include <llvm-12/llvm/IR/Function.h>
+#include <llvm-12/llvm/IR/Instructions.h>
 #include <llvm-12/llvm/IR/Value.h>
+#include <llvm-12/llvm/Support/raw_ostream.h>
 
 AstNodeFnCall::AstNodeFnCall(AstNode* fn_expr, std::vector<AstNode*> args) {
 	m_fn_expr = fn_expr;
@@ -69,17 +70,21 @@ AstNodeFnCall* AstNodeFnCall::DeepCloneT() {
 
 	return newone;
 }
-llvm::Value* AstNodeFnCall::Compile(LLVMIR& llvm_ir) {
-	llvm::Function* fn = (llvm::Function*)m_fn_expr->Compile(llvm_ir);
+llvm::Value* AstNodeFnCall::Compile(CompileContext& cctx) {
+	llvm::Function* fn = (llvm::Function*)m_fn_expr->Compile(cctx);
 	assert(fn->arg_size() == m_args.size());
 	std::vector<llvm::Value*> args;
 	for (size_t i = 0; i < m_args.size(); i++) {
-		llvm::Value* arg_value = m_args.at(i)->Compile(llvm_ir);
+		llvm::Value* arg_value = m_args.at(i)->Compile(cctx);
 		if (arg_value->getType() == fn->getArg(i)->getType()) {
 			args.push_back(arg_value);
 		} else if (arg_value->getType() == fn->getArg(i)->getType()->getPointerTo()) {
 			args.push_back(IRB.CreateLoad(fn->getArg(i)->getType(), arg_value, sprintf_to_stdstr("load_arg_%lu", i)));
 		} else {
+			arg_value->getType()->print(llvm::outs(), true);
+			printf("\n");
+			fn->getArg(i)->getType()->print(llvm::outs(), true);
+			printf("\n");
 			panicf("bug");
 		}
 	}

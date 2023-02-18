@@ -90,7 +90,7 @@ void TypeInfoTuple::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

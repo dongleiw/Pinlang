@@ -44,7 +44,7 @@ void TypeInfoConstraint::FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGTyp
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithTargetTypeId(tifn->GetReturnTypeId());
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_never_call_verify, builtin_fn_never_call));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_never_call_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

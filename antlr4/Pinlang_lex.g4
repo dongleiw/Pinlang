@@ -19,11 +19,16 @@ BoolLiteral
     | FALSE
     ;
 
+PointerLiteral
+	: NULLPTR
+	;
+
 // keywords
 FN			: 'fn';
 VAR			: 'var';
 TRUE		: 'true';
 FALSE		: 'false';
+NULLPTR		: 'null';
 TYPE		: 'type';
 RETURN		: 'return';
 CLASS		: 'class';

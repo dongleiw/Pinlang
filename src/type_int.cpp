@@ -11,7 +11,6 @@
 #include "define.h"
 #include "execute_context.h"
 #include "fntable.h"
-#include "llvm_ir.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
@@ -86,7 +85,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -117,7 +116,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithTargetTypeId(m_typeid);
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -146,7 +145,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithTargetTypeId(m_typeid);
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("sub", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -175,7 +174,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithTargetTypeId(m_typeid);
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("mul", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -204,7 +203,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithTargetTypeId(m_typeid);
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("div", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -233,7 +232,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("equal", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -262,7 +261,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("lessThan", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -291,7 +290,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("lessEqual", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -320,7 +319,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("notEqual", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -349,7 +348,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterThan", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -378,7 +377,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop, nullptr));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_verify_nop));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("greaterEqual", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -391,7 +390,7 @@ void TypeInfoInt::InitBuiltinMethods(VerifyContext& ctx) {
 	}
 	ctx.PopSTack();
 }
-llvm::Type* TypeInfoInt::GetLLVMIRType(LLVMIR& llvm_ir) {
+llvm::Type* TypeInfoInt::GetLLVMIRType(CompileContext& cctx) {
 	switch (m_typeid) {
 	case TYPE_ID_INT8:
 	case TYPE_ID_UINT8:

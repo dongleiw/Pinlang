@@ -54,7 +54,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -85,7 +85,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 				}
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithIdentifier("bool");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_equal_verify, builtin_fn_equal_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_equal_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("equal", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -107,7 +107,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_getTypeName_verify,builtin_fn_getTypeName_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_getTypeName_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("GetTypeName", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -121,7 +121,7 @@ void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("int");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_getTypeId_verify, builtin_fn_getTypeId_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_getTypeId_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("GetTypeId", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());

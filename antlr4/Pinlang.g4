@@ -26,9 +26,14 @@ type_reference
 	| type_tuple
 	;
 
+type_pointer
+	: '*' type
+	;
+
 type
     : type_value
 	| type_reference
+	| type_pointer
 	| Identifier
 	;
 
@@ -56,6 +61,8 @@ expr_primary
 	| expr_primary L_BRACKET expr R_BRACKET             # expr_primary_access_array_element // 数组下标访问
 	| expr_primary '.' Identifier                       # expr_primary_access_attr  // 访问属性
 	| expr_init                                         # expr_primary_init   // 初始化
+	| '&' expr                                          # expr_dereference   // value -> address
+	| '*' expr                                          # expr_reference   // address -> value
 	;
 
 expr
@@ -63,7 +70,7 @@ expr
     | expr op=(MUL|DIV|MOD) expr														# expr_muliplicative
     | expr op=(ADD|SUB) expr      														# expr_additive
     | expr op=(EQUALS|NOT_EQUALS|LESS|GREATER|LESS_OR_EQUALS|GREATER_OR_EQUALS) expr  	# expr_relational
-    | expr op=(LOGICAL_OR| LOGICAL_AND | '!') expr                                      # expr_logical
+    | expr op=(LOGICAL_OR | LOGICAL_AND | '!') expr                                     # expr_logical
     ;
 
 expr_list_optional
@@ -201,6 +208,7 @@ literal
     |   IntegerLiteral
     |	StringLiteral
     |	BoolLiteral
+	|   PointerLiteral
     ;
 
 start: statement*;

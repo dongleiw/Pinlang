@@ -11,6 +11,7 @@
 
 #include <assert.h>
 #include <bits/stdint-uintn.h>
+#include <llvm-12/llvm/IR/DerivedTypes.h>
 #include <vector>
 
 //static Variable* builtin_fn_callback_tostring(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
@@ -124,7 +125,7 @@ void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 				AstNodeType* return_type = new AstNodeType();
 				return_type->InitWithTargetTypeId(m_element_tid);
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_index_verify, builtin_fn_index_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_index_verify));
 			}
 
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("index", implements);
@@ -157,4 +158,15 @@ void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 		AddConstraint(CONSTRAINT_ID_NONE, fns);
 	}
 	ctx.PopSTack();
+}
+llvm::Type* TypeInfoArray::GetLLVMIRType(CompileContext& cctx) {
+	if (IsStaticSize()) {
+		// 静态大小的数组
+		TypeInfo* ti_element = g_typemgr.GetTypeInfo(m_element_tid);
+		return llvm::ArrayType::get(ti_element->GetLLVMIRType(cctx), m_static_size);
+	} else {
+		// 动态大小的数组, 其实是指向元素的指针
+		TypeInfo* ti_element = g_typemgr.GetTypeInfo(m_element_tid);
+		return ti_element->GetLLVMIRType(cctx)->getPointerTo();
+	}
 }

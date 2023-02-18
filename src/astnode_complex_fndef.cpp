@@ -36,7 +36,7 @@ AstNodeComplexFnDef::Implement AstNodeComplexFnDef::Implement::DeepClone() {
 	if (m_body != nullptr) {
 		return Implement(generic_params, params, m_return_type == nullptr ? nullptr : m_return_type->DeepCloneT(), m_body->DeepCloneT());
 	} else {
-		return Implement(generic_params, params, m_return_type == nullptr ? nullptr : m_return_type->DeepCloneT(), m_verify_cb, m_execute_cb);
+		return Implement(generic_params, params, m_return_type == nullptr ? nullptr : m_return_type->DeepCloneT(), m_verify_cb);
 	}
 }
 VerifyContextResult AstNodeComplexFnDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
@@ -337,13 +337,12 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 		});
 	}
 
-	instance.instance_name = TypeInfoFn::GetUniqFnName(m_fnname, instance.gparams_tid, instance.params_tid, instance.return_tid);
+	instance.instance_name = TypeInfoFn::GetUniqFnName(m_obj_tid, m_fnname, instance.gparams_tid, instance.params_tid, instance.return_tid);
 	TypeId fn_tid		   = g_typemgr.GetOrAddTypeFn(ctx, instance.params_tid, instance.return_tid);
 	if (instance.implement->m_body != nullptr) {
 		instance.fn_addr = ctx.GetFnTable().AddUserDefineFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT(), instance.instance_name);
 	} else {
-		instance.fn_addr = ctx.GetFnTable().AddBuiltinFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_verify_cb,
-														   instance.implement->m_execute_cb);
+		instance.fn_addr = ctx.GetFnTable().AddBuiltinFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_verify_cb, instance.instance_name);
 	}
 
 	m_instances.push_back(instance);

@@ -9,15 +9,18 @@
 
 class AstNodeLiteral : public AstNode {
 public:
+	AstNodeLiteral() {}
 	AstNodeLiteral(int32_t value);
 	AstNodeLiteral(int64_t value);
 	AstNodeLiteral(float value);
 	AstNodeLiteral(bool value);
 	AstNodeLiteral(std::string value);
 
+	void SetNullPointer();
+
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
-	virtual llvm::Value*		Compile(LLVMIR& llvm_ir) override;
+	virtual llvm::Value*		Compile(CompileContext& cctx) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeLiteral*	 DeepCloneT();
@@ -25,8 +28,6 @@ public:
 	void CastToInt64();
 
 private:
-	AstNodeLiteral() {}
-
 private:
 	uint64_t	m_value_int;
 	float		m_value_float;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "type.h"
-#include <bits/stdint-uintn.h>
 
 /*
  * 基础的str类型

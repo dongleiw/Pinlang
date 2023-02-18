@@ -35,6 +35,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			}
 			m_fn_addr		= ti->GetMethodByIdx(method_idx);
 			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
+			m_fnid			= ctx.GetFnTable().GetFnId(m_fn_addr);
 		} else if (vparam.GetResultTid() != TYPE_ID_INFER) {
 			// 父节点传递过来了期望的结果类型
 			// 使用该类型来选择合适的函数重载
@@ -44,6 +45,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			}
 			m_fn_addr		= ti->GetMethodByIdx(method_idx);
 			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
+			m_fnid			= ctx.GetFnTable().GetFnId(m_fn_addr);
 		} else {
 			// 上下文不足无法推断. 最后尝试下只用方法名查找, 如果有多个重名方法, 则失败
 			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name);
@@ -52,6 +54,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			}
 			m_fn_addr		= ti->GetMethodByIdx(method_idx);
 			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
+			m_fnid			= ctx.GetFnTable().GetFnId(m_fn_addr);
 		}
 	}
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
@@ -80,4 +83,14 @@ Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
 AstNodeAccessAttr* AstNodeAccessAttr::DeepCloneT() {
 	AstNodeAccessAttr* newone = new AstNodeAccessAttr(m_obj_expr->DeepClone(), m_attr_name);
 	return newone;
+}
+llvm::Value* AstNodeAccessAttr::Compile(CompileContext& cctx) {
+	if (m_is_field) {
+		panicf("not implemented yet");
+	} else {
+		if (!cctx.HasNamedValue(m_fnid)) {
+			panicf("fn[%s] not defined", m_fnid.c_str());
+		}
+		return cctx.GetNamedValue(m_fnid);
+	}
 }

@@ -31,6 +31,7 @@ public:
 
 	static Variable* CreateTypeVariable(TypeId tid);
 	static Variable* CreateTypeTuple(TypeId tuple_tid, std::vector<Variable*> elements);
+	static Variable* CreateTypePointer(TypeId tuple_tid, std::vector<Variable*> elements);
 
 	TypeId GetTypeId() const { return m_tid; }
 

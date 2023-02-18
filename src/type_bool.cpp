@@ -3,7 +3,6 @@
 #include "astnode_constraint.h"
 #include "define.h"
 #include "fntable.h"
-#include "llvm_ir.h"
 #include "type_mgr.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -42,7 +41,7 @@ void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				AstNodeType*					return_type = new AstNodeType();
 				return_type->InitWithIdentifier("str");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify, builtin_fn_tostring_execute));
+				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_tostring_verify));
 			}
 			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("tostring", implements);
 			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
@@ -57,6 +56,6 @@ void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
 	}
 	ctx.PopSTack();
 }
-llvm::Type* TypeInfoBool::GetLLVMIRType(LLVMIR& llvm_ir) {
+llvm::Type* TypeInfoBool::GetLLVMIRType(CompileContext& cctx) {
 	return llvm::Type::getInt1Ty(IRC);
 }

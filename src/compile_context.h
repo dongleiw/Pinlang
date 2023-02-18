@@ -14,7 +14,7 @@
 #include <list>
 #include <llvm-12/llvm/IR/Value.h>
 
-class LLVMIR {
+class CompileContext {
 public:
 	class Block {
 	public:
@@ -27,6 +27,8 @@ public:
 	};
 
 public:
+	CompileContext();
+
 	void Init();
 
 	llvm::LLVMContext& GetContext() { return *m_context; }
@@ -43,23 +45,19 @@ public:
 	void			SetCurFn(llvm::Function* fn) { m_cur_fn = fn; }
 	llvm::Function* GetCurFn() const { return m_cur_fn; }
 
-	void		 SetRetValue(llvm::Value* value) { m_ret_value = value; }
-	llvm::Value* GetRetValue() const { return m_ret_value; }
+	void CompileBegin();
+	void CompileEnd();
 
-	void			  SetExitBlock(llvm::BasicBlock* block) { m_exit_block = block; }
-	llvm::BasicBlock* GetExitBlock() const { return m_exit_block; }
+	bool IsLeftValue() const;
 
 private:
 	llvm::LLVMContext* m_context;
 	llvm::Module*	   m_module;
 	llvm::IRBuilder<>* m_builder;
-	//std::map<std::string, llvm::Value*> m_named_values;
-	std::list<Block*> m_blocks;
-	llvm::Function*	  m_cur_fn;
-	llvm::Value*	  m_ret_value;	// 当前函数的返回值
-	llvm::BasicBlock* m_exit_block; // 当前函数的退出block
+	std::list<Block*>  m_blocks;
+	llvm::Function*	   m_cur_fn;
 };
 
-#define IRC (llvm_ir.GetContext())
-#define IRB (llvm_ir.GetBuilder())
-#define IRM (llvm_ir.GetModule())
+#define IRC (cctx.GetContext())
+#define IRB (cctx.GetBuilder())
+#define IRM (cctx.GetModule())

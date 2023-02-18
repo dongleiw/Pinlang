@@ -179,7 +179,7 @@ AstNodeComplexFnDef* DynamicLoading::create_astnode_fn_dl_open() {
 		   .type = param_1_type,
 	   }};
 
-	AstNodeComplexFnDef::Implement implement(gparams, params, return_type, builtin_fn_dlOpen_verify, builtin_fn_dlOpen_execute);
+	AstNodeComplexFnDef::Implement implement(gparams, params, return_type, builtin_fn_dlOpen_verify);
 	implements.push_back(implement);
 
 	AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("dl_open", implements);
@@ -213,7 +213,7 @@ AstNodeComplexFnDef* DynamicLoading::create_astnode_fn_dl_getFn() {
 	AstNodeType* return_type = new AstNodeType();
 	return_type->InitWithIdentifier("T");
 
-	implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_dlGetFn_verify, builtin_fn_dlGetFn_execute));
+	implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, builtin_fn_dlGetFn_verify));
 
 	AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("dl_getFn", implements);
 

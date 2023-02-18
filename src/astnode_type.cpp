@@ -6,6 +6,7 @@
 #include "type_array.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "type_pointer.h"
 #include "type_tuple.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -28,6 +29,10 @@ void AstNodeType::InitWithArray(AstNodeType* element_type, AstNode* size_expr) {
 	m_type_kind			 = TYPE_KIND_ARRAY;
 	m_array_element_type = element_type;
 	m_array_size_expr	 = size_expr;
+}
+void AstNodeType::InitWithPointer(AstNodeType* pointee_type) {
+	m_type_kind	   = TYPE_KIND_POINTER;
+	m_pointee_type = pointee_type;
 }
 void AstNodeType::InitWithTuple(std::vector<AstNodeType*> tuple_element_types) {
 	m_type_kind			  = TYPE_KIND_TUPLE;
@@ -84,6 +89,14 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam v
 		}
 		TypeId array_tid = g_typemgr.GetOrAddTypeArray(ctx, element_tid, array_size, added);
 		vr.SetResultTypeId(array_tid);
+		break;
+	}
+	case TYPE_KIND_POINTER:
+	{
+		TypeId pointee_tid = m_pointee_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
+		bool   added	   = false;
+		TypeId pointer_tid = g_typemgr.GetOrAddTypePointer(ctx, pointee_tid, added);
+		vr.SetResultTypeId(pointer_tid);
 		break;
 	}
 	case TYPE_KIND_TUPLE:
@@ -148,6 +161,14 @@ std::map<std::string, TypeId> AstNodeType::InferType(TypeId target_tid) const {
 		merge_infer_result(result, m_array_element_type->InferType(element_target_tid));
 		break;
 	}
+	case TYPE_KIND_POINTER:
+	{
+		// 已知*T类型id为target_tid. 推导T
+		TypeInfoPointer* ti			 = dynamic_cast<TypeInfoPointer*>(g_typemgr.GetTypeInfo(target_tid));
+		TypeId			 pointee_tid = ti->GetPointeeTid();
+		merge_infer_result(result, m_pointee_type->InferType(pointee_tid));
+		break;
+	}
 	case TYPE_KIND_TUPLE:
 	{
 		// 已知tuple(T1,T2,...)类型id为target_tid. 推导T1,T2,...
@@ -190,7 +211,11 @@ AstNodeType* AstNodeType::DeepCloneT() {
 		break;
 	case TYPE_KIND_ARRAY:
 		newone->m_array_element_type = m_array_element_type->DeepCloneT();
-		newone->m_array_size_expr	 = m_array_size_expr==nullptr? nullptr:m_array_size_expr->DeepClone();
+		newone->m_array_size_expr	 = m_array_size_expr == nullptr ? nullptr : m_array_size_expr->DeepClone();
+		break;
+	case TYPE_KIND_POINTER:
+		newone->m_pointee_type	  = m_pointee_type->DeepCloneT();
+		newone->m_array_size_expr = m_array_size_expr == nullptr ? nullptr : m_array_size_expr->DeepClone();
 		break;
 	case TYPE_KIND_TUPLE:
 		for (auto iter : m_tuple_element_types) {

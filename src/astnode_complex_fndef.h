@@ -6,8 +6,8 @@
 #include "astnode_blockstmt.h"
 #include "astnode_type.h"
 #include "define.h"
-#include "fntable.h"
 #include "execute_context.h"
+#include "fntable.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -29,16 +29,14 @@ public:
 			m_return_tid	 = TYPE_ID_NONE;
 			m_body			 = body;
 			m_verify_cb		 = nullptr;
-			m_execute_cb	 = nullptr;
 		}
-		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, BuiltinFnVerifyCallback verify_cb, BuiltinFnExecuteCallback execute_cb) {
+		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, BuiltinFnVerifyCallback verify_cb) {
 			m_generic_params = generic_params;
 			m_params		 = params;
 			m_return_type	 = return_type;
 			m_return_tid	 = TYPE_ID_NONE;
 			m_body			 = nullptr;
 			m_verify_cb		 = verify_cb;
-			m_execute_cb	 = execute_cb;
 		}
 
 		void					 Verify(VerifyContext& ctx);
@@ -56,7 +54,6 @@ public:
 		AstNodeType*					m_return_type;
 		AstNodeBlockStmt*				m_body;
 		BuiltinFnVerifyCallback			m_verify_cb;
-		BuiltinFnExecuteCallback		m_execute_cb;
 
 		// 如果该实现不是泛型(也就是参数类型和返回值类型是固定的), 则根据上下文推导出以下两个信息
 		std::vector<TypeId> m_params_tid;

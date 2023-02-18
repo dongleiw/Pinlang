@@ -2,7 +2,7 @@
 
 #include "execute_context.h"
 #include "instruction.h"
-#include "llvm_ir.h"
+#include "compile_context.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -23,7 +23,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) = 0;
 	virtual Variable*			Execute(ExecuteContext& ctx)						  = 0;
-	virtual llvm::Value*		Compile(LLVMIR& llvm_ir);
+	virtual llvm::Value*		Compile(CompileContext& cctx);
 
 	void	 SetParent(AstNode* parent) { m_parent = parent; }
 	AstNode* GetParent() { return m_parent; }

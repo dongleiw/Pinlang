@@ -5,11 +5,16 @@
 #include "type.h"
 
 /*
- * int类型. i8 i16 i32 i64 u8 u16 u32 u64
+ * `*T` pointer类型, T为任意类型
  */
-class TypeInfoInt : public TypeInfo {
+class TypeInfoPointer : public TypeInfo {
 public:
-	TypeInfoInt(TypeId tid);
+	TypeInfoPointer(TypeId pointee_tid);
 	void				InitBuiltinMethods(VerifyContext& ctx) override;
 	virtual llvm::Type* GetLLVMIRType(CompileContext& cctx) override;
+
+	TypeId GetPointeeTid() const { return m_pointee_tid; }
+
+private:
+	TypeId m_pointee_tid;
 };

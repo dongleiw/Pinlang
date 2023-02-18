@@ -4,7 +4,6 @@
 #include "define.h"
 #include "execute_context.h"
 #include "instruction.h"
-#include "llvm_ir.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
@@ -107,18 +106,18 @@ AstNodeOperator* AstNodeOperator::DeepCloneT() {
 	AstNodeOperator* newone = new AstNodeOperator(m_left_expr->DeepClone(), m_constraint_name, m_op, m_right_expr->DeepClone());
 	return newone;
 }
-llvm::Value* AstNodeOperator::Compile(LLVMIR& llvm_ir) {
-	llvm::Value* left_value	 = m_left_expr->Compile(llvm_ir);
-	llvm::Value* right_value = m_right_expr->Compile(llvm_ir);
+llvm::Value* AstNodeOperator::Compile(CompileContext& cctx) {
+	llvm::Value* left_value	 = m_left_expr->Compile(cctx);
+	llvm::Value* right_value = m_right_expr->Compile(cctx);
 
 	if (left_value->getType()->isPointerTy()) {
 		TypeInfo* ti_left = g_typemgr.GetTypeInfo(m_left_expr_tid);
-		left_value		  = IRB.CreateLoad(ti_left->GetLLVMIRType(llvm_ir), left_value, "left_operand");
+		left_value		  = IRB.CreateLoad(ti_left->GetLLVMIRType(cctx), left_value, "left_operand");
 	}
 
 	if (right_value->getType()->isPointerTy()) {
 		TypeInfo* ti_right = g_typemgr.GetTypeInfo(m_right_expr_tid);
-		right_value		   = IRB.CreateLoad(ti_right->GetLLVMIRType(llvm_ir), right_value, "right_operand");
+		right_value		   = IRB.CreateLoad(ti_right->GetLLVMIRType(cctx), right_value, "right_operand");
 	}
 
 	if (is_integer_type(m_left_expr_tid)) {

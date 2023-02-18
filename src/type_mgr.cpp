@@ -11,6 +11,7 @@
 #include "type_fn.h"
 #include "type_int.h"
 #include "type_mgr.h"
+#include "type_pointer.h"
 #include "type_str.h"
 #include "type_tuple.h"
 #include "type_type.h"
@@ -204,6 +205,22 @@ TypeId TypeMgr::GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> elemen
 	}
 	added			  = true;
 	TypeInfoTuple* ti = new TypeInfoTuple(element_tids);
+	add_type(ti);
+	ti->InitBuiltinMethods(ctx);
+	return ti->GetTypeId();
+}
+TypeId TypeMgr::GetOrAddTypePointer(VerifyContext& ctx, TypeId pointee_tid, bool& added){
+	added = false;
+	for (const auto ti : m_typeinfos) {
+		if (ti->IsPointer()) {
+			const TypeInfoPointer* ti_ptr = dynamic_cast<TypeInfoPointer*>(ti);
+			if(ti_ptr->GetPointeeTid() == pointee_tid){
+				return ti_ptr->GetTypeId();
+			}
+		}
+	}
+	added			  = true;
+	TypeInfoPointer* ti = new TypeInfoPointer(pointee_tid);
 	add_type(ti);
 	ti->InitBuiltinMethods(ctx);
 	return ti->GetTypeId();

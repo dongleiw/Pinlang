@@ -19,6 +19,7 @@ public:
 	virtual std::any visitType_bool(PinlangParser::Type_boolContext* ctx) override;
 	virtual std::any visitType_fn(PinlangParser::Type_fnContext* ctx) override;
 	virtual std::any visitType_array_static_size(PinlangParser::Type_array_static_sizeContext* ctx) override;
+	virtual std::any visitType_pointer(PinlangParser::Type_pointerContext* ctx) override;
 
 	virtual std::any visitType_reference(PinlangParser::Type_referenceContext* ctx) override;
 	virtual std::any visitType_array_dynamic_size(PinlangParser::Type_array_dynamic_sizeContext* ctx) override;
@@ -45,6 +46,8 @@ public:
 	virtual std::any visitExpr_primary_access_array_element(PinlangParser::Expr_primary_access_array_elementContext* ctx) override;
 	virtual std::any visitExpr_primary_access_attr(PinlangParser::Expr_primary_access_attrContext* ctx) override;
 	virtual std::any visitExpr_primary_init(PinlangParser::Expr_primary_initContext* ctx) override;
+	virtual std::any visitExpr_dereference(PinlangParser::Expr_dereferenceContext* ctx) override;
+	virtual std::any visitExpr_reference(PinlangParser::Expr_referenceContext* ctx) override;
 
 	virtual std::any visitExpr_init_element(PinlangParser::Expr_init_elementContext* context) override;
 	virtual std::any visitExpr_init_body(PinlangParser::Expr_init_bodyContext* context) override;

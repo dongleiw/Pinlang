@@ -20,12 +20,14 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
+	virtual llvm::Value*		Compile(CompileContext& cctx) override;
 
 	virtual AstNode*   DeepClone() override { return DeepCloneT(); }
 	AstNodeAssignment* DeepCloneT();
 
 private:
-	AstNodeAssignment(){}
+	AstNodeAssignment() {}
+
 private:
 	AstNode* m_left;
 	AstNode* m_right;

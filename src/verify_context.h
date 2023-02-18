@@ -40,6 +40,7 @@ public:
 		m_expect_return_tid = TYPE_ID_NONE;
 		m_args_tid_is_set	= false;
 		m_args_tid.clear();
+		m_expect_left_value = false;
 	}
 
 	VerifyContextParam& SetExepectLeftValue(bool b) {
@@ -107,5 +108,5 @@ private:
 	Stack*			  m_top_stack;
 	VariableTable	  m_global_vt;
 	AstNodeBlockStmt* m_global_block;
-	FnTable		  m_fn_table;
+	FnTable			  m_fn_table;
 };

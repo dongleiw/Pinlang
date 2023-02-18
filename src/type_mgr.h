@@ -32,6 +32,7 @@ public:
 
 	TypeId GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64_t static_size, bool& added);
 	TypeId GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> element_tids, bool& added);
+	TypeId GetOrAddTypePointer(VerifyContext& ctx, TypeId pointee_tid, bool& added);
 
 	TypeId AddTypeInfo(TypeInfo* ti);
 	TypeId GetOrAddTypeConstraint(TypeInfoConstraint* ti);

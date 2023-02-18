@@ -11,6 +11,8 @@
 #include "log.h"
 #include "verify_context.h"
 
+AstNodeIdentifier::AstNodeIdentifier(std::string id) : m_id(id), m_is_complex_fn(false), m_compile_to_left_value(false) {
+}
 VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	verify_begin();
 	log_debug("verify identifier[%s]", m_id.c_str());
@@ -62,6 +64,8 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 		m_result_typeid = v->GetTypeId();
 	}
 
+	m_compile_to_left_value = vparam.ExpectLeftValue();
+
 	verify_end();
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
@@ -84,15 +88,30 @@ Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 AstNodeIdentifier* AstNodeIdentifier::DeepCloneT() {
 	return new AstNodeIdentifier(m_id);
 }
-llvm::Value* AstNodeIdentifier::Compile(LLVMIR& llvm_ir) {
+llvm::Value* AstNodeIdentifier::Compile(CompileContext& cctx) {
 	if (m_is_complex_fn) {
 		// 是一个静态函数 (目前只支持静态函数)
 		// 返回函数id
-		if (!llvm_ir.HasNamedValue(m_fn_id)) {
+		if (!cctx.HasNamedValue(m_fn_id)) {
 			panicf("fn[%s] not defined", m_fn_id.c_str());
 		}
-		return llvm_ir.GetNamedValue(m_fn_id);
+		return cctx.GetNamedValue(m_fn_id);
 	} else {
-		return llvm_ir.GetNamedValue(m_id);
+		if (m_compile_to_left_value) {
+			return cctx.GetNamedValue(m_id);
+		} else {
+			llvm::Value* v = cctx.GetNamedValue(m_id);
+
+			TypeInfo*	ti		= g_typemgr.GetTypeInfo(m_result_typeid);
+			llvm::Type* ir_type = ti->GetLLVMIRType(cctx);
+
+			if (v->getType() == ir_type) {
+				return v;
+			} else if (v->getType() == ir_type->getPointerTo()) {
+				return IRB.CreateLoad(ti->GetLLVMIRType(cctx), v);
+			} else {
+				panicf("bug");
+			}
+		}
 	}
 }

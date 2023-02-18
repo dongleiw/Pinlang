@@ -2,7 +2,6 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_for.h"
 #include "instruction.h"
-#include "llvm_ir.h"
 #include "log.h"
 
 bool AstNode::IsInFor() const {
@@ -32,6 +31,6 @@ void AstNode::verify_end() {
 		m_verify_status = VERIFIED;
 	}
 }
-llvm::Value* AstNode::Compile(LLVMIR& llvm_ir) {
+llvm::Value* AstNode::Compile(CompileContext& cctx) {
 	panicf("not implemented");
 }
