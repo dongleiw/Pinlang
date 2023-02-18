@@ -1,12 +1,14 @@
 #include "astnode_init.h"
 #include "astnode_type.h"
 #include "define.h"
+#include "instruction.h"
 #include "log.h"
 #include "type.h"
 #include "type_array.h"
 #include "type_class.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "utils.h"
 #include "variable.h"
 #include "verify_context.h"
 
@@ -79,7 +81,7 @@ Variable* AstNodeInit::Execute(ExecuteContext& ctx) {
 
 		// 处理显式指定的字段
 		for (auto& iter : m_elements) {
-			Variable* v = iter.attr_value->Execute(ctx);
+			Variable* v			   = iter.attr_value->Execute(ctx);
 			fields[iter.attr_name] = v;
 		}
 
@@ -103,4 +105,55 @@ AstNodeInit* AstNodeInit::DeepCloneT() {
 		newone->m_elements.push_back(iter.DeepClone());
 	}
 	return newone;
+}
+CompileResult AstNodeInit::Compile(VM& vm, FnInstructionMaker& maker) {
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
+
+	Var var_result = maker.TmpVarBegin("init", ti->GetMemSize());
+
+	// 一个保存当前目标内存地址的寄存器
+	RegisterId register_addr = vm.AllocGeneralRegister();
+	maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, register_addr, REGISTER_ID_STACK_FRAME, var_result.mem_addr.relative_addr,
+																		 sprintf_to_stdstr("get addr of init-expr-result")));
+
+	if (ti->IsArray()) {
+		// 是数组初始化表达式. 将每个元素都编译到目标内存地址的相应偏移位置
+		TypeInfoArray* ti_array	  = dynamic_cast<TypeInfoArray*>(ti);
+		TypeInfo*	   ti_element = g_typemgr.GetTypeInfo(ti_array->GetElementType());
+		if (ti->IsValueType()) {
+			for (size_t i = 0; i < m_elements.size(); i++) {
+				CompileResult cr_element = m_elements.at(i).attr_value->Compile(vm, maker);
+				if (cr_element.IsFnId()) {
+					panicf("not implemented");
+				} else {
+					if (cr_element.IsValue()) {
+						maker.AddInstruction(new Instruction_store_register(maker, register_addr, cr_element.GetRegisterId(), ti_element->GetMemSize()));
+					} else {
+						maker.AddInstruction(new Instruction_memcpy(maker, register_addr, cr_element.GetRegisterId(), ti_element->GetMemSize()));
+					}
+					vm.ReleaseGeneralRegister(cr_element.GetRegisterId());
+					if (!cr_element.GetStackVarName().empty()) {
+						maker.VarEnd(cr_element.GetStackVarName());
+					}
+				}
+
+				if (i + 1 == m_elements.size()) {
+					break;
+				}
+				// 寄存器中保存的内存地址指向下一个数组元素
+				maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, register_addr, register_addr, ti_element->GetMemSize(),
+																					 sprintf_to_stdstr("get addr of init-element[%d]", i+1)));
+			}
+		} else {
+			panicf("not implemented");
+		}
+	} else if (ti->IsClass()) {
+		panicf("not implemented");
+	} else {
+		panicf("bug");
+	}
+
+	maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, register_addr, REGISTER_ID_STACK_FRAME, var_result.mem_addr.relative_addr,
+																		 sprintf_to_stdstr("get addr of init-expr-result")));
+	return CompileResult(register_addr, false, var_result.var_name);
 }

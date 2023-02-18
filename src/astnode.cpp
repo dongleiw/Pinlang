@@ -31,7 +31,7 @@ void AstNode::verify_end() {
 		m_verify_status = VERIFIED;
 	}
 }
-void AstNode::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
+CompileResult AstNode::Compile(VM& vm, FnInstructionMaker& maker) {
 	panicf("not implemented");
 }
 void AstNode::BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr) {

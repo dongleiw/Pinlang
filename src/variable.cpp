@@ -141,7 +141,7 @@ Variable* Variable::CreateTypeTuple(TypeId tuple_tid, std::vector<Variable*> ele
 		if (ti->GetElementTids().at(i) != elements.at(i)->GetTypeId()) {
 			panicf("bug");
 		}
-		std::string field_name = std::string("f") + int_to_str(i);
+		std::string field_name = std::string("f") + to_str(i);
 		fields[field_name]	   = elements.at(i);
 	}
 	Variable* v = new Variable(tuple_tid);

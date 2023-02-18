@@ -21,9 +21,8 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) = 0;
 	virtual Variable*			Execute(ExecuteContext& ctx)						  = 0;
-	virtual void				Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr);
-	// virtual void				Compile(VM& vm, FnInstructionMaker& maker, Var& returned_var);
-	virtual void BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr);
+	virtual CompileResult		Compile(VM& vm, FnInstructionMaker& maker);
+	virtual void				BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr);
 
 	void	 SetParent(AstNode* parent) { m_parent = parent; }
 	AstNode* GetParent() { return m_parent; }

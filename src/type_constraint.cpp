@@ -37,7 +37,7 @@ void TypeInfoConstraint::FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGTyp
 						AstNodeType* param_type = new AstNodeType();
 						param_type->InitWithTargetTypeId(tifn->GetParamType(i));
 						params.push_back(ParserParameter{
-							.name = "a" + int_to_str(i),
+							.name = "a" + to_str(i),
 							.type = param_type,
 						});
 					}

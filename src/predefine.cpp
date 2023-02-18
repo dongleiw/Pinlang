@@ -78,7 +78,7 @@ static AstNodeComplexFnDef::Implement create_implement_of_printf(int args_num) {
 	   }};
 
 	for (int i = 0; i < args_num; i++) {
-		const std::string idx = int_to_str(i);
+		const std::string idx = to_str(i);
 		gparams.push_back({ParserGenericParam{
 			.type_name		 = "T" + idx,
 			.constraint_name = "ToString",

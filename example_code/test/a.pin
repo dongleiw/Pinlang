@@ -1,4 +1,10 @@
+fn add(a i32, b i32) i32{
+	return a+b+4;
+}
 fn main() i32 {
-	var i=1+200;
-	return i;
+	var array = [3]int{1,2,3};
+	var i u64 = 0;
+	var j u64 = 1;
+	var e = add(array[i], array[j]);
+	return e;
 }

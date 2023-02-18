@@ -5,6 +5,7 @@
 #include "astnode.h"
 #include "execute_context.h"
 #include "fntable.h"
+#include "instruction.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -24,7 +25,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
-	virtual void				Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) override;
+	virtual CompileResult		Compile(VM& vm, FnInstructionMaker& maker) override;
 
 	virtual AstNode*   DeepClone() override { return DeepCloneT(); }
 	AstNodeIdentifier* DeepCloneT();
@@ -32,6 +33,7 @@ public:
 private:
 	std::string m_id;
 
-	FnAddr m_fn_addr; // 如果identier为函数, 则保存函数地址
-	bool   m_is_complex_fn;
+	FnAddr		m_fn_addr; // 如果identier为静态函数, 则保存函数地址
+	std::string m_fn_id;   // 如果identifier为静态函数, 保存函数的实际的名字
+	bool		m_is_complex_fn;
 };

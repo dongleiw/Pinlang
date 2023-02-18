@@ -1,0 +1,158 @@
+将代码翻译成基本的指令, 类似于机器指令, 但是模拟的. 
+
+原因:
+	不翻译也可以实现"代码执行", 只要按照ast树执行即可. 
+	但是直接执行ast, 会导致"执行"阶段和"解析"阶段严重耦合. 比如执行时需要获取类型信息:
+		比如获取某个字段的memory-offset, 来计算字段的数据的起始内存地址.
+		比如获取数组元素的memory-size. 来计算第i个元素的起始内存地址.
+	这些信息在运行时是固定的, 因此可以硬编码到生成的机器码中
+
+	而且这样比较好玩
+
+	因此决定增加一些基础的指令. 来模拟机器指令. 只是做一些探索, 不考虑性能,兼容性,扩展性
+
+寄存器:
+	- stack address register 栈地址寄存器, 记录当前栈帧地址. 64bit. 简称sr
+	- general-register 多个通用寄存器. 64bit. 简称gr
+	- instruction-address-register 指令地址寄存器. 记录下一条指令的内存地址. 64bit. 简称ir
+	- return_address_register 返回值内存地址寄存器. 64bit. 简称rr
+
+指令:
+	- Instruction_load_register_const<T>(target_register, const_value)
+		将const_value写入target_register
+		T大小限定8bit~64bit
+	- Instruction_store_register(addr_register, value_register)
+		将value_register中的值存储到addr_register中的内存地址
+	- Instruction_memcpy(dst_register, src_register, bytes)
+		拷贝src的内存到dst 
+	- Instruction_write_const_value
+	- Instruction_call
+		调用函数
+	- Instruction_ret
+		退出函数
+	- Instruction_stack_alloc
+		分配栈内存
+	- Instruction_exit
+		退出进程
+
+	- Instruction_add_const<typename T, bool RESULT_IS_VALUE, bool LEFT_IS_VALUE>
+		将一个寄存器中的值(或者是内存地址对应的值)和一个常量求和, 结果放到result寄存器(或者是result寄存器内存地址对应的内存)
+	- Instruction_add<typename T, bool RESULT_IS_VALUE, bool LEFT_IS_VALUE, bool RIGHT_IS_VALUE>
+	- Instruction_mul_const
+		寄存器和常量相乘
+
+实现:
+	struct CompileResult{
+		Register register; // 如果是R_VALUE则是值, 如果是R_MEM_ADDR则是值存储的内存地址. 如果是R_NONE则未使用寄存器
+		std::string stack_var_name; // 如果申请了临时栈内存, 这里记录名字. 否则为空
+	};
+
+	`1`: // 常量值
+		// 将值存放到R_VALUE寄存器
+		register = maker.AllocRegister(R_VALUE);
+		maker.add_instruction(Instruction_load_register(register, 1));
+	
+		CompileResult{
+			register: register,
+		}
+
+	`i`: // 变量
+		register = maker.AllocRegister(R_MEM_ADDR);
+		stack_var_i = maker.GetStackVar("i");
+		maker.add_instruction(Instruction_add(register, REGISTER_STACK_FRAME, stack_var_i.offset)); // register = stack_frame_addr + stack_var_offset
+	
+		CompileResult{
+			register: register,
+		}
+
+	`left_expr + right_expr`:
+		result_register = maker.AllocRegister(R_VALUE)
+	
+		compile_result_left = `left_expr`.compile();
+		compile_result_right = `right_expr`.compile();
+	
+		maker.add_instruction(Instruction_add(result_register, compile_result_left.register, compile_result_right.register));
+	
+		maker.ReleaseRegister(compile_result_left.register);
+		maker.ReleaseRegister(compile_result_right.register);
+	
+		if(!compile_result_left.stack_var.empty()){
+			// left_expr申请了临时栈内存, 释放掉
+			maker.ReleaseStackVar(compile_result_left.stack_var);
+		}
+		if(!compile_result_right.stack_var.empty()){
+			// left_expr申请了临时栈内存, 释放掉
+			maker.ReleaseStackVar(compile_result_right.stack_var);
+		}
+	
+		CompileResult{
+			register: result_register,
+		}
+
+	`var i i32=init_expr;`:
+		stack_var_i = maker.AllocStackVar(4); // 申请栈变量`i`
+		
+		register_i_addr = maker.AllocRegister(R_MEM_ADDR);
+		maker.add_instruction(Instruction_add(register_i_addr, REGISTER_STACK_FRAME, stack_var_i.offset)); // 计算i的内存地址
+	
+		compile_result = init_expr.compile();
+		
+		maker.add_instruction(Instruction_memcpy(register_i_addr, compile_result.register, 4));
+		if(!compile_result.stack_var.empty()){
+			maker.ReleaseStackVar(compile_result.stack_var);
+		}
+
+	`[2]i32{element_expr_1, element_expr_2}`: // 数组
+		stack_var_tmp = maker.AllocStackVar(8);
+	
+		register_tmp_addr = maker.AllocRegister(R_MEM_ADDR);
+		maker.add_instruction(Instruction_add(register_tmp_addr, REGISTER_STACK_FRAME, stack_var_tmp.offset));
+	
+		// 第一个元素
+		compile_result_1 = element_expr_1.compile();
+		maker.add_instruction(Instruction_memcpy(register_tmp_addr, compile_result_1.register, 4));
+		maker.ReleaseRegister(compile_result_1.register);
+		if(!compile_result_1.stack_var.empty()){
+			maker.ReleaseStackVar(compile_result_1.stack_var);
+		}
+	
+		maker.add_instruction(Instruction_add(register_tmp_addr, register_tmp_addr, 4)); // 指向下一个数组元素
+	
+		compile_result_2 = element_expr_2.compile();
+		maker.add_instruction(Instruction_memcpy(register_tmp_addr, compile_result_2.register, 4));
+		maker.ReleaseRegister(compile_result_2.register);
+		if(!compile_result_2.stack_var.empty()){
+			maker.ReleaseStackVar(compile_result_2.stack_var);
+		}
+	
+		maker.add_instruction(Instruction_add(register_tmp_addr, REGISTER_STACK_FRAME, stack_var_tmp.offset)); // 将寄存器重新指向数组起始地址
+	
+		CompileResult{
+			register: register_tmp_addr, 
+			stack_var: stack_var_tmp.name, // 分配了栈变量, 将栈变量的名字传递给parent-node
+		}
+
+	`array[idx_expr]`
+		// array的元素类型是i32, idx_expr的结果是u64
+		// 计算对应数组元素的内存地址, 通过地址寄存器返回
+	
+	
+		register_element_addr = maker.AllocRegister(R_MEM_ADDR); // 申请一个地址寄存器, 用来保存计算结果
+	
+		compile_result = idx_expr.compile();
+		maker.add_instruction(Instruction_mul(register_element_addr, compile_result.register, 4)); // register_element_addr = idx_expr * 4
+		maker.ReleaseRegister(compile_result.register);
+		if(compile_result.istmp()){
+			maker.ReleaseStackVar(compile_result.stack_var_name);
+		}
+	
+		register_array_addr = maker.AllocRegister(R_MEM_ADDR);
+		maker.add_instruction(Instruction_add(register_array_addr, REGISTER_STACK_FRAME, array.offset));
+	
+		maker.add_instruction(Instruction_add(register_element_addr, register_array_addr, register_element_addr)); // register_element_addr = register_array_addr + register_element_addr
+	
+		maker.ReleaseRegister(register_array_addr);
+	
+		CompileResult{
+			register: register_element_addr,
+		}

@@ -1,9 +1,11 @@
 #include "astnode_identifier.h"
 #include "astnode_complex_fndef.h"
 #include "define.h"
+#include "instruction.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "utils.h"
 #include "variable.h"
 
 #include "log.h"
@@ -38,18 +40,21 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 			// 根据参数类型和结果类型来实例化
 			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate_param_return(ctx, vparam.GetFnCallArgs(), vparam.GetResultTid());
 			m_fn_addr							   = instance.fn_addr;
+			m_fn_id								   = instance.instance_name;
 			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 		} else if (vparam.GetResultTid() != TYPE_ID_INFER) {
 			// 父节点传递过来了期望的结果类型
 			// 使用该类型来选择合适的函数重载
 			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate_type(ctx, vparam.GetResultTid());
 			m_fn_addr							   = instance.fn_addr;
+			m_fn_id								   = instance.instance_name;
 			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 
 		} else {
 			// 上下文不足无法推断. 最后尝试下只用方法名查找, 如果有多个重名方法, 则失败
 			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate(ctx);
 			m_fn_addr							   = instance.fn_addr;
+			m_fn_id								   = instance.instance_name;
 			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 		}
 	} else {
@@ -79,7 +84,16 @@ Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 AstNodeIdentifier* AstNodeIdentifier::DeepCloneT() {
 	return new AstNodeIdentifier(m_id);
 }
-void AstNodeIdentifier::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
-	const Var v = maker.GetVar(m_id);
-	target_addr = v.mem_addr;
+CompileResult AstNodeIdentifier::Compile(VM& vm, FnInstructionMaker& maker) {
+	if (m_is_complex_fn) {
+		// 是一个静态函数 (目前只支持静态函数)
+		// 返回函数id
+		return CompileResult(m_fn_id);
+	} else {
+		// 是一个变量, 使用寄存器返回这个变量的内存地址
+		RegisterId rid = vm.AllocGeneralRegister();
+		maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, rid, REGISTER_ID_STACK_FRAME, maker.GetVar(m_id).mem_addr.relative_addr,
+																			 sprintf_to_stdstr("get addr of identifier[%s]", m_id.c_str())));
+		return CompileResult(rid, false, "");
+	}
 }

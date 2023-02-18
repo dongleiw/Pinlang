@@ -142,7 +142,7 @@ make_builtin_fn_greaterEqual(TYPE_ID_UINT64, GetValueUInt64);
 #define make_builtin_fn_tostring(int_type_id, fnname)                                                                                                  \
 	Variable* builtin_fn_tostring_##int_type_id(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) { \
 		assert(thisobj->GetTypeId() == int_type_id && args.size() == 0);                                                                               \
-		return new Variable(int_to_str(thisobj->fnname()));                                                                                            \
+		return new Variable(to_str(thisobj->fnname()));                                                                                            \
 	}
 make_builtin_fn_tostring(TYPE_ID_INT8, GetValueInt8);
 make_builtin_fn_tostring(TYPE_ID_INT16, GetValueInt16);

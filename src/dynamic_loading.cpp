@@ -145,7 +145,7 @@ static Variable* builtin_fn_dlGetFn_execute(BuiltinFnInfo& builtin_fn_info, Exec
 	// 不知道函数参数名, 先随便生成几个
 	std::vector<std::string> params_name;
 	for (size_t i = 0; i < ti_fn->GetParamNum(); i++) {
-		params_name.push_back("arg_" + int_to_str(i));
+		params_name.push_back("arg_" + to_str(i));
 	}
 
 	DynamicFnExecuteCallback callback = dl.GetBuiltinFnCallback(ti_fn->GetParmsTid(), ti_fn->GetReturnTypeId());

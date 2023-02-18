@@ -75,7 +75,7 @@ std::string TypeInfoTuple::generate_name() {
 	return s;
 }
 std::string TypeInfoTuple::GetFieldName(int idx) {
-	return std::string("f") + int_to_str(idx);
+	return std::string("f") + to_str(idx);
 }
 void TypeInfoTuple::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();

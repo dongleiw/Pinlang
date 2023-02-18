@@ -11,6 +11,7 @@
 #include "support/CPPUtils.h"
 #include "type.h"
 #include "type_mgr.h"
+#include "utils.h"
 #include "variable.h"
 #include "verify_context.h"
 
@@ -77,12 +78,42 @@ AstNodeVarDef* AstNodeVarDef::DeepCloneT() {
 
 	return newone;
 }
-void AstNodeVarDef::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
-	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
-	Var new_var	 = maker.VarBegin(m_varname, ti->GetMemSize());
+CompileResult AstNodeVarDef::Compile(VM& vm, FnInstructionMaker& maker) {
+	TypeInfo* ti	  = g_typemgr.GetTypeInfo(m_result_typeid);
+	Var		  new_var = maker.VarBegin(m_varname, ti->GetMemSize());
+
+	// 申请一个寄存器, 存放变量的内存地址
+	RegisterId register_var_addr = vm.AllocGeneralRegister();
+
+	CompileResult cr_init_expr;
 	if (m_init_expr != nullptr) {
-		m_init_expr->Compile(vm, maker, new_var.mem_addr);
+		cr_init_expr = m_init_expr->Compile(vm, maker);
 	}
+	maker.AddInstruction(new Instruction_add_const<uint64_t, true, true>(maker, register_var_addr, REGISTER_ID_STACK_FRAME, new_var.mem_addr.relative_addr,
+																		 sprintf_to_stdstr("get addr of var[%s]", m_varname.c_str())));
+
+	if (m_init_expr != nullptr) {
+		if (cr_init_expr.IsFnId()) {
+			panicf("not supported yet");
+		} else {
+			if (cr_init_expr.IsValue()) {
+				// init_expr返回的寄存器中保存的是一个值. 将该值保存到变量对应的内存
+				maker.AddInstruction(new Instruction_store_register(maker, register_var_addr, cr_init_expr.GetRegisterId(), ti->GetMemSize()));
+			} else {
+				// init_expr返回的寄存器中保存的是一个内存地址. 将该内存地址指向的值拷贝到变量对应的内存
+				maker.AddInstruction(new Instruction_memcpy(maker, register_var_addr, cr_init_expr.GetRegisterId(), ti->GetMemSize(),
+															sprintf_to_stdstr("copy init value to var[%s]", m_varname.c_str())));
+			}
+			vm.ReleaseGeneralRegister(cr_init_expr.GetRegisterId());
+			if (!cr_init_expr.GetStackVarName().empty()) {
+				// 如果这个地址是初始化表达式自己申请的临时内存块, 这里释放掉
+				maker.VarEnd(cr_init_expr.GetStackVarName());
+			}
+		}
+	}
+
+	vm.ReleaseGeneralRegister(register_var_addr);
+	return CompileResult();
 }
 void AstNodeVarDef::BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr) {
 	maker.VarEnd(m_varname);

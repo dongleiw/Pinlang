@@ -9,6 +9,11 @@
 #include <vector>
 
 class VM;
+class FnInstructionMaker;
+
+typedef int RegisterId;
+
+const RegisterId REGISTER_ID_STACK_FRAME = 0;
 
 struct MemAddr {
 	enum AddrType {
@@ -16,36 +21,52 @@ struct MemAddr {
 		RELATIVE_TO_STATIC_AREA,	  // 相对static area的起始地址
 		RELATIVE_TO_INSTRUCTION_AREA, // 相对instruction area的起始地址
 		PTR_RELATIVE_TO_STACK_AREA,	  // 在`RELATIVE_TO_STACK_AREA`位置读取一个地址
+		STATIC_FN_ID,				  // 是静态函数, 静态函数在编译阶段确定函数的指令相对地址, 保存函数名字.
 	};
-	AddrType type;
-	int64_t	 relative_addr;
-	uint64_t absolute_addr;
+	AddrType	type;
+	int64_t		relative_addr;
+	uint64_t	absolute_addr;
+	std::string fn_id;
+	std::string tmp_name;
+	bool		is_pointer;
 
-	MemAddr(AddrType a_type, int64_t a_relative_addr) : type(a_type), relative_addr(a_relative_addr), absolute_addr(0) {
+	MemAddr(AddrType a_type, int64_t a_relative_addr) : type(a_type), relative_addr(a_relative_addr), absolute_addr(0), is_pointer(false) {
 	}
-	MemAddr() : type(RELATIVE_TO_STACK_AREA), relative_addr(0) {
+	MemAddr() : type(RELATIVE_TO_STACK_AREA), relative_addr(0), absolute_addr(0), is_pointer(false) {
+	}
+	MemAddr(std::string fn_id) : type(STATIC_FN_ID), fn_id(fn_id), is_pointer(false) {
 	}
 
-	std::string ToString() const {
-		char buf[128];
-		switch (type) {
-		case RELATIVE_TO_STACK_AREA:
-			snprintf(buf, sizeof(buf), "sr+%ld", relative_addr);
-			break;
-		case RELATIVE_TO_STATIC_AREA:
-			snprintf(buf, sizeof(buf), "static-area %ld", relative_addr);
-			break;
-		case RELATIVE_TO_INSTRUCTION_AREA:
-			snprintf(buf, sizeof(buf), "instruction-area %ld", relative_addr);
-			break;
-		case PTR_RELATIVE_TO_STACK_AREA:
-			snprintf(buf, sizeof(buf), "stack-frame ptr %ld", relative_addr);
-			break;
-		default:
-			panicf("bug");
-		}
-		return std::string(buf);
+	std::string ToString(FnInstructionMaker& maker) const;
+};
+
+class CompileResult {
+public:
+	CompileResult() : m_unset(true) {
 	}
+	CompileResult(RegisterId rid, bool is_value, std::string stack_var_name) {
+		m_unset			 = false;
+		m_rid			 = rid;
+		m_is_value		 = is_value;
+		m_stack_var_name = stack_var_name;
+	}
+	CompileResult(std::string fn_id) {
+		m_unset = false;
+		m_fn_id = fn_id;
+	}
+
+	bool		IsFnId() const;
+	std::string GetFnId() const;
+	RegisterId	GetRegisterId() const;
+	bool		IsValue() const;
+	std::string GetStackVarName() const;
+
+private:
+	bool		m_unset;
+	std::string m_fn_id; // 是一个静态函数. 这里记录函数的id. 此时rid未定义
+	RegisterId	m_rid;
+	bool		m_is_value;		  // 寄存器中是一个指向实际数据的指针, 还是一个值
+	std::string m_stack_var_name; // 如果申请了临时栈内存, 这里记录名字. 否则为空
 };
 
 /*
@@ -68,9 +89,32 @@ protected:
 	std::string m_fn_id;
 	std::string m_desc;
 };
+/*
+ * 指令注释
+ */
+class InstructionComment {
+public:
+	InstructionComment() {
+	}
+	InstructionComment(std::string content) {
+		m_content = std::string("  // ") + content;
+	}
+	InstructionComment(int align, std::string content) {
+		std::string prefix = "";
+		for (int i = 0; i < align; i++) {
+			prefix += "/";
+		}
+		m_content = prefix + "// " + content;
+	}
+	void			   Merge(const InstructionComment& another);
+	const std::string& GetContent() const { return m_content; }
+
+protected:
+	std::string m_content;
+};
+
 struct Var {
 	std::string var_name;
-	uint64_t	stack_offset;
 	uint64_t	mem_size;
 	MemAddr		mem_addr;
 };
@@ -99,27 +143,37 @@ public:
 
 public:
 	FnInstructionMaker(std::string fn_id) {
-		m_fn_id		 = fn_id;
-		m_cur_offset = START_OFFSET;
-		m_max_offset = m_cur_offset;
+		m_fn_id				= fn_id;
+		m_cur_offset		= START_OFFSET;
+		m_max_offset		= m_cur_offset;
+		m_tmp_var_name_seed = 1;
 	}
 
 	// 一个变量开始生命周期
-	const Var VarBegin(std::string var_name, uint64_t size);
-	const Var TmpVarBegin(uint64_t size);
+	Var VarBegin(std::string var_name, uint64_t size);
+	Var TmpVarBegin(std::string prefix, uint64_t size);
 	// 一个变量结束声明周期. 之后该变量的栈内存就可以释放掉给后续变量使用了
 	void VarEnd(std::string var_name);
 
 	const Var GetVar(std::string var_name) const;
 	bool	  HasVar(std::string var_name) const;
+	const Var GetVarByStackOffset(int64_t stack_offset) const;
+
+	// 设置函数的参数. mem_addr为相对callee的stack-frame
+	void SetArg(std::string var_name, uint64_t mem_size, MemAddr mem_addr);
 
 	void							AddInstruction(Instruction* instruction);
+	bool							HasInstruction(const Instruction* instruction) const;
 	const std::string&				GetFnId() const { return m_fn_id; }
 	const std::vector<Instruction*> GetInstructions() const { return m_instructions; }
 
 	// 函数指令已经生成添加完毕.
 	// 生成第一条指令. 一次性分配所有栈内存
 	void Finish();
+
+	void AddComment(InstructionComment comment);
+	void InsertComments(size_t fn_start_idx, std::map<size_t, InstructionComment>& comments) const;
+	void SetFnComment(InstructionComment comment);
 
 private:
 	std::string				  m_fn_id;
@@ -128,6 +182,9 @@ private:
 	uint64_t				  m_cur_offset; // 当前已分配的栈内存的偏移
 	uint64_t				  m_max_offset; // 记录分配栈内存过程中的最大偏移. 在函数开始位置一次性分配完.
 	int						  m_tmp_var_name_seed;
+
+	std::map<size_t, InstructionComment> m_comments;
+	InstructionComment					 m_fn_comment;
 };
 
 /*
@@ -147,6 +204,12 @@ private:
  *		在所有指令设置完毕后, 再刷新一遍
  */
 class VM {
+private:
+	struct Register {
+		uint64_t value;
+		bool	 is_empty;
+	};
+
 public:
 public:
 	VM(std::string main_fn_id);
@@ -165,11 +228,19 @@ public:
 	void	 SetReg_ir(uint64_t ir) { m_reg_instruction = ir; }
 	void	 Inc_ir();
 
-	uint64_t GetReg_sr() const { return m_reg_stack_frame; }
-	void	 SetReg_sr(uint64_t ir) { m_reg_stack_frame = ir; }
-
 	uint64_t GetReg_rr() const { return m_reg_return_mem_address; }
 	void	 SetReg_rr(uint64_t rr) { m_reg_return_mem_address = rr; }
+
+	RegisterId AllocGeneralRegister();				   // 分配通用寄存器, 如果没有空闲的, 则panic
+	void	   ReleaseGeneralRegister(RegisterId rid); // 回收通用寄存器
+
+	template <typename T>
+	T GetRegister(RegisterId rid) {
+		assert(sizeof(T) <= sizeof(Register::value));
+		return *(T*)&(m_registers.at(rid).value);
+	}
+	const void* GetRegisterAddr(RegisterId rid);
+	void		SetRegister(RegisterId rid, const void* ptr, size_t bytes);
 
 	/*
 	 * 增加静态数据
@@ -190,10 +261,13 @@ public:
 
 	void PrintInstructions() const;
 
-public:
 	void AddFn(const FnInstructionMaker& maker);
 	// 指令设置过程中, 函数的调用只是设置了fnid, 需要刷新函数的地址
 	void RefreshFnAddr();
+
+	uint64_t GetInstructionAreaStartAddr() const {
+		return (uint64_t) & (m_instructions[0]);
+	}
 
 public: // test
 	void test1();
@@ -202,8 +276,9 @@ private:
 	void prepare_all();
 
 private:
-	std::vector<Instruction*>	   m_instructions;
-	std::map<std::string, MemAddr> m_fn_id_2_instruction_addr; // 函数id到函数的指令起始地址的映射关系
+	std::vector<Instruction*>			 m_instructions;
+	std::map<std::string, uint64_t>		 m_fn_id_2_instruction_addr_offset; // 函数id到函数的指令起始地址(相对instruction area的偏移)的映射关系
+	std::map<size_t, InstructionComment> m_comments;
 
 	uint8_t* m_static_area;
 	uint64_t m_static_area_size;
@@ -229,215 +304,331 @@ private:
 	 */
 	uint64_t m_reg_return_mem_address;
 
-	struct MR {
-		bool	 empty;
-		uint64_t value;
-		MR() : empty(true), value(0) {}
-	};
-	MR m_mr[128]; // mr 通用的内存地址寄存器
+	/*
+	 * 寄存器统一都是uint64_t. 
+	 * 这会带来一个问题, 如何在uint64_t中保存其他类型的值. 比如uint32_t, float, double
+	 *		约定: 
+	 *			如果存储1byte, 则存储在uin64_t的第1个字节
+	 *			如果存储2byte, 则存储在uin64_t的前2个字节
+	 *			如果存储4byte, 则存储在uin64_t的前4个字节
+	 *			如果存储8byte, 则使用所有字节
+	 */
+	std::vector<Register> m_registers;
 };
 
 /*
- * 将指定内存地址的两个数相加(位数支持8/16/32/64), 结果存储到指定内存地址
+ * 将左寄存器中的值(或者是地址对应的值)和右寄存器中的值(或者是地址对应的值)相加
+ * T:
+ *		值的类型
+ * RESULT_IS_VALUE: 
+ *		true: 结果存储在寄存器中
+ *		false: result寄存器中保存了一个内存地址, 结果写入该内存地址指向的内存
+ * LEFT_IS_VALUE: 
+ *		true: left寄存器中是值
+ *		false: left寄存器中保存了一个内存地址, 值保存在该内存地址指向的内存中
+ * RIGHT_IS_VALUE: 
+ *		true: right寄存器中是值
+ *		false: right寄存器中保存了一个内存地址, 值保存在该内存地址指向的内存中
  */
-template <typename T>
+template <typename T, bool RESULT_IS_VALUE, bool LEFT_IS_VALUE, bool RIGHT_IS_VALUE>
 class Instruction_add : public Instruction {
 public:
-	Instruction_add(MemAddr result_addr, MemAddr left_addr, MemAddr right_addr) {
-		m_result_addr = result_addr;
-		m_left_addr	  = left_addr;
-		m_right_addr  = right_addr;
-		m_desc=sprintf_to_stdstr("add left[%s] right[%s] result[%s]", left_addr.ToString().c_str(), right_addr.ToString().c_str(), result_addr.ToString().c_str());
+	Instruction_add(FnInstructionMaker& maker, RegisterId r_result, RegisterId r_left, RegisterId r_right) {
+		m_r_result = r_result;
+		m_r_left   = r_left;
+		m_r_right  = r_right;
+
+		m_desc = sprintf_to_stdstr("add r-left[%d:%s] r-right[%d:%s] r-result[%d:%s] type[%s]",
+								   r_left, LEFT_IS_VALUE ? "value" : "ptr",
+								   r_right, RIGHT_IS_VALUE ? "value" : "ptr",
+								   r_result, RESULT_IS_VALUE ? "value" : "ptr",
+								   get_type_name<T>());
 	}
 
 	virtual void Execute() override {
-		m_vm->MakeAbsoluteMemAddr_run(m_result_addr);
-		m_vm->MakeAbsoluteMemAddr_run(m_left_addr);
-		m_vm->MakeAbsoluteMemAddr_run(m_right_addr);
-		*(T*)m_result_addr.absolute_addr = *(T*)m_left_addr.absolute_addr + *(T*)m_right_addr.absolute_addr;
+		T left_value, right_value, result_value;
+
+		if (LEFT_IS_VALUE) {
+			// left寄存器中保存了值
+			left_value = m_vm->GetRegister<T>(m_r_left);
+		} else {
+			// left寄存器中保存了值的内存地址
+			left_value = *(T*)m_vm->GetRegister<uint64_t>(m_r_left);
+		}
+
+		if (RIGHT_IS_VALUE) {
+			// right寄存器中保存了值
+			right_value = m_vm->GetRegister<T>(m_r_right);
+		} else {
+			// right寄存器中保存了值的内存地址
+			right_value = *(T*)m_vm->GetRegister<uint64_t>(m_r_right);
+		}
+
+		result_value = left_value + right_value;
+
+		if (RESULT_IS_VALUE) {
+			m_vm->SetRegister(m_r_result, &result_value, sizeof(result_value));
+		} else {
+			// result寄存器中保存的是内存地址, 将结果拷贝过去
+			uint64_t result_addr = m_vm->GetRegister<uint64_t>(m_r_result);
+			memcpy((void*)result_addr, &result_value, sizeof(result_value));
+		}
+
 		m_vm->Inc_ir();
 	}
 	virtual void Prepare(VM* vm) override {
 		m_vm = vm;
-		m_vm->MakeAbsoluteMemAddr_load(m_result_addr);
-		m_vm->MakeAbsoluteMemAddr_load(m_left_addr);
-		m_vm->MakeAbsoluteMemAddr_load(m_right_addr);
 	}
 
 private:
-	MemAddr m_result_addr;
-	MemAddr m_left_addr;
-	MemAddr m_right_addr;
+	RegisterId m_r_result;
+	RegisterId m_r_left;
+	RegisterId m_r_right;
 };
 
 /*
- * 将指定内存地址的两个数相乘(位数支持8/16/32/64), 结果存储到指定内存地址
- * 用法
+ * 将左寄存器中的值(或者是地址对应的值)和常量相加
+ * T:
+ *		值的类型. 
+ * RESULT_IS_VALUE: 
+ *		true: 结果存储在寄存器中
+ *		false: result寄存器中保存了一个内存地址, 结果写入该内存地址指向的内存
+ * LEFT_IS_VALUE: 
+ *		true: left寄存器中是值
+ *		false: left寄存器中保存了一个内存地址, 值保存在该内存地址指向的内存中
  */
-template <typename T>
-class Instruction_mul : public Instruction {
+template <typename T, bool RESULT_IS_VALUE, bool LEFT_IS_VALUE>
+class Instruction_add_const : public Instruction {
 public:
-	Instruction_mul(MemAddr result_addr, MemAddr left_addr, MemAddr right_addr) {
-		m_result_addr = result_addr;
-		m_left_addr	  = left_addr;
-		m_right_addr  = right_addr;
+	Instruction_add_const(FnInstructionMaker& maker, RegisterId r_result, RegisterId r_left, T const_value, std::string comment) {
+		init(maker, r_result, r_left, const_value, comment);
+	}
+	Instruction_add_const(FnInstructionMaker& maker, RegisterId r_result, RegisterId r_left, T const_value) {
+		init(maker, r_result, r_left, const_value, std::string(""));
 	}
 
 	virtual void Execute() override {
-		m_vm->MakeAbsoluteMemAddr_run(m_result_addr);
-		m_vm->MakeAbsoluteMemAddr_run(m_left_addr);
-		m_vm->MakeAbsoluteMemAddr_run(m_right_addr);
-		*(T*)m_result_addr.absolute_addr = *(T*)m_left_addr.absolute_addr * *(T*)m_right_addr.absolute_addr;
+		T result;
+		if (LEFT_IS_VALUE) {
+			// left寄存器中保存了值, 将其强行转换为T类型
+			result = m_vm->GetRegister<T>(m_r_left) + m_r_right_const_value;
+		} else {
+			// left寄存器中保存了值的内存地址
+			result = *(T*)m_vm->GetRegister<uint64_t>(m_r_left) + m_r_right_const_value;
+		}
+
+		if (RESULT_IS_VALUE) {
+			m_vm->SetRegister(m_r_result, &result, sizeof(result));
+		} else {
+			// result寄存器中保存的是内存地址, 将结果拷贝过去
+			uint64_t result_addr = m_vm->GetRegister<uint64_t>(m_r_result);
+			memcpy((void*)result_addr, &result, sizeof(result));
+		}
+
 		m_vm->Inc_ir();
 	}
 	virtual void Prepare(VM* vm) override {
 		m_vm = vm;
-		m_vm->MakeAbsoluteMemAddr_load(m_result_addr);
-		m_vm->MakeAbsoluteMemAddr_load(m_left_addr);
-		m_vm->MakeAbsoluteMemAddr_load(m_right_addr);
 	}
 
 private:
-	MemAddr m_result_addr;
-	MemAddr m_left_addr;
-	MemAddr m_right_addr;
+	void init(FnInstructionMaker& maker, RegisterId r_result, RegisterId r_left, T const_value, std::string comment) {
+		m_r_result			  = r_result;
+		m_r_left			  = r_left;
+		m_r_right_const_value = const_value;
+
+		m_desc = sprintf_to_stdstr("add const: r-left[%d:%s] r-right_const_value[%s] r-result[%d:%s] ",
+								   r_left, LEFT_IS_VALUE ? "value" : "ptr",
+								   to_str(m_r_right_const_value).c_str(),
+								   r_result, RESULT_IS_VALUE ? "value" : "ptr");
+		if (!comment.empty()) {
+			m_desc += "// " + comment;
+		}
+	}
+
+private:
+	RegisterId m_r_result;
+	RegisterId m_r_left;
+	T		   m_r_right_const_value;
 };
 
 /*
- * 将指定内存地址的两个数相乘(位数支持8/16/32/64), 结果存储到指定内存地址
- * 用法
+ * 将left寄存器中的值(或者是地址指向的值) 和常量相乘, 结果存储到result寄存器(或者是地址指向的内存)
+ * T uint(8/16/32/64)_t int(8/16/32/64_t  float double 
  */
-template <typename ResultT, typename LeftT, typename RightT>
+template <typename T, bool RESULT_IS_VALUE, bool LEFT_IS_VALUE>
 class Instruction_mul_const : public Instruction {
 public:
-	Instruction_mul_const(MemAddr result_addr, MemAddr left_addr, RightT right_value) {
-		m_result_addr = result_addr;
-		m_left_addr	  = left_addr;
-		m_right_value = right_value;
+	Instruction_mul_const(FnInstructionMaker& maker, RegisterId register_result, RegisterId register_left, T right_value) {
+		assert(sizeof(T) <= 8);
+		m_register_result = register_result;
+		m_register_left	  = register_left;
+		m_right_value	  = right_value;
+		m_desc			  = sprintf_to_stdstr("mul_const: left-register[%d:%s] * right-value[%s] => result-register[%d:%s]",
+									  register_left, LEFT_IS_VALUE ? "value" : "ptr",
+									  to_str(m_right_value).c_str(),
+									  register_result, RESULT_IS_VALUE ? "value" : "ptr");
 	}
 
 	virtual void Execute() override {
-		m_vm->MakeAbsoluteMemAddr_run(m_result_addr);
-		m_vm->MakeAbsoluteMemAddr_run(m_left_addr);
-		*(ResultT*)m_result_addr.absolute_addr = *(LeftT*)m_left_addr.absolute_addr * m_right_value;
+		T result_value;
+		if (LEFT_IS_VALUE) {
+			result_value = m_vm->GetRegister<T>(m_register_left) * m_right_value;
+		} else {
+			result_value = *(T*)m_vm->GetRegister<uint64_t>(m_register_left) * m_right_value;
+		}
+
+		if (RESULT_IS_VALUE) {
+			m_vm->SetRegister(m_register_result, (const void*)&result_value, sizeof(result_value));
+		} else {
+			uint64_t result_addr = m_vm->GetRegister<uint64_t>(m_register_result);
+			memcpy((void*)result_addr, (const void*)&result_value, sizeof(result_value));
+		}
+
 		m_vm->Inc_ir();
 	}
 	virtual void Prepare(VM* vm) override {
 		m_vm = vm;
-		m_vm->MakeAbsoluteMemAddr_load(m_result_addr);
-		m_vm->MakeAbsoluteMemAddr_load(m_left_addr);
 	}
 
 private:
-	MemAddr m_result_addr;
-	MemAddr m_left_addr;
-	RightT	m_right_value;
+	RegisterId m_register_result;
+	RegisterId m_register_left;
+	T		   m_right_value;
 };
 
 /*
- * 从源地址读取一定长度数据写入到目标地址
- * dst_addr
+ * 将src寄存器中的地址指向的值拷贝到dst寄存器中的地址指向的内存
+ * register_dst 存放目标内存的地址
+ * register_src 存放源内存的地址
  */
-class Instruction_memcpy_from_value_to_value : public Instruction {
+class Instruction_memcpy : public Instruction {
 public:
-	Instruction_memcpy_from_value_to_value(const Var& dst_var, const Var& src_var) {
-		assert(dst_var.mem_size == src_var.mem_size);
-		m_dst_addr = dst_var.mem_addr;
-		m_src_addr = src_var.mem_addr;
-		m_bytes	   = dst_var.mem_size;
-		m_desc	   = sprintf_to_stdstr("copy from var[%s] to var[%s]", src_var.var_name.c_str(), dst_var.var_name.c_str());
+	Instruction_memcpy(FnInstructionMaker& maker, RegisterId register_dst, RegisterId register_src, uint64_t bytes) {
+		init(maker, register_dst, register_src, bytes, "");
 	}
-	Instruction_memcpy_from_value_to_value(const Var& dst_var, const MemAddr& src_addr) {
-		m_dst_addr = dst_var.mem_addr;
-		m_src_addr = src_addr;
-		m_bytes	   = dst_var.mem_size;
-		m_desc	   = sprintf_to_stdstr("copy from addr[%s] to var[%s]", src_addr.ToString().c_str(), dst_var.var_name.c_str());
+	Instruction_memcpy(FnInstructionMaker& maker, RegisterId register_dst, RegisterId register_src, uint64_t bytes, std::string comment) {
+		init(maker, register_dst, register_src, bytes, comment);
 	}
 
 	virtual void Execute() override {
-		m_vm->MakeAbsoluteMemAddr_run(m_dst_addr);
-		m_vm->MakeAbsoluteMemAddr_run(m_src_addr);
-
-		memcpy((void*)m_dst_addr.absolute_addr, (const void*)m_src_addr.absolute_addr, m_bytes);
-
+		uint64_t src_addr = m_vm->GetRegister<uint64_t>(m_register_src);
+		uint64_t dst_addr = m_vm->GetRegister<uint64_t>(m_register_dst);
+		memcpy((void*)dst_addr, (const void*)src_addr, m_bytes);
 		m_vm->Inc_ir();
 	}
 	virtual void Prepare(VM* vm) override {
 		m_vm = vm;
-		m_vm->MakeAbsoluteMemAddr_load(m_dst_addr);
-		m_vm->MakeAbsoluteMemAddr_load(m_src_addr);
 	}
 
 private:
-	MemAddr m_dst_addr;
-	MemAddr m_src_addr;
-	int		m_bytes;
+	void init(FnInstructionMaker& maker, RegisterId register_dst, RegisterId register_src, uint64_t bytes, std::string comment) {
+		m_register_dst = register_dst;
+		m_register_src = register_src;
+		m_bytes		   = bytes;
+		m_desc		   = sprintf_to_stdstr("copy %lu bytes from register[%d] to register[%d]", bytes, m_register_src, m_register_dst);
+
+		if (!comment.empty()) {
+			m_desc += "// " + comment;
+		}
+	}
+
+private:
+	RegisterId m_register_dst;
+	RegisterId m_register_src;
+	uint64_t   m_bytes;
 };
 
 // 向某个内存地址写入一个常量值(integer,float)
 template <typename T>
 class Instruction_write_const_value : public Instruction {
 public:
-	// 向某个内存地址写入一个常量值
-	Instruction_write_const_value(MemAddr dst_addr, T value) {
-		m_dst_addr = dst_addr;
-		m_value	   = value;
-		m_desc	   = sprintf_to_stdstr("write value[0x%lx] %lubytes to addr[%s]", uint64_t(m_value), sizeof(m_value), dst_addr.ToString().c_str());
-	}
-	// 向某个内存地址写入一个常量值
-	Instruction_write_const_value(const Var& var, T value) {
-		m_dst_addr = var.mem_addr;
-		m_value	   = value;
-		m_desc	   = sprintf_to_stdstr("write value[0x%lx] %lubytes to var[%s:%s]", uint64_t(m_value), sizeof(m_value), var.var_name.c_str(), m_dst_addr.ToString().c_str());
+	Instruction_write_const_value(FnInstructionMaker& maker, RegisterId rid, T value) {
+		m_rid	= rid;
+		m_value = value;
+		m_desc	= sprintf_to_stdstr("write_const_value rid_addr[%d] type[%s] value[%s]", rid, get_type_name<T>(), to_str(value).c_str());
 	}
 
 	virtual void Execute() override {
-		m_vm->MakeAbsoluteMemAddr_run(m_dst_addr);
-
-		memcpy((void*)m_dst_addr.absolute_addr, (const void*)&m_value, sizeof(m_value));
+		uint64_t target_addr = m_vm->GetRegister<uint64_t>(m_rid);
+		memcpy((void*)target_addr, (const void*)&m_value, sizeof(m_value));
 		m_vm->Inc_ir();
 	}
 	virtual void Prepare(VM* vm) override {
 		m_vm = vm;
-		m_vm->MakeAbsoluteMemAddr_load(m_dst_addr);
 	}
 
 private:
-	MemAddr m_dst_addr;
-	T		m_value;
+	RegisterId m_rid;
+	T		   m_value;
 };
 
-// 向某个内存地址写入一个常量地址
-class Instruction_write_addr : public Instruction {
+// 将一个常量值加载到某个寄存器
+template <typename T>
+class Instruction_load_register_const : public Instruction {
 public:
-	// 向某个内存地址写入一个常量地址
-	Instruction_write_addr(MemAddr dst_addr, MemAddr value_addr) {
-		m_dst_addr	 = dst_addr;
-		m_value_addr = value_addr;
+	Instruction_load_register_const(FnInstructionMaker& maker, RegisterId rid, T value) {
+		init(maker, rid, value, std::string(""));
 	}
-	// 向某个内存地址写入一个常量地址
-	Instruction_write_addr(const Var dst_var, MemAddr value_addr) {
-		m_dst_addr	 = dst_var.mem_addr;
-		m_value_addr = value_addr;
-		m_desc		 = sprintf_to_stdstr("write addr[%s] 8 byte to var[%s:%s]", m_value_addr.ToString().c_str(), dst_var.var_name.c_str(), m_dst_addr.ToString().c_str());
+	Instruction_load_register_const(FnInstructionMaker& maker, RegisterId rid, T value, std::string comment) {
+		init(maker, rid, value, comment);
 	}
 
 	virtual void Execute() override {
-		m_vm->MakeAbsoluteMemAddr_run(m_dst_addr);
-		m_vm->MakeAbsoluteMemAddr_run(m_value_addr);
-
-		memcpy((void*)m_dst_addr.absolute_addr, (const void*)&m_value_addr.absolute_addr, 8);
+		m_vm->SetRegister(m_rid, &m_const_value, sizeof(m_const_value));
 		m_vm->Inc_ir();
 	}
 	virtual void Prepare(VM* vm) override {
 		m_vm = vm;
-		m_vm->MakeAbsoluteMemAddr_load(m_dst_addr);
-		m_vm->MakeAbsoluteMemAddr_load(m_value_addr);
 	}
 
 private:
-	MemAddr m_dst_addr;
-	MemAddr m_value_addr;
+	void init(FnInstructionMaker& maker, RegisterId rid, T value, std::string comment) {
+		m_rid		  = rid;
+		m_const_value = value;
+		m_desc		  = sprintf_to_stdstr("load_register_const rid[%d] type[%s] value[%s] // %s", rid, get_type_name<T>(), to_str(m_const_value).c_str(), comment.c_str());
+	}
+
+private:
+	RegisterId m_rid;
+	T		   m_const_value;
+};
+
+// 将value寄存器中的值保存到addr寄存器中的内存地址指向的内存块
+class Instruction_store_register : public Instruction {
+public:
+	Instruction_store_register(FnInstructionMaker& maker, RegisterId register_addr, RegisterId register_value, int bytes) {
+		init(maker, register_addr, register_value, bytes, "");
+	}
+	Instruction_store_register(FnInstructionMaker& maker, RegisterId register_addr, RegisterId register_value, int bytes, std::string comment) {
+		init(maker, register_addr, register_value, bytes, comment);
+	}
+
+	virtual void Execute() override {
+		const void* value_ptr = m_vm->GetRegisterAddr(m_rid_value);
+		uint64_t	addr	  = m_vm->GetRegister<uint64_t>(m_rid_addr);
+		memcpy((void*)addr, value_ptr, m_bytes);
+		m_vm->Inc_ir();
+	}
+	virtual void Prepare(VM* vm) override {
+		m_vm = vm;
+	}
+
+private:
+	void init(FnInstructionMaker& maker, RegisterId register_addr, RegisterId register_value, int bytes, std::string comment) {
+		m_rid_addr	= register_addr;
+		m_rid_value = register_value;
+		m_bytes		= bytes;
+		m_desc		= sprintf_to_stdstr("store_register rid_addr[%d] rid_value[%d] bytes[%d]", m_rid_addr, m_rid_value, bytes);
+		if (!comment.empty()) {
+			m_desc += "// " + comment;
+		}
+	}
+
+private:
+	RegisterId m_rid_addr;
+	RegisterId m_rid_value;
+	int		   m_bytes;
 };
 
 /*
@@ -450,101 +641,66 @@ class Instruction_call : public Instruction {
 public:
 	/*
 	 * fn_id 目标函数id
-	 * return_var_addr caller提供的返回值的存储位置. callee在返回前, 将返回值拷贝到这个位置. 必须是MemAddr::RELATIVE_TO_STACK_AREA
+	 * return_var_offset 保存返回值的内存地址(相对caller的栈帧的偏移地址)
 	 */
-	Instruction_call(std::string fn_id, MemAddr return_var_addr) {
-		assert(return_var_addr.type == MemAddr::RELATIVE_TO_STACK_AREA);
-		m_fn_id							 = fn_id;
-		m_is_target_instruction_addr_set = false;
-		m_return_var_addr				 = return_var_addr;
-	}
-	Instruction_call(std::string fn_id, const Var& return_var) {
-		assert(return_var.mem_addr.type == MemAddr::RELATIVE_TO_STACK_AREA);
-		m_fn_id							 = fn_id;
-		m_is_target_instruction_addr_set = false;
-		m_return_var_addr				 = return_var.mem_addr;
-		m_desc							 = sprintf_to_stdstr("call fn[%s] returned_var[%s:%s]", m_fn_id.c_str(), return_var.var_name.c_str(), m_return_var_addr.ToString().c_str());
-	}
-
-	virtual void Execute() override {
-		assert(m_is_target_instruction_addr_set);
-		uint64_t caller_sr = m_vm->GetReg_sr();
-		uint64_t caller_ir = m_vm->GetReg_ir();
-		uint64_t caller_rr = m_vm->GetReg_rr();
-
-		uint64_t callee_sr = (uint64_t)m_vm->GetStackTop();
-
-		uint64_t rr_absolute_addr = m_return_var_addr.relative_addr + caller_sr;
-
-		m_vm->Push(caller_sr);
-		m_vm->Push(caller_ir + 8); // 指向call的下一条指令
-		m_vm->Push(caller_rr);
-
-		m_vm->SetReg_sr(callee_sr);
-		m_vm->SetReg_ir(m_target_instruction_addr.absolute_addr);
-		m_vm->SetReg_rr(rr_absolute_addr);
-	}
-	virtual void Prepare(VM* vm) override {
-		assert(m_is_target_instruction_addr_set);
-		m_vm = vm;
-		vm->MakeAbsoluteMemAddr_load(m_target_instruction_addr);
-	}
-
-	std::string GetFnId() const { return m_fn_id; }
-	void		SetInstructionAddr(MemAddr target_instruction_addr) {
-		   m_is_target_instruction_addr_set = true;
-		   m_target_instruction_addr		= target_instruction_addr;
-	}
-
-private:
-	std::string m_fn_id; // 调用的函数唯一id. 在函数的指令地址都确定后, 再设置真正的函数地址
-	bool		m_is_target_instruction_addr_set;
-	MemAddr		m_target_instruction_addr;
-	MemAddr		m_return_var_addr;
-};
-
-// 退出函数
-class Instruction_ret : public Instruction {
-public:
-	/*
-	 * return_var_size 返回值大小
-	 * return_var_addr callee返回的数据的地址. 将该数据拷贝到caller提供的目标地址. 必须是MemAddr::RELATIVE_TO_STACK_AREA
-	 */
-	Instruction_ret(uint64_t return_var_size, MemAddr return_var_addr);
-	Instruction_ret();
+	Instruction_call(FnInstructionMaker& maker, std::string fn_id, int64_t return_var_offset);
 
 	virtual void Execute() override;
 	virtual void Prepare(VM* vm) override;
 
+	std::string GetFnId() const { return m_fn_id; }
+
+	void SetFnInstructionAddrOffset(uint64_t fn_instruction_addr_offset) {
+		m_is_fn_instruction_addr_set = true;
+		m_fn_instruction_addr_offset = fn_instruction_addr_offset;
+	}
+
 private:
-	bool	 m_has_return_var;
-	uint64_t m_return_var_size;
-	MemAddr	 m_return_var_addr;
+	std::string m_fn_id; // 调用的函数唯一id. 在函数的指令地址都确定后, 再设置真正的函数地址
+	bool		m_is_fn_instruction_addr_set;
+	uint64_t	m_fn_instruction_addr_offset;
+	uint64_t	m_fn_instruction_addr;
+	int64_t		m_return_var_offset;
 };
 
-// 退出函数, 返回常量值(integer,float)
-template <typename T>
-class Instruction_ret_const_value : public Instruction {
+// 退出函数
+template <bool REGISTER_IS_VALUE>
+class Instruction_ret : public Instruction {
 public:
 	/*
+	 * rid_returned 
+	 *		如果REGISTER_IS_VALUE, 则rid_returned中存储了返回的数据. 否则rid_returned中存储了返回的数据的内存地址
 	 * return_var_size 返回值大小
-	 * return_var_addr callee返回的数据的地址. 将该数据拷贝到caller提供的目标地址. 必须是MemAddr::RELATIVE_TO_STACK_AREA
 	 */
-	Instruction_ret_const_value(T return_value) {
-		m_return_value = return_value;
-		m_desc		   = sprintf_to_stdstr("return const value[0x%lx]", uint64_t(m_return_value));
+	Instruction_ret(FnInstructionMaker& maker, RegisterId rid_returned, uint64_t returned_value_size) {
+		m_has_return_var	  = true;
+		m_rid_returned		  = rid_returned;
+		m_returned_value_size = returned_value_size;
+		m_desc				  = sprintf_to_stdstr("ret register_returned[%d:%s] %lu byte", m_rid_returned, REGISTER_IS_VALUE ? "value" : "ptr", m_returned_value_size);
+	}
+	Instruction_ret() {
+		m_has_return_var = false;
+		m_desc			 = sprintf_to_stdstr("ret");
 	}
 
 	virtual void Execute() override {
-		memcpy((void*)m_vm->GetReg_rr(), (const void*)&m_return_value, sizeof(m_return_value));
+		if (m_has_return_var) {
+			const void* data_ptr = nullptr;
+			if (REGISTER_IS_VALUE) {
+				data_ptr = m_vm->GetRegisterAddr(m_rid_returned);
+			} else {
+				data_ptr = (const void*)m_vm->GetRegister<uint64_t>(m_rid_returned);
+			}
+			memcpy((void*)m_vm->GetReg_rr(), data_ptr, m_returned_value_size);
+		}
 
-		uint64_t caller_sr = *(uint64_t*)m_vm->GetReg_sr();
-		uint64_t caller_ir = *((uint64_t*)m_vm->GetReg_sr() + 1);
-		uint64_t caller_rr = *((uint64_t*)m_vm->GetReg_sr() + 2);
+		uint64_t caller_sr = *(uint64_t*)m_vm->GetRegister<uint64_t>(REGISTER_ID_STACK_FRAME);
+		uint64_t caller_ir = *((uint64_t*)m_vm->GetRegister<uint64_t>(REGISTER_ID_STACK_FRAME) + 1);
+		uint64_t caller_rr = *((uint64_t*)m_vm->GetRegister<uint64_t>(REGISTER_ID_STACK_FRAME) + 2);
 
-		m_vm->Pop((uint64_t)m_vm->GetStackTop() - m_vm->GetReg_sr());
+		m_vm->Pop((uint64_t)m_vm->GetStackTop() - m_vm->GetRegister<uint64_t>(REGISTER_ID_STACK_FRAME));
 
-		m_vm->SetReg_sr(caller_sr);
+		m_vm->SetRegister(REGISTER_ID_STACK_FRAME, &caller_sr, sizeof(caller_sr));
 		m_vm->SetReg_ir(caller_ir);
 		m_vm->SetReg_rr(caller_rr);
 	}
@@ -553,7 +709,9 @@ public:
 	}
 
 private:
-	T m_return_value;
+	bool	   m_has_return_var;
+	RegisterId m_rid_returned;
+	uint64_t   m_returned_value_size;
 };
 
 // 从stack上弹出一定数量的内存
@@ -593,23 +751,21 @@ private:
 // 执行完毕
 class Instruction_exit : public Instruction {
 public:
-	Instruction_exit(const Var& exitcode_var) {
-		m_exitcode_addr = exitcode_var.mem_addr;
-		m_desc=sprintf_to_stdstr("exit exitcode[%s:%s]", exitcode_var.var_name.c_str(), m_exitcode_addr.ToString().c_str());
+	Instruction_exit(FnInstructionMaker& maker, RegisterId register_exitcode_var_addr) {
+		m_register_exitcode_var_addr = register_exitcode_var_addr;
+		m_desc						 = sprintf_to_stdstr("exit register_exitcode_var_addr[%d]", register_exitcode_var_addr);
 	}
 
 	virtual void Execute() override {
-		m_vm->MakeAbsoluteMemAddr_run(m_exitcode_addr);
-
-		int32_t exitcode = *(int32_t*)m_exitcode_addr.absolute_addr;
+		uint64_t exitcode_var_addr = m_vm->GetRegister<uint64_t>(m_register_exitcode_var_addr);
+		int32_t	 exitcode		   = *(int32_t*)exitcode_var_addr;
 		printf("exitcode=%d\n", exitcode);
 		m_vm->SetReg_ir(0);
 	}
 	virtual void Prepare(VM* vm) override {
 		m_vm = vm;
-		m_vm->MakeAbsoluteMemAddr_load(m_exitcode_addr);
 	}
 
 private:
-	MemAddr m_exitcode_addr;
+	RegisterId m_register_exitcode_var_addr;
 };

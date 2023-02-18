@@ -153,12 +153,12 @@ void AstNodeBlockStmt::VerifyIdentfier(AstNode* cur_node, std::string id, Verify
 	}
 	// panicf("global identifier[%s] not exists", id.c_str());
 }
-void AstNodeBlockStmt::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
+CompileResult AstNodeBlockStmt::Compile(VM& vm, FnInstructionMaker& maker) {
 	for (auto node : m_stmts) {
-		Var tmpv;
-		node->Compile(vm, maker, tmpv.mem_addr);
+		node->Compile(vm, maker);
 	}
 	for (auto iter = m_stmts.rbegin(); iter != m_stmts.rend(); iter++) {
 		(*iter)->BlockEnd(vm, maker, nullptr);
 	}
+	return CompileResult();
 }

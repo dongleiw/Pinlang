@@ -46,22 +46,28 @@ AstNodeReturn* AstNodeReturn::DeepCloneT() {
 
 	return newone;
 }
-void AstNodeReturn::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
-	// return是statement, 忽略returned_var
-
+CompileResult AstNodeReturn::Compile(VM& vm, FnInstructionMaker& maker) {
 	if (m_returned_expr == nullptr) {
-		maker.AddInstruction(new Instruction_ret());
+		maker.AddInstruction(new Instruction_ret<false>());
+		maker.AddComment(InstructionComment(0, sprintf_to_stdstr("return;")));
 	} else {
+		maker.AddComment(InstructionComment(sprintf_to_stdstr("return xxx;")));
 		TypeInfo* ti = g_typemgr.GetTypeInfo(m_returned_expr_tid);
 
-		if (m_returned_expr_is_tmp) {
-			Var tmpv = maker.TmpVarBegin(ti->GetMemSize());
-			m_returned_expr->Compile(vm, maker, tmpv.mem_addr);
-			maker.AddInstruction(new Instruction_ret(ti->GetMemSize(), tmpv.mem_addr));
+		CompileResult cr_returned_expr = m_returned_expr->Compile(vm, maker);
+		if (cr_returned_expr.IsFnId()) {
+			panicf("not supported yet");
 		} else {
-			MemAddr mem_addr;
-			m_returned_expr->Compile(vm, maker, mem_addr);
-			maker.AddInstruction(new Instruction_ret(ti->GetMemSize(), mem_addr));
+			if (cr_returned_expr.IsValue()) {
+				maker.AddInstruction(new Instruction_ret<true>(maker, cr_returned_expr.GetRegisterId(), ti->GetMemSize()));
+			} else {
+				maker.AddInstruction(new Instruction_ret<false>(maker, cr_returned_expr.GetRegisterId(), ti->GetMemSize()));
+			}
+			vm.ReleaseGeneralRegister(cr_returned_expr.GetRegisterId());
+			if (!cr_returned_expr.GetStackVarName().empty()) {
+				maker.VarEnd(cr_returned_expr.GetStackVarName());
+			}
 		}
 	}
+	return CompileResult();
 }

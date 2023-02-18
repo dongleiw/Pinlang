@@ -3,6 +3,7 @@
 #include "instruction.h"
 #include "log.h"
 #include "type.h"
+#include "utils.h"
 #include "variable.h"
 #include "verify_context.h"
 #include <cstdint>
@@ -137,34 +138,56 @@ void AstNodeLiteral::CastToInt64() {
 	assert(m_result_typeid == TYPE_ID_INT32);
 	m_result_typeid = TYPE_ID_INT64;
 }
-void AstNodeLiteral::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
+CompileResult AstNodeLiteral::Compile(VM& vm, FnInstructionMaker& maker) {
+	RegisterId rid = vm.AllocGeneralRegister();
 	switch (m_result_typeid) {
 	case TYPE_ID_INT8:
 	case TYPE_ID_UINT8:
-		maker.AddInstruction(new Instruction_write_const_value<uint8_t>(target_addr, uint8_t(m_value_int)));
+	{
+		uint8_t data = uint8_t(m_value_int);
+		maker.AddInstruction(new Instruction_load_register_const<uint8_t>(maker, rid, data, sprintf_to_stdstr("literal u8 %u", uint32_t(data))));
+		return CompileResult(rid, true, "");
 		break;
+	}
 	case TYPE_ID_INT16:
 	case TYPE_ID_UINT16:
-		maker.AddInstruction(new Instruction_write_const_value<uint16_t>(target_addr, uint16_t(m_value_int)));
+	{
+		uint16_t data = uint16_t(m_value_int);
+		maker.AddInstruction(new Instruction_load_register_const<uint16_t>(maker, rid, data, sprintf_to_stdstr("literal u16 %u", uint32_t(data))));
+		return CompileResult(rid, true, "");
 		break;
+	}
 	case TYPE_ID_INT32:
 	case TYPE_ID_UINT32:
-		maker.AddInstruction(new Instruction_write_const_value<uint32_t>(target_addr, uint32_t(m_value_int)));
+	{
+		uint32_t data = uint32_t(m_value_int);
+		maker.AddInstruction(new Instruction_load_register_const<uint32_t>(maker, rid, data, sprintf_to_stdstr("literal u32 %u", uint32_t(data))));
+		return CompileResult(rid, true, "");
 		break;
+	}
 	case TYPE_ID_INT64:
 	case TYPE_ID_UINT64:
-		maker.AddInstruction(new Instruction_write_const_value<uint64_t>(target_addr, uint64_t(m_value_int)));
+	{
+		uint64_t data = uint64_t(m_value_int);
+		maker.AddInstruction(new Instruction_load_register_const<uint64_t>(maker, rid, data, sprintf_to_stdstr("literal u32 %u", uint64_t(data))));
+		return CompileResult(rid, true, "");
 		break;
+	}
 	case TYPE_ID_FLOAT:
-		maker.AddInstruction(new Instruction_write_const_value<float>(target_addr, m_value_float));
+	{
+		maker.AddInstruction(new Instruction_load_register_const<float>(maker, rid, m_value_float, sprintf_to_stdstr("literal float %f", m_value_float)));
+		return CompileResult(rid, true, "");
 		break;
+	}
 	case TYPE_ID_BOOL:
-		maker.AddInstruction(new Instruction_write_const_value<bool>(target_addr, m_value_bool));
+	{
+		maker.AddInstruction(new Instruction_load_register_const<bool>(maker, rid, m_value_bool, sprintf_to_stdstr("literal bool %s", m_value_bool ? "true" : "false")));
+		return CompileResult(rid, true, "");
 		break;
+	}
 	case TYPE_ID_STR: // str是reference type, 真实数据在堆上, 栈上只是一个指针
 	{
-		MemAddr addr = vm.AddStaticData((const void*)m_value_str.c_str(), m_value_str.size());
-		maker.AddInstruction(new Instruction_write_addr(target_addr, addr));
+		panicf("not implemented yet");
 		break;
 	}
 	default:
@@ -172,67 +195,3 @@ void AstNodeLiteral::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_
 		break;
 	}
 }
-/*void AstNodeLiteral::Compile(VM& vm, FnInstructionMaker& maker, Var& returned_var) {
-	switch (m_result_typeid) {
-	case TYPE_ID_INT8:
-	case TYPE_ID_UINT8:
-	{
-		uint8_t v			  = uint8_t(m_value_int);
-		MemAddr addr		  = vm.AddStaticData((const void*)&v, sizeof(v));
-		returned_var.mem_addr = addr;
-		returned_var.mem_size = 1;
-		break;
-	}
-	case TYPE_ID_INT16:
-	case TYPE_ID_UINT16:
-	{
-		uint16_t v			  = uint16_t(m_value_int);
-		MemAddr	 addr		  = vm.AddStaticData((const void*)&v, sizeof(v));
-		returned_var.mem_addr = addr;
-		returned_var.mem_size = 2;
-		break;
-	}
-	case TYPE_ID_INT32:
-	case TYPE_ID_UINT32:
-	{
-		uint32_t v			  = uint32_t(m_value_int);
-		MemAddr	 addr		  = vm.AddStaticData((const void*)&v, sizeof(v));
-		returned_var.mem_addr = addr;
-		returned_var.mem_size = 4;
-		break;
-	} break;
-	case TYPE_ID_INT64:
-	case TYPE_ID_UINT64:
-	{
-		uint64_t v			  = uint64_t(m_value_int);
-		MemAddr	 addr		  = vm.AddStaticData((const void*)&v, sizeof(v));
-		returned_var.mem_addr = addr;
-		returned_var.mem_size = 8;
-		break;
-	}
-	case TYPE_ID_FLOAT:
-	{
-		MemAddr addr		  = vm.AddStaticData((const void*)&m_value_float, sizeof(m_value_float));
-		returned_var.mem_addr = addr;
-		returned_var.mem_size = 4;
-		break;
-	}
-	case TYPE_ID_BOOL:
-	{
-		MemAddr addr		  = vm.AddStaticData((const void*)&m_value_bool, sizeof(m_value_bool));
-		returned_var.mem_addr = addr;
-		returned_var.mem_size = 1;
-		break;
-	}
-	case TYPE_ID_STR: // str是reference type, 真实数据在堆上, 栈上只是一个指针
-	{
-		MemAddr addr		  = vm.AddStaticData((const void*)m_value_str.c_str(), m_value_str.size());
-		returned_var.mem_addr = addr;
-		returned_var.mem_size = 8;
-		break;
-	}
-	default:
-		panicf("unknown literal type[%d]", m_result_typeid);
-		break;
-	}
-}*/

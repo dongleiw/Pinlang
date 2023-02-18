@@ -8,6 +8,7 @@
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "utils.h"
 #include "variable.h"
 #include "verify_context.h"
 #include <vector>
@@ -87,6 +88,9 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 	m_left_expr_tid	 = vr_left.GetResultTypeId();
 	m_right_expr_tid = vr_right.GetResultTypeId();
 
+	m_left_expr_is_tmp	= vr_left.IsTmp();
+	m_right_expr_is_tmp = vr_right.IsTmp();
+
 	return vr;
 }
 Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
@@ -102,18 +106,54 @@ AstNodeOperator* AstNodeOperator::DeepCloneT() {
 	AstNodeOperator* newone = new AstNodeOperator(m_left_expr->DeepClone(), m_constraint_name, m_op, m_right_expr->DeepClone());
 	return newone;
 }
-void AstNodeOperator::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
-	if (m_left_expr_tid == TYPE_ID_INT32 && m_right_expr_tid == TYPE_ID_INT32) {
-		Var left_result = maker.TmpVarBegin(4);
-		m_left_expr->Compile(vm, maker, left_result.mem_addr);
+CompileResult AstNodeOperator::Compile(VM& vm, FnInstructionMaker& maker) {
+	if ((m_left_expr_tid == TYPE_ID_INT32 && m_right_expr_tid == TYPE_ID_INT32) || (m_left_expr_tid == TYPE_ID_INT64 && m_right_expr_tid == TYPE_ID_INT64) ||
+		(m_left_expr_tid == TYPE_ID_UINT32 && m_right_expr_tid == TYPE_ID_UINT32) ||
+		(m_left_expr_tid == TYPE_ID_UINT64 && m_right_expr_tid == TYPE_ID_UINT64)) {
+		//TypeInfo* ti = g_typemgr.GetTypeInfo(TYPE_ID_INT32);
 
-		Var right_result = maker.TmpVarBegin(4);
-		m_right_expr->Compile(vm, maker, right_result.mem_addr);
+		maker.AddComment(InstructionComment(sprintf_to_stdstr("xx + xx")));
+		RegisterId register_result = vm.AllocGeneralRegister();
 
-		maker.AddInstruction(new Instruction_add<uint32_t>(target_addr, left_result.mem_addr, right_result.mem_addr));
+		CompileResult cr_left  = m_left_expr->Compile(vm, maker);
+		CompileResult cr_right = m_right_expr->Compile(vm, maker);
 
-		maker.VarEnd(right_result.var_name);
-		maker.VarEnd(left_result.var_name);
+		if (cr_left.IsFnId() || cr_right.IsFnId()) {
+			panicf("not implemented yet");
+		} else {
+
+#define _generate_add_instruction(tid, result_is_value, left_is_value, right_is_value)                                                                                                  \
+	if (tid == TYPE_ID_INT32 || tid == TYPE_ID_UINT32) {                                                                                                                                \
+		maker.AddInstruction(new Instruction_add<uint32_t, result_is_value, left_is_value, right_is_value>(maker, register_result, cr_left.GetRegisterId(), cr_right.GetRegisterId())); \
+	} else if (tid == TYPE_ID_INT64 || tid == TYPE_ID_UINT64) {                                                                                                                         \
+		maker.AddInstruction(new Instruction_add<uint64_t, result_is_value, left_is_value, right_is_value>(maker, register_result, cr_left.GetRegisterId(), cr_right.GetRegisterId())); \
+	}
+
+			if (cr_left.IsValue()) {
+				if (cr_right.IsValue()) {
+					_generate_add_instruction(m_left_expr_tid, true, true, true);
+				} else {
+					_generate_add_instruction(m_left_expr_tid, true, true, false);
+				}
+			} else {
+				if (cr_right.IsValue()) {
+					_generate_add_instruction(m_left_expr_tid, true, false, true);
+				} else {
+					_generate_add_instruction(m_left_expr_tid, true, false, false);
+				}
+			}
+		}
+
+		vm.ReleaseGeneralRegister(cr_left.GetRegisterId());
+		vm.ReleaseGeneralRegister(cr_right.GetRegisterId());
+
+		if (!cr_left.GetStackVarName().empty()) {
+			maker.VarEnd(cr_left.GetStackVarName());
+		}
+		if (!cr_right.GetStackVarName().empty()) {
+			maker.VarEnd(cr_right.GetStackVarName());
+		}
+		return CompileResult(register_result, true, "");
 	} else {
 		panicf("not implemented yet");
 	}

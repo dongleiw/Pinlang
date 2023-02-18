@@ -6,6 +6,7 @@
 #include "define.h"
 #include "execute_context.h"
 #include "fntable.h"
+#include "instruction.h"
 #include "source_info.h"
 #include "type.h"
 #include "variable.h"
@@ -21,7 +22,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
-	virtual void				Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) override;
+	virtual CompileResult		Compile(VM& vm, FnInstructionMaker& maker) override;
 
 	AstNodeOperator* DeepCloneT();
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
@@ -37,6 +38,9 @@ private:
 
 	TypeId m_left_expr_tid;
 	TypeId m_right_expr_tid;
+
+	bool m_left_expr_is_tmp;
+	bool m_right_expr_is_tmp;
 
 	FnAddr m_fn_addr;
 };

@@ -6,6 +6,7 @@
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "utils.h"
 #include "variable_table.h"
 
 Variable* FnTable::CallFn(FnAddr addr, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
@@ -177,8 +178,21 @@ void FnTable::Compile(VM& vm) {
 		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn.fn_tid));
 
 		FnInstructionMaker maker(fn.fnname);
-		MemAddr mem_addr;
-		fn.body->Compile(vm, maker, mem_addr);
+
+		// 声明参数
+		int64_t cur_offset = 0;
+		assert(fn.params_name.size() == tifn->GetParamNum());
+		for (size_t i = tifn->GetParamNum(); i > 0; i--) {
+			TypeId	  arg_tid = tifn->GetParamType(i - 1);
+			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
+
+			cur_offset -= arg_ti->GetMemSize();
+
+			maker.SetArg(fn.params_name.at(i - 1), arg_ti->GetMemSize(), MemAddr(MemAddr::RELATIVE_TO_STACK_AREA, cur_offset));
+		}
+
+		maker.SetFnComment(InstructionComment(0, sprintf_to_stdstr("fn name[%s]", fn.fnname.c_str())));
+		fn.body->Compile(vm, maker);
 		maker.Finish();
 		vm.AddFn(maker);
 	}

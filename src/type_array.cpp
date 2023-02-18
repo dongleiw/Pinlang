@@ -48,9 +48,9 @@ static void builtin_fn_size_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext
 }
 
 static Variable* builtin_fn_index_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj != nullptr && g_typemgr.GetTypeInfo(thisobj->GetTypeId())->IsArray() && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
+	assert(thisobj != nullptr && g_typemgr.GetTypeInfo(thisobj->GetTypeId())->IsArray() && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_UINT64);
 
-	int32_t index = args.at(0)->GetValueInt32();
+	uint64_t index = args.at(0)->GetValueUInt64();
 	return thisobj->GetValueArrayElement(index);
 }
 static void builtin_fn_index_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
@@ -67,7 +67,8 @@ TypeInfoArray::TypeInfoArray(TypeId element_tid, uint64_t size) {
 		// 数组大小编译期确定. 变量的值就是数组元素
 		m_mem_size		 = size * element_ti->GetMemSize();
 		m_mem_align_size = element_ti->GetMemAlignSize();
-		m_name			 = "[" + int_to_str(size) + "]";
+		m_name			 = "[" + to_str(size) + "]";
+		m_is_value_type	 = true;
 	} else {
 		// 数组大小不是编译期确定. 变量的值是一个指向数组实际数据的指针
 		assert(sizeof(void*) == 8);
@@ -113,7 +114,7 @@ void TypeInfoArray::InitBuiltinMethods(VerifyContext& ctx) {
 				std::vector<ParserParameter>	params;
 				{
 					AstNodeType* index_type = new AstNodeType();
-					index_type->InitWithIdentifier("i32");
+					index_type->InitWithIdentifier("u64");
 					params.push_back({ParserParameter{
 						.name = "a",
 						.type = index_type,
