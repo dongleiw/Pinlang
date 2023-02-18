@@ -18,6 +18,7 @@ std::string int_to_str(uint64_t i);
 
 bool has_suffix(std::string a, std::string suffix);
 void replace_str(std::string& str, std::string oldstr, std::string newstr);
+std::string sprintf_to_stdstr(const char* fmt, ...);
 
 /*
  * 将字符串分割为多个参数

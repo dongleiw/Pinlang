@@ -39,6 +39,7 @@ static void builtin_fn_getTypeId_verify(BuiltinFnInfo& builtin_fn_info, VerifyCo
 
 TypeInfoType::TypeInfoType() {
 	m_name = "type";
+	m_is_value_type	 = true;
 }
 void TypeInfoType::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();

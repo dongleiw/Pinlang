@@ -65,11 +65,6 @@ public:
 	const char* GetValueStr() const;
 	int			GetValueStrSize() const;
 
-	bool IsConst() const { return m_is_const; }
-
-	bool IsTmp() const { return m_is_tmp; }
-	void SetTmp(bool tmp) { m_is_tmp = tmp; }
-
 	std::string ToString() const;
 
 	Variable* GetFieldValue(std::string field_name);
@@ -84,17 +79,9 @@ private:
 
 private:
 	TypeId m_tid;
-	bool   m_is_const;
-	bool   m_is_tmp; // 是否是临时变量.
 
 	// 变量的数据
 	uint8_t* m_data;
-
-	union Data {
-		bool*	  v_bool;
-		int*	  v_int;
-		uint8_t** v_ptr;
-	};
 
 	// 编译阶段使用
 	AstNodeConstraint*	 m_value_constraint;

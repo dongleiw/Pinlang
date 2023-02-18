@@ -5,6 +5,7 @@
 #include "astnode.h"
 #include "astnode_type.h"
 #include "execute_context.h"
+#include "instruction.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -18,6 +19,8 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
+	virtual void				Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) override;
+	virtual void				BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeVarDef*	 DeepCloneT();

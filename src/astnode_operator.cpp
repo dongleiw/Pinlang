@@ -3,13 +3,13 @@
 #include "astnode_literal.h"
 #include "define.h"
 #include "execute_context.h"
+#include "instruction.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "variable.h"
 #include "verify_context.h"
-#include <memory>
 #include <vector>
 
 AstNodeOperator::AstNodeOperator(AstNode* left_expr, std::string constraint_name, std::string op, AstNode* right_expr) {
@@ -68,21 +68,24 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 
 	// 处理编译期常量表达式
 	// 必须是基本类型. 否则是operator overloading. 目前没法确认是否是纯方法. 如果不是纯方法, `left op right`也不是编译期常量表达式
-	if (vr_left.IsConst()) {
-		m_left_expr = new AstNodeCompileConst(vr_left.GetConstResult());
-	}
-	if (vr_right.IsConst()) {
-		m_right_expr = new AstNodeCompileConst(vr_right.GetConstResult());
-	}
-	if (ti->IsPrimaryType() && vr_left.IsConst() && vr_right.IsConst()) {
-		// 这里临时搞了一个ExecuteContext用来调用方法. TODO 太丑陋了
-		ExecuteContext exe_ctx;
-		exe_ctx.SetFnTable(ctx.GetFnTable());
-		Variable*			   v_left = vr_left.GetConstResult();
-		std::vector<Variable*> args{vr_right.GetConstResult()};
-		Variable*			   v_result = exe_ctx.GetFnTable().CallFn(m_fn_addr, exe_ctx, v_left, args);
-		vr.SetConstResult(v_result);
-	}
+	//if (vr_left.IsConst()) {
+	//	m_left_expr = new AstNodeCompileConst(vr_left.GetConstResult());
+	//}
+	//if (vr_right.IsConst()) {
+	//	m_right_expr = new AstNodeCompileConst(vr_right.GetConstResult());
+	//}
+	//if (ti->IsPrimaryType() && vr_left.IsConst() && vr_right.IsConst()) {
+	//	// 这里临时搞了一个ExecuteContext用来调用方法. TODO 太丑陋了
+	//	ExecuteContext exe_ctx;
+	//	exe_ctx.SetFnTable(ctx.GetFnTable());
+	//	Variable*			   v_left = vr_left.GetConstResult();
+	//	std::vector<Variable*> args{vr_right.GetConstResult()};
+	//	Variable*			   v_result = exe_ctx.GetFnTable().CallFn(m_fn_addr, exe_ctx, v_left, args);
+	//	vr.SetConstResult(v_result);
+	//}
+
+	m_left_expr_tid	 = vr_left.GetResultTypeId();
+	m_right_expr_tid = vr_right.GetResultTypeId();
 
 	return vr;
 }
@@ -98,4 +101,20 @@ Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
 AstNodeOperator* AstNodeOperator::DeepCloneT() {
 	AstNodeOperator* newone = new AstNodeOperator(m_left_expr->DeepClone(), m_constraint_name, m_op, m_right_expr->DeepClone());
 	return newone;
+}
+void AstNodeOperator::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
+	if (m_left_expr_tid == TYPE_ID_INT32 && m_right_expr_tid == TYPE_ID_INT32) {
+		Var left_result = maker.TmpVarBegin(4);
+		m_left_expr->Compile(vm, maker, left_result.mem_addr);
+
+		Var right_result = maker.TmpVarBegin(4);
+		m_right_expr->Compile(vm, maker, right_result.mem_addr);
+
+		maker.AddInstruction(new Instruction_add<uint32_t>(target_addr, left_result.mem_addr, right_result.mem_addr));
+
+		maker.VarEnd(right_result.var_name);
+		maker.VarEnd(left_result.var_name);
+	} else {
+		panicf("not implemented yet");
+	}
 }

@@ -1,6 +1,7 @@
 #include "astnode.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_for.h"
+#include "instruction.h"
 #include "log.h"
 
 bool AstNode::IsInFor() const {
@@ -29,4 +30,9 @@ void AstNode::verify_end() {
 	} else {
 		m_verify_status = VERIFIED;
 	}
+}
+void AstNode::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
+	panicf("not implemented");
+}
+void AstNode::BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr) {
 }

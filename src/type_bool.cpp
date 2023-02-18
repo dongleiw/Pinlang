@@ -26,6 +26,7 @@ TypeInfoBool::TypeInfoBool() {
 	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;
 	m_mem_size		 = 1;
 	m_mem_align_size = 1;
+	m_is_value_type	 = true;
 }
 void TypeInfoBool::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();

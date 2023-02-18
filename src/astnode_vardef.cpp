@@ -6,6 +6,7 @@
 #include "astnode_type.h"
 #include "astnode_vardef.h"
 #include "define.h"
+#include "instruction.h"
 #include "log.h"
 #include "support/CPPUtils.h"
 #include "type.h"
@@ -58,7 +59,6 @@ VerifyContextResult AstNodeVarDef::Verify(VerifyContext& ctx, VerifyContextParam
 }
 Variable* AstNodeVarDef::Execute(ExecuteContext& ctx) {
 	Variable* v = new Variable(m_result_typeid);
-	v->SetTmp(false);
 	if (m_init_expr != nullptr) {
 		v->Assign(m_init_expr->Execute(ctx));
 	}
@@ -76,4 +76,14 @@ AstNodeVarDef* AstNodeVarDef::DeepCloneT() {
 	newone->m_is_const = m_is_const;
 
 	return newone;
+}
+void AstNodeVarDef::Compile(VM& vm, FnInstructionMaker& maker, MemAddr& target_addr) {
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
+	Var new_var	 = maker.VarBegin(m_varname, ti->GetMemSize());
+	if (m_init_expr != nullptr) {
+		m_init_expr->Compile(vm, maker, new_var.mem_addr);
+	}
+}
+void AstNodeVarDef::BlockEnd(VM& vm, FnInstructionMaker& maker, const MemAddr* target_addr) {
+	maker.VarEnd(m_varname);
 }

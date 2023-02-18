@@ -73,7 +73,6 @@ Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
 			return v->GetFieldValue(m_attr_name);
 		} else {
 			Variable* method_v = new Variable(m_result_typeid, FunctionObj(v, m_fn_addr));
-			method_v->SetTmp(false);
 			return method_v;
 		}
 	}

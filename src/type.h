@@ -38,13 +38,15 @@ public:
 	};
 
 public:
-	TypeInfo() : m_typeid(TYPE_ID_NONE), m_typegroup_id(TYPE_GROUP_ID_UNRESOLVE) {
+	TypeInfo() : m_typeid(TYPE_ID_NONE), m_typegroup_id(TYPE_GROUP_ID_UNRESOLVE), m_is_value_type(false) {
 	}
 
 	TypeId		GetTypeId() const { return m_typeid; }
 	void		SetTypeId(TypeId tid) { m_typeid = tid; }
 	std::string GetName() { return m_name; }
 	void		SetName(std::string name) { m_name = name; }
+
+	bool IsValueType() const { return m_is_value_type; }
 
 	/*
 	 * 根据方法名和参数类型查找函数. 如果需要则实例化
@@ -86,7 +88,7 @@ public:
 	std::vector<MethodIndex> GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, std::vector<TypeId> method_params_tid);
 
 	bool HasField(std::string field_name) const;
-	//void			   AddField(std::string field_name, TypeId tid);
+	// void			   AddField(std::string field_name, TypeId tid);
 	void			   SetFields(std::vector<std::pair<std::string, TypeId>> fields);
 	TypeId			   GetFieldType(std::string field_name) const;
 	std::vector<Field> GetField() const { return m_field_list; }
@@ -113,9 +115,10 @@ protected:
 	std::string m_name;
 	int			m_mem_size;		  // 内存大小
 	int			m_mem_align_size; // 内存对齐大小
+	bool		m_is_value_type;
 
 	/*
-	 * 该类型实现的约束列表. 
+	 * 该类型实现的约束列表.
 	 */
 	std::vector<Constraint> m_constraints;
 

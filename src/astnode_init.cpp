@@ -68,7 +68,6 @@ Variable* AstNodeInit::Execute(ExecuteContext& ctx) {
 		std::vector<Variable*> array_elements;
 		for (auto& iter : m_elements) {
 			Variable* v = iter.attr_value->Execute(ctx);
-			v->SetTmp(false);
 			array_elements.push_back(v);
 		}
 		return new Variable(m_result_typeid, array_elements);
@@ -81,7 +80,6 @@ Variable* AstNodeInit::Execute(ExecuteContext& ctx) {
 		// 处理显式指定的字段
 		for (auto& iter : m_elements) {
 			Variable* v = iter.attr_value->Execute(ctx);
-			v->SetTmp(false);
 			fields[iter.attr_name] = v;
 		}
 

@@ -1,6 +1,7 @@
 #include "fntable.h"
 #include "astnode_blockstmt.h"
 #include "define.h"
+#include "instruction.h"
 #include "log.h"
 #include "type.h"
 #include "type_fn.h"
@@ -77,13 +78,12 @@ Variable* FnTable::call_dynamic_fn(DynamicFnInfo& fninfo, ExecuteContext& ctx, V
 		assert(tifn->GetParamType(i) == args.at(i)->GetTypeId());
 	}
 
-
 	ctx.PushStack();
 	Variable* ret_var = fninfo.execute_cb(fninfo, ctx, obj, args);
 	ctx.PopStack();
 	return ret_var;
 }
-FnAddr FnTable::AddUserDefineFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body) {
+FnAddr FnTable::AddUserDefineFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body, std::string fnname) {
 	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
 
 	// 构造block
@@ -107,6 +107,7 @@ FnAddr FnTable::AddUserDefineFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_ti
 	ctx.PopSTack();
 
 	UserDefFnInfo fninfo = UserDefFnInfo{
+		.fnname		 = fnname,
 		.fn_tid		 = fn_tid,
 		.obj_tid	 = obj_tid,
 		.gparams	 = gparams,
@@ -170,4 +171,15 @@ TypeId FnTable::GetFnReturnTypeId(FnAddr addr) const {
 	TypeId		fn_tid = GetFnTypeId(addr);
 	TypeInfoFn* tifn   = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
 	return tifn->GetReturnTypeId();
+}
+void FnTable::Compile(VM& vm) {
+	for (const UserDefFnInfo& fn : m_userdef_fn_table) {
+		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn.fn_tid));
+
+		FnInstructionMaker maker(fn.fnname);
+		MemAddr mem_addr;
+		fn.body->Compile(vm, maker, mem_addr);
+		maker.Finish();
+		vm.AddFn(maker);
+	}
 }
