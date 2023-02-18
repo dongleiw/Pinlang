@@ -1,15 +1,35 @@
 grammar Pinlang;
 import Pinlang_lex;
 
-type_array: L_BRACKET R_BRACKET type ;
+type_integer: INT_U8 | INT_U16 | INT_U32 | INT_U64 | INT_I8 | INT_I16 | INT_I32 | INT_I64 ;
+type_float: FLOAT_F32 | FLOAT_F64 ;
+type_bool: BOOL ;
+type_str: STR ;
+type_array_static_size: L_BRACKET expr R_BRACKET type ;
+type_array_dynamic_size: L_BRACKET R_BRACKET type ;
+type_array: type_array_static_size | type_array_dynamic_size ;
 type_tuple: L_PAREN type_list R_PAREN ;
 type_fn: FN L_PAREN parameter_list R_PAREN type? ;
-type
-    : TYPE
-	| Identifier
+
+type_value
+	: TYPE
+	| type_integer
+	| type_float
+	| type_bool
+	| type_array_static_size
 	| type_fn
-	| type_array
+	;
+
+type_reference
+	: type_array_dynamic_size
+	| type_str
 	| type_tuple
+	;
+
+type
+    : type_value
+	| type_reference
+	| Identifier
 	;
 
 type_list

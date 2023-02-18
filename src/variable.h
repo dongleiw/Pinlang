@@ -41,7 +41,6 @@ public:
 	AstNodeConstraint*	 GetValueConstraint() const;
 	AstNodeComplexFnDef* GetValueComplexFn() const;
 
-	const int GetValueArraySize() const;
 	Variable* GetValueArrayElement(int idx);
 	void	  SetValueArrayElement(int idx, Variable* element);
 
@@ -62,8 +61,9 @@ public:
 	uint32_t GetValueUInt32() const;
 	uint64_t GetValueUInt64() const;
 
-	char* GetValueStr();
-	int	  GetValueStrSize() const;
+	char*		GetValueStr();
+	const char* GetValueStr() const;
+	int			GetValueStrSize() const;
 
 	bool IsConst() const { return m_is_const; }
 
@@ -80,30 +80,21 @@ public:
 
 private:
 	void set_default_value();
+	void construct_init(TypeId tid, const void* data);
 
 private:
 	TypeId m_tid;
 	bool   m_is_const;
 	bool   m_is_tmp; // 是否是临时变量.
 
-	// reference type
-	FunctionObj* m_value_fnobj; // function
+	// 变量的数据
+	uint8_t* m_data;
 
-	union Value {
-		// value type
-		TypeId value_tid; // type
-
-		uint64_t value_int; // integer
-
-		float value_float; // float
-		bool  value_bool;  // bool
-
-		// reference type
-		TypeInfoArray::MemStructure* value_array;  // array
-		TypeInfoStr::MemStructure*	 value_str;	   // str
-		uint8_t*					 value_fields; // class/tuple
+	union Data {
+		bool*	  v_bool;
+		int*	  v_int;
+		uint8_t** v_ptr;
 	};
-	Value m_value;
 
 	// 编译阶段使用
 	AstNodeConstraint*	 m_value_constraint;

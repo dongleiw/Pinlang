@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <sys/types.h>
 
 #include "define.h"
 #include "log.h"
@@ -115,8 +116,8 @@ void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods(ctx);
 
 	bool   added		 = false;
-	TypeId array_str_tid = GetOrAddTypeArray(ctx, TYPE_ID_STR, added);
-	m_main_fn_tid= GetOrAddTypeFn(ctx, std::vector<TypeId>{array_str_tid}, TYPE_ID_INT32);
+	TypeId array_str_tid = GetOrAddTypeArray(ctx, TYPE_ID_STR, 0, added);
+	m_main_fn_tid		 = GetOrAddTypeFn(ctx, std::vector<TypeId>{array_str_tid}, TYPE_ID_INT32);
 }
 
 TypeId TypeMgr::allocate_typeid() {
@@ -171,18 +172,18 @@ TypeId TypeMgr::GetOrAddTypeFn(VerifyContext& ctx, std::vector<TypeId> params, T
 	ti->InitBuiltinMethods(ctx);
 	return ti->GetTypeId();
 }
-TypeId TypeMgr::GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, bool& added) {
+TypeId TypeMgr::GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64_t static_size, bool& added) {
 	added = false;
 	for (const auto ti : m_typeinfos) {
 		if (ti->IsArray()) {
 			const TypeInfoArray* tiarray = dynamic_cast<TypeInfoArray*>(ti);
-			if (tiarray->GetElementType() == element_tid) {
+			if (tiarray->GetElementType() == element_tid && tiarray->GetStaticSize() == static_size) {
 				return ti->GetTypeId();
 			}
 		}
 	}
 	added			  = true;
-	TypeInfoArray* ti = new TypeInfoArray(element_tid);
+	TypeInfoArray* ti = new TypeInfoArray(element_tid, static_size);
 	add_type(ti);
 	ti->InitBuiltinMethods(ctx);
 	return ti->GetTypeId();

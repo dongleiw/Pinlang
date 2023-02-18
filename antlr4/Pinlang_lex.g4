@@ -38,6 +38,18 @@ ELSE        : 'else';
 FOR         : 'for';
 WHILE       : 'while';
 BREAK       : 'break';
+INT_U8      : 'u8';
+INT_U16     : 'u16';
+INT_U32     : 'u32';
+INT_U64     : 'u64';
+INT_I8      : 'i8';
+INT_I16     : 'i16';
+INT_I32     : 'i32';
+INT_I64     : 'i64';
+FLOAT_F32   : 'f32';
+FLOAT_F64   : 'f64';
+BOOL        : 'bool';
+STR         : 'str';
 
 // Relation operators
 EQUALS                 : '==';

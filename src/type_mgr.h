@@ -30,7 +30,7 @@ public:
 	 */
 	TypeId GetOrAddTypeFn(VerifyContext& ctx, std::vector<TypeId> params, TypeId return_tid);
 
-	TypeId GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, bool& added);
+	TypeId GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64_t static_size, bool& added);
 	TypeId GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> element_tids, bool& added);
 
 	TypeId AddTypeInfo(TypeInfo* ti);

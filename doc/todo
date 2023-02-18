@@ -24,7 +24,6 @@ immutable
 		假如有个约束C[T], 那么一个类型可能会同时实现C[int]和C[float]. 这可能不是我们期望的. 
 	泛型结构体/类
 	泛型特化
-区分lvalue/rvalue, 解决赋值问题
 数组
 	创建动态长度数组
 	追加元素
@@ -46,7 +45,7 @@ inline function/method
 调用c库
 type cast
 标准库
-	algrithom random math crypto encoding network file log io console
+	algrithom random math crypto encoding network file log io console container
 便捷计算:
 	++ --
 	+= -= *= /= %=
