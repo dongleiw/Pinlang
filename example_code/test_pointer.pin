@@ -1,0 +1,30 @@
+// 指针
+fn get_value_from_pointer(ptr *int) int{
+	return *ptr;
+}
+fn modify_value_from_pointer(ptr *int) {
+	*ptr=2;
+}
+fn swap_value(a *int, b *int) {
+	var tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
+fn main() i32 {
+	//var i = 100;
+	//var pi *int = &i;
+	//*pi = 200;
+	//return *pi;
+
+	//var i=1;
+	//return get_value_from_pointer(&i);
+
+	//var i=1;
+	//modify_value_from_pointer(&i);
+	//return i;
+
+	//var a=1;
+	//var b=2;
+	//swap_value(&a, &b);
+	//return b;
+}

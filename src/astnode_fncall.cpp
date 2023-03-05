@@ -45,6 +45,14 @@ VerifyContextResult AstNodeFnCall::Verify(VerifyContext& ctx, VerifyContextParam
 		panicf("argument type not match");
 	}
 
+	for (size_t i = 0; i < tifn->GetParamNum(); i++) {
+		TypeInfo* ti_arg = g_typemgr.GetTypeInfo(tifn->GetParamType(i));
+		if (ti_arg->IsArray()) {
+			// 如果是数组, 会被修改为指向数组的指针. 因此这里需要设置compile_to_left_value
+			m_args.at(i)->SetCompileToLeftValue();
+		}
+	}
+
 	m_result_typeid = tifn->GetReturnTypeId();
 	VerifyContextResult vr(m_result_typeid);
 
@@ -71,22 +79,30 @@ AstNodeFnCall* AstNodeFnCall::DeepCloneT() {
 	return newone;
 }
 llvm::Value* AstNodeFnCall::Compile(CompileContext& cctx) {
+	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_fn_tid));
+
 	llvm::Function* fn = (llvm::Function*)m_fn_expr->Compile(cctx);
 	assert(fn->arg_size() == m_args.size());
 	std::vector<llvm::Value*> args;
 	for (size_t i = 0; i < m_args.size(); i++) {
+		TypeId		 tid_arg   = tifn->GetParamType(i);
+		TypeInfo*	 ti_arg	   = g_typemgr.GetTypeInfo(tid_arg);
 		llvm::Value* arg_value = m_args.at(i)->Compile(cctx);
-		if (arg_value->getType() == fn->getArg(i)->getType()) {
-			args.push_back(arg_value);
-		} else if (arg_value->getType() == fn->getArg(i)->getType()->getPointerTo()) {
-			args.push_back(IRB.CreateLoad(fn->getArg(i)->getType(), arg_value, sprintf_to_stdstr("load_arg_%lu", i)));
-		} else {
-			arg_value->getType()->print(llvm::outs(), true);
-			printf("\n");
-			fn->getArg(i)->getType()->print(llvm::outs(), true);
-			printf("\n");
-			panicf("bug");
-		}
+		assert(arg_value->getType() == fn->getArg(i)->getType());
+		args.push_back(arg_value);
+		//if (ti_arg->IsArray()) {
+		//	// 如果参数是数组, 那么会被替换为指向数组的指针.
+		//}
+		//if (arg_value->getType() == fn->getArg(i)->getType()) {
+		//} else if (arg_value->getType() == fn->getArg(i)->getType()->getPointerTo()) {
+		//	args.push_back(IRB.CreateLoad(fn->getArg(i)->getType(), arg_value, sprintf_to_stdstr("load_arg_%lu", i)));
+		//} else {
+		//	arg_value->getType()->print(llvm::outs(), true);
+		//	printf("\n");
+		//	fn->getArg(i)->getType()->print(llvm::outs(), true);
+		//	printf("\n");
+		//	panicf("bug");
+		//}
 	}
 	if (fn->getReturnType()->isVoidTy()) {
 		IRB.CreateCall((llvm::Function*)fn, args); // return void 的情况下名字必须为空

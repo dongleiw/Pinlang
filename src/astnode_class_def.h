@@ -25,6 +25,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
+	virtual llvm::Value*		Compile(CompileContext& cctx) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeClassDef* DeepCloneT();
@@ -40,4 +41,6 @@ private:
 	std::vector<AstNodeComplexFnDef*>	   m_method_list;
 	std::vector<AstNode*>				   m_subclass_list; // 目前忽略掉
 	std::vector<ParserClassImplConstraint> m_impl_constraint_list;
+
+	TypeId m_class_tid;
 };

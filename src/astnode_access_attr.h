@@ -33,4 +33,6 @@ private:
 	bool		m_is_field;
 	FnAddr		m_fn_addr;
 	std::string m_fnid;
+
+	TypeId m_obj_tid;
 };

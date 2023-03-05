@@ -1,4 +1,5 @@
 #include "astnode_access_attr.h"
+#include "compile_context.h"
 #include "define.h"
 #include "type.h"
 #include "type_fn.h"
@@ -16,9 +17,9 @@ AstNodeAccessAttr::AstNodeAccessAttr(AstNode* obj_expr, std::string attr_name) {
 VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	log_debug("verify access attr[%s]", m_attr_name.c_str());
 
-	VerifyContextResult vr_expr = m_obj_expr->Verify(ctx, VerifyContextParam());
-	TypeId				obj_tid = vr_expr.GetResultTypeId();
-	TypeInfo*			ti		= g_typemgr.GetTypeInfo(obj_tid);
+	VerifyContextResult vr_expr = m_obj_expr->Verify(ctx, VerifyContextParam().SetExepectLeftValue(true));
+	m_obj_tid					= vr_expr.GetResultTypeId();
+	TypeInfo* ti				= g_typemgr.GetTypeInfo(m_obj_tid);
 	if (ti->HasField(m_attr_name)) {
 		// 是字段
 		m_is_field		= true;
@@ -31,7 +32,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			// 根据参数类型和结果类型来选择
 			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name, vparam.GetFnCallArgs(), vparam.GetResultTid());
 			if (!method_idx.IsValid()) {
-				panicf("type[%d:%s] doesn't have method[%s] with args[%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), g_typemgr.GetTypeName(vparam.GetFnCallArgs()).c_str());
+				panicf("type[%d:%s] doesn't have method[%s] with args[%s]", m_obj_tid, GET_TYPENAME_C(m_obj_tid), m_attr_name.c_str(), g_typemgr.GetTypeName(vparam.GetFnCallArgs()).c_str());
 			}
 			m_fn_addr		= ti->GetMethodByIdx(method_idx);
 			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
@@ -41,7 +42,7 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			// 使用该类型来选择合适的函数重载
 			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name, vparam.GetResultTid());
 			if (!method_idx.IsValid()) {
-				panicf("type[%d:%s] doesn't have method[%s] of type[%d:%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str(), vparam.GetResultTid(), GET_TYPENAME_C(vparam.GetResultTid()));
+				panicf("type[%d:%s] doesn't have method[%s] of type[%d:%s]", m_obj_tid, GET_TYPENAME_C(m_obj_tid), m_attr_name.c_str(), vparam.GetResultTid(), GET_TYPENAME_C(vparam.GetResultTid()));
 			}
 			m_fn_addr		= ti->GetMethodByIdx(method_idx);
 			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
@@ -50,13 +51,15 @@ VerifyContextResult AstNodeAccessAttr::Verify(VerifyContext& ctx, VerifyContextP
 			// 上下文不足无法推断. 最后尝试下只用方法名查找, 如果有多个重名方法, 则失败
 			MethodIndex method_idx = ti->GetConcreteMethod(ctx, m_attr_name);
 			if (!method_idx.IsValid()) {
-				panicf("type[%d:%s] doesn't have method[%s]", obj_tid, GET_TYPENAME_C(obj_tid), m_attr_name.c_str());
+				panicf("type[%d:%s] doesn't have method[%s]", m_obj_tid, GET_TYPENAME_C(m_obj_tid), m_attr_name.c_str());
 			}
 			m_fn_addr		= ti->GetMethodByIdx(method_idx);
 			m_result_typeid = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
 			m_fnid			= ctx.GetFnTable().GetFnId(m_fn_addr);
 		}
 	}
+
+	m_compile_to_left_value = vparam.ExpectLeftValue();
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
 Variable* AstNodeAccessAttr::Execute(ExecuteContext& ctx) {
@@ -86,7 +89,16 @@ AstNodeAccessAttr* AstNodeAccessAttr::DeepCloneT() {
 }
 llvm::Value* AstNodeAccessAttr::Compile(CompileContext& cctx) {
 	if (m_is_field) {
-		panicf("not implemented yet");
+		llvm::Value* obj		 = m_obj_expr->Compile(cctx);
+		TypeInfo*	 ti_obj		 = g_typemgr.GetTypeInfo(m_obj_tid);
+		llvm::Type*	 ir_type_obj = ti_obj->GetLLVMIRType(cctx);
+		assert(ir_type_obj->getPointerTo() == obj->getType());
+		llvm::Value* attr_value = IRB.CreateConstGEP2_32(ir_type_obj, obj, 0, ti_obj->GetFieldIndex(m_attr_name));
+		if (!m_compile_to_left_value) {
+			TypeInfo* ti_field = g_typemgr.GetTypeInfo(m_result_typeid);
+			attr_value		   = IRB.CreateLoad(ti_field->GetLLVMIRType(cctx), attr_value);
+		}
+		return attr_value;
 	} else {
 		if (!cctx.HasNamedValue(m_fnid)) {
 			panicf("fn[%s] not defined", m_fnid.c_str());

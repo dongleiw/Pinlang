@@ -67,6 +67,7 @@ public:
 	virtual std::any visitStmt_if(PinlangParser::Stmt_ifContext* ctx) override;
 	virtual std::any visitStmt_assignment(PinlangParser::Stmt_assignmentContext* ctx) override;
 	virtual std::any visitStmt_break(PinlangParser::Stmt_breakContext* ctx) override;
+	virtual std::any visitStmt_continue(PinlangParser::Stmt_continueContext* context) override;
 
 	virtual std::any visitStmt_for_init(PinlangParser::Stmt_for_initContext* ctx) override;
 	virtual std::any visitStmt_for_cond(PinlangParser::Stmt_for_condContext* ctx) override;

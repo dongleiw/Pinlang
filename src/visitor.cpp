@@ -20,6 +20,7 @@
 #include "astnode_logical_operator.h"
 #include "astnode_operator.h"
 #include "astnode_reference.h"
+#include "astnode_continue.h"
 #include "astnode_return.h"
 #include "astnode_tuple.h"
 #include "astnode_type.h"
@@ -361,6 +362,8 @@ std::any Visitor::visitStatement(PinlangParser::StatementContext* ctx) {
 		return ctx->stmt_while()->accept(this);
 	} else if (ctx->stmt_break() != nullptr) {
 		return ctx->stmt_break()->accept(this);
+	} else if (ctx->stmt_continue() != nullptr) {
+		return ctx->stmt_continue()->accept(this);
 	} else {
 		panicf("bug");
 	}
@@ -808,4 +811,7 @@ std::any Visitor::visitStmt_while(PinlangParser::Stmt_whileContext* ctx) {
 }
 std::any Visitor::visitStmt_break(PinlangParser::Stmt_breakContext* ctx) {
 	return (AstNode*)new AstNodeBreak();
+}
+std::any Visitor::visitStmt_continue(PinlangParser::Stmt_continueContext* context) {
+	return (AstNode*)new AstNodeContinue();
 }

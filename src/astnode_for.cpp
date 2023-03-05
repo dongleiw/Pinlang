@@ -1,10 +1,12 @@
 #include "astnode_for.h"
+#include "compile_context.h"
 #include "define.h"
 #include "log.h"
 #include "variable_table.h"
 #include "verify_context.h"
 
 #include <cassert>
+#include <llvm-12/llvm/IR/BasicBlock.h>
 
 AstNodeFor::AstNodeFor(AstNode* init_expr, AstNode* cond_expr, AstNode* loop_expr, AstNode* body) {
 	m_init_expr = init_expr;
@@ -78,4 +80,43 @@ AstNodeFor* AstNodeFor::DeepCloneT() {
 						  m_cond_expr == nullptr ? nullptr : m_cond_expr->DeepClone(),
 						  m_loop_expr == nullptr ? nullptr : m_loop_expr->DeepClone(),
 						  m_body->DeepClone());
+}
+llvm::Value* AstNodeFor::Compile(CompileContext& cctx) {
+	if (m_init_expr != nullptr) {
+		m_init_expr->Compile(cctx);
+	}
+	llvm::BasicBlock* for_cond_block = llvm::BasicBlock::Create(IRC, "for_cond", cctx.GetCurFn());
+	llvm::BasicBlock* for_loop_block = llvm::BasicBlock::Create(IRC, "for_loop", cctx.GetCurFn());
+	llvm::BasicBlock* for_body_block = llvm::BasicBlock::Create(IRC, "for_body", cctx.GetCurFn());
+	llvm::BasicBlock* for_end_block	 = llvm::BasicBlock::Create(IRC, "for_end", cctx.GetCurFn());
+
+	IRB.CreateBr(for_cond_block);
+	IRB.SetInsertPoint(for_cond_block);
+
+	if (m_cond_expr != nullptr) {
+		llvm::Value* cond_value = m_cond_expr->Compile(cctx);
+		IRB.CreateCondBr(cond_value, for_body_block, for_end_block);
+	} else {
+		IRB.CreateBr(for_body_block);
+	}
+
+	IRB.SetInsertPoint(for_body_block);
+	// for statement允许continue/break. 需要设置对应跳转block
+	llvm::BasicBlock* old_continue_block = cctx.GetContinueBlock();
+	llvm::BasicBlock* old_break_block	 = cctx.GetBreakBlock();
+	cctx.SetContinueBlock(for_loop_block);
+	cctx.SetBreakBlock(for_end_block);
+	m_body->Compile(cctx);
+	cctx.SetContinueBlock(old_continue_block);
+	cctx.SetBreakBlock(old_break_block);
+	IRB.CreateBr(for_loop_block);
+
+	IRB.SetInsertPoint(for_loop_block);
+	if (m_loop_expr != nullptr) {
+		m_loop_expr->Compile(cctx);
+	}
+	IRB.CreateBr(for_cond_block);
+
+	IRB.SetInsertPoint(for_end_block);
+	return nullptr;
 }

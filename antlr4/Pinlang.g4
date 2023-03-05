@@ -188,6 +188,10 @@ stmt_break
 	: BREAK ';'
 	;
 
+stmt_continue
+	: CONTINUE ';'
+	;
+
 statement
 	: expr ';'
 	| stmt_vardef ';'
@@ -201,6 +205,7 @@ statement
 	| stmt_class_def
 	| stmt_assignment ';'
 	| stmt_break 
+	| stmt_continue
     ;
 
 literal

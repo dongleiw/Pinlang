@@ -11,7 +11,7 @@
 #include "log.h"
 #include "verify_context.h"
 
-AstNodeIdentifier::AstNodeIdentifier(std::string id) : m_id(id), m_is_complex_fn(false), m_compile_to_left_value(false) {
+AstNodeIdentifier::AstNodeIdentifier(std::string id) : m_id(id), m_is_complex_fn(false) {
 }
 VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
 	verify_begin();

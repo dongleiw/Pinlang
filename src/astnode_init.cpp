@@ -1,5 +1,6 @@
 #include "astnode_init.h"
 #include "astnode_type.h"
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
 #include "log.h"
@@ -119,6 +120,7 @@ llvm::Value* AstNodeInit::Compile(CompileContext& cctx) {
 			// 静态大小数组是一个value type, 直接分配在stack上.
 			llvm::Value* pv_array = IRB.CreateAlloca(ti_array->GetLLVMIRType(cctx));
 			for (size_t i = 0; i < m_elements.size(); i++) {
+				assert(m_elements.at(i).attr_name.empty());
 				llvm::Value* element_value = m_elements.at(i).attr_value->Compile(cctx);
 				if (element_value->getType() == ir_type_element) {
 				} else if (element_value->getType() == ir_type_element->getPointerTo()) {
@@ -135,6 +137,16 @@ llvm::Value* AstNodeInit::Compile(CompileContext& cctx) {
 			// 数组大小是动态的. 是一个reference type, 需要在heap上分配内存. 还不支持
 			panicf("not implemented yet");
 		}
+	} else if (ti->IsClass()) {
+		llvm::Type*	 ir_type_class = ti->GetLLVMIRType(cctx);
+		llvm::Value* class_inst	   = IRB.CreateAlloca(ir_type_class, nullptr, sprintf_to_stdstr("class_inst_%s", ti->GetName().c_str()));
+		for (size_t i = 0; i < m_elements.size(); i++) {
+			assert(!m_elements.at(i).attr_name.empty());
+			llvm::Value* element_value = m_elements.at(i).attr_value->Compile(cctx);
+			llvm::Value* element_addr  = IRB.CreateConstGEP2_32(ir_type_class, class_inst, 0, (int)ti->GetFieldIndex(m_elements.at(i).attr_name));
+			IRB.CreateStore(element_value, element_addr);
+		}
+		return class_inst;
 	} else {
 		panicf("not implemented yet");
 	}

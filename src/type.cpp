@@ -97,6 +97,14 @@ TypeId TypeInfo::GetFieldType(std::string field_name) const {
 	}
 	panicf("bug");
 }
+size_t TypeInfo::GetFieldIndex(std::string field_name) const {
+	for (size_t i = 0; i < m_field_list.size(); i++) {
+		if (m_field_list.at(i).name == field_name) {
+			return i;
+		}
+	}
+	panicf("bug");
+}
 MethodIndex TypeInfo::GetConcreteMethod(VerifyContext& ctx, std::string method_name, std::vector<TypeId> args_tid, TypeId return_tid) {
 	int method_count = 0;
 	for (auto constraint : m_constraints) {

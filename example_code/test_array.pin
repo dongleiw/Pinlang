@@ -1,0 +1,49 @@
+//================== 大小编译期确定的数组
+fn get_array_element_val(array [2]i32, idx u64) i32{
+	return array[idx];
+}
+fn get_array_element_ptr_array(array *[2]i32, idx u64) i32{
+	return (*array)[idx];
+}
+fn get_array_element_ptr_array_element(array *i32, idx u64) i32{
+	return array[idx];
+}
+fn modify_array_element_val(array [2]i32){
+	array[0]=100;
+}
+fn modify_array_element_ptr_array(array *[2]i32){
+	(*array)[0]=100;
+}
+fn modify_array_element_ptr_array_element(array *i32){
+	array[0]=100;
+}
+fn main() i32 {
+	var array = [2]i32{1,2};
+
+	//var idx u64 = 1;
+	//return array[idx];
+
+	//var sum = array[0] + array[1];
+	//return sum;
+
+	//array[0] = 100;
+	//return array[0];
+
+	//var idx u64 = 1;
+	//var e = get_array_element_val(array, idx);
+	//var e = get_array_element_ptr_array(&array, idx);
+	//var e = get_array_element_ptr_array_element(&(array[0]), idx);
+	//var e = get_array_element_val([2]i32{1,2}, idx);
+	//var e = get_array_element_ptr_array(&[2]i32{1,2}, idx);
+	//var e = get_array_element_ptr_array_element(&([2]i32{1,2}[0]), idx);
+	//return e;
+
+	//modify_array_element_val(array);
+	//modify_array_element_ptr_array(&array);
+	//modify_array_element_ptr_array_element(&(array[0]));
+	//return array[0];
+
+	//var pa = &array;
+	//(*pa)[0]=100;
+	//return (*pa)[0];
+}

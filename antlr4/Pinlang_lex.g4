@@ -43,6 +43,7 @@ ELSE        : 'else';
 FOR         : 'for';
 WHILE       : 'while';
 BREAK       : 'break';
+CONTINUE    : 'continue';
 INT_U8      : 'u8';
 INT_U16     : 'u16';
 INT_U32     : 'u32';

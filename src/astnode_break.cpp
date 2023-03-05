@@ -1,4 +1,5 @@
 #include "astnode_break.h"
+#include "compile_context.h"
 #include "define.h"
 #include "log.h"
 #include "type_mgr.h"
@@ -8,7 +9,7 @@ AstNodeBreak::AstNodeBreak() {
 }
 
 VerifyContextResult AstNodeBreak::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
-	if(!IsInFor()){
+	if (!IsInFor()) {
 		panicf("break can only be used in for statement");
 	}
 	VerifyContextResult vr_result;
@@ -20,4 +21,9 @@ Variable* AstNodeBreak::Execute(ExecuteContext& ctx) {
 }
 AstNodeBreak* AstNodeBreak::DeepCloneT() {
 	return new AstNodeBreak();
+}
+llvm::Value* AstNodeBreak::Compile(CompileContext& cctx) {
+	assert(cctx.GetBreakBlock() != nullptr);
+	IRB.CreateBr(cctx.GetBreakBlock());
+	return nullptr;
 }

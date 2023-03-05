@@ -10,6 +10,7 @@
 #include "variable.h"
 #include "variable_table.h"
 #include "verify_context.h"
+#include <llvm-12/llvm/IR/DerivedTypes.h>
 
 // TODO 检查字段名和方法名不重复
 VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
@@ -19,9 +20,9 @@ VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextPar
 		panicf("conflict class name[%s]", m_class_name.c_str());
 	}
 
-	TypeId class_tid = g_typemgr.AddTypeInfo(new TypeInfoClass(m_class_name));
-	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_class_name, Variable::CreateTypeVariable(class_tid));
-	TypeInfoClass* ti = dynamic_cast<TypeInfoClass*>(g_typemgr.GetTypeInfo(class_tid));
+	m_class_tid = g_typemgr.AddTypeInfo(new TypeInfoClass(m_class_name));
+	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_class_name, Variable::CreateTypeVariable(m_class_tid));
+	TypeInfoClass* ti = dynamic_cast<TypeInfoClass*>(g_typemgr.GetTypeInfo(m_class_tid));
 
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
 
@@ -82,4 +83,14 @@ AstNodeClassDef* AstNodeClassDef::DeepCloneT() {
 	}
 
 	return newone;
+}
+llvm::Value* AstNodeClassDef::Compile(CompileContext& cctx) {
+	std::vector<llvm::Type*> ir_type_fields;
+	TypeInfo*				 ti = g_typemgr.GetTypeInfo(m_class_tid);
+	for (auto f : ti->GetField()) {
+		TypeInfo* ti_field = g_typemgr.GetTypeInfo(f.tid);
+		ir_type_fields.push_back(ti_field->GetLLVMIRType(cctx));
+	}
+	llvm::StructType* ty = llvm::StructType::create(ir_type_fields, m_class_name);
+	return nullptr;
 }

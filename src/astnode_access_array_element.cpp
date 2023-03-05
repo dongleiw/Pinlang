@@ -1,10 +1,12 @@
 #include "astnode_access_array_element.h"
 #include "astnode_constraint.h"
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
 #include "log.h"
 #include "type_array.h"
 #include "type_mgr.h"
+#include "type_pointer.h"
 #include "variable.h"
 #include <llvm-12/llvm/IR/DerivedTypes.h>
 #include <llvm-12/llvm/IR/Type.h>
@@ -19,8 +21,7 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 
 	VerifyContextResult vr_obj	= m_array_expr->Verify(ctx, VerifyContextParam().SetExepectLeftValue(true));
 	TypeId				obj_tid = vr_obj.GetResultTypeId();
-	m_array_expr_is_tmp			= vr_obj.IsTmp();
-	TypeInfo* ti				= g_typemgr.GetTypeInfo(obj_tid);
+	TypeInfo*			ti		= g_typemgr.GetTypeInfo(obj_tid);
 
 	TypeId index_tid = m_index_expr->Verify(ctx, VerifyContextParam().SetResultTid(TYPE_ID_UINT64)).GetResultTypeId();
 	if (index_tid != TYPE_ID_UINT64) {
@@ -39,6 +40,7 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 	m_fn_addr				 = ti->GetMethodByIdx(method_index);
 	m_array_tid				 = obj_tid;
 	m_result_typeid			 = ctx.GetFnTable().GetFnReturnTypeId(m_fn_addr);
+	m_compile_to_left_value	 = vparam.ExpectLeftValue();
 
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
 }
@@ -66,47 +68,46 @@ AstNodeAccessArrayElement* AstNodeAccessArrayElement::DeepCloneT() {
 	return newone;
 }
 /*
-	var array = []int{1,2,3};
-	var i=0;
-	var e = array[i];
-
-	var array = []int{ []int{1,2}, []int{3,4} };
-	var i=0;
-	var e = array[i];
-
-	var array = []int{ []int{1,2}, []int{3,4} };
-	var i=0;
-	var j=1;
-	var e = array[i][j];
  */
 llvm::Value* AstNodeAccessArrayElement::Compile(CompileContext& cctx) {
-	TypeInfo*	ti_array	  = g_typemgr.GetTypeInfo(m_array_expr->GetResultTypeId());
-	llvm::Type* ir_type_array = ti_array->GetLLVMIRType(cctx);
-
-	llvm::Type* ir_type_index = g_typemgr.GetTypeInfo(TYPE_ID_UINT64)->GetLLVMIRType(cctx);
-
 	llvm::Value* array = m_array_expr->Compile(cctx);
 	llvm::Value* index = m_index_expr->Compile(cctx);
 
-	if (array->getType() == ir_type_array) {
-		// array是一个保存数组数据的寄存器, 需要获取指针, 否则没法执行GEP
-		llvm::Value* array_store_ptr = IRB.CreateAlloca(ir_type_array, nullptr, "store_array");
-		IRB.CreateStore(array, array_store_ptr);
-		array = array_store_ptr;
-	} else if (array->getType() == ir_type_array->getPointerTo()) {
-		// array是一个指向数组数据的指针
+	TypeInfo*	ti_array			  = g_typemgr.GetTypeInfo(m_array_expr->GetResultTypeId());
+	TypeInfo*	ti_array_element	  = g_typemgr.GetTypeInfo(m_result_typeid);
+	llvm::Type* ir_type_array_element = ti_array_element->GetLLVMIRType(cctx);
+	if (ti_array->IsArray()) {
+		/*
+		 * `array`是一个指向数组的指针
+		 * var a = [2]i32{1,2};
+		 * var array = &a; // *[2]i32
+		 */
+		assert(array->getType() == ti_array->GetLLVMIRType(cctx)->getPointerTo());
+		if (m_compile_to_left_value) {
+			return IRB.CreateGEP(nullptr, array, std::vector<llvm::Value*>{IRB.getInt64(0), index}, "array_indexed_element");
+		} else {
+			llvm::Value* element_ptr = IRB.CreateGEP(nullptr, array, std::vector<llvm::Value*>{IRB.getInt64(0), index}, "array_indexed_element");
+			return IRB.CreateLoad(ir_type_array_element, element_ptr);
+		}
+	} else if (ti_array->IsPointer()) {
+		/*
+		 * `array`是一个指向数组元素的指针
+		 * var a = [2]i32{1,2};
+		 * var array = &(array[0]); // *i32
+		 *
+		 * 将类型为*i32的指针转换为*[0]i32
+		 */
+		TypeInfoPointer* ti_pointer	   = dynamic_cast<TypeInfoPointer*>(ti_array);
+		TypeInfo*		 ti_pointee	   = g_typemgr.GetTypeInfo(ti_pointer->GetPointeeTid());
+		llvm::Type*		 ir_type_array = llvm::ArrayType::get(ti_pointee->GetLLVMIRType(cctx), 0);
+		llvm::Value*	 cast_array	   = IRB.CreateBitCast(array, ir_type_array->getPointerTo());
+		if (m_compile_to_left_value) {
+			return IRB.CreateGEP(nullptr, cast_array, std::vector<llvm::Value*>{IRB.getInt64(0), index}, "array_indexed_element");
+		} else {
+			llvm::Value* element_ptr = IRB.CreateGEP(nullptr, cast_array, std::vector<llvm::Value*>{IRB.getInt64(0), index}, "array_indexed_element");
+			return IRB.CreateLoad(ir_type_array_element, element_ptr);
+		}
 	} else {
 		panicf("bug");
 	}
-
-	if (index->getType() == ir_type_index) {
-		// index value就是u64值
-	} else if (index->getType() == ir_type_index->getPointerTo()) {
-		// index value是*u64, 需要load为u64
-		index = IRB.CreateLoad(ir_type_index, index, "load_array_index");
-	} else {
-		panicf("bug");
-	}
-
-	return IRB.CreateGEP(nullptr, array, std::vector<llvm::Value*>{IRB.getInt64(0), index}, "array_indexed_element");
 }

@@ -56,13 +56,8 @@ llvm::Value* AstNodeReturn::Compile(CompileContext& cctx) {
 		TypeInfo*	 ti_return = g_typemgr.GetTypeInfo(m_returned_expr_tid);
 		llvm::Value* ret_value = m_returned_expr->Compile(cctx);
 
-		if (ret_value->getType()->isPointerTy()) {
-			//cctx.SetRetValue(IRB.CreateLoad(ti_return->GetLLVMIRType(cctx), ret_value, "ret"));
-			IRB.CreateRet(IRB.CreateLoad(ti_return->GetLLVMIRType(cctx), ret_value, "ret"));
-		} else {
-			//cctx.SetRetValue(ret_value);
-			IRB.CreateRet(ret_value);
-		}
+		assert(ret_value->getType() == ti_return->GetLLVMIRType(cctx));
+		IRB.CreateRet(ret_value);
 	}
 	return nullptr;
 }

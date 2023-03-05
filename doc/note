@@ -1,0 +1,92 @@
+函数的参数类型是[N]T:
+	fn foo(a [2]i32){
+	}
+	由于GEP的第二个参数必须是ptr, 如果数组数据在register中, 无法直接GEP, 需要先store到内存中. (不确定LLVM是否提供类似的方法)
+	一个解决办法是将上述函数转换为 foo(a *[2]i32); 在函数调用之前, caller先clone一个临时数组, 然后传递ptr给callee
+
+	一个办法是caller传递指针, callee内部自己来clone. 
+	
+	发现一个新办法, 可以将类型为[N]T的参数修改为*[N]T, 并且增加byval属性
+
+数组类型的变换:
+	方案1:
+		fn foo1(a [3]i32){}
+		fn foo2(a *[3]i32){}
+		fn foo3(a *i32){}
+
+		foo1( [3]i32{1,2,3} ); // ok 类型匹配
+		foo2( [3]i32{1,2,3} ); // error 类型不匹配. [3]i32 != *[3]i32
+		foo3( [3]i32{1,2,3} ); // ok. 类型不匹配, 但可以自动转换. [3]i32 => *i32
+
+		fn bar1(a [3]char){}
+		fn bar2(a *[3]char){}
+		fn bar3(a *char){}
+
+		bar1( "hi" ); // ok. "hi" 类型为 [3]char
+		bar2( "hi" ); // error. "hi" 类型为 [3]char != *[3]char
+		bar3( "hi" ); // ok. "hi" 类型为 [3]char, 可以自动转换为 *char
+
+		根据上述例子可以得出: 
+			[N]T => *T // 可以自动转换. 这种转换会丢失数组长度信息N
+			*T => [N]T // 无法自动转换
+	方案2:
+		fn foo1(a [3]i32){}
+		fn foo2(a *[3]i32){}
+		fn foo3(a *i32){}
+		fn foo5(a *[2]i32){}
+
+		foo1( [3]i32{1,2,3} ); // ok 类型匹配
+		foo2( [3]i32{1,2,3} ); // error 类型不匹配. [3]i32 != *[3]i32
+		foo3( [3]i32{1,2,3} ); // error 类型不匹配. [3]i32 != *i32
+		foo3( &([3]i32{1,2,3}[0]) ); // ok 数组第0元素的地址类型为 *i32
+
+		fn bar1(a [3]char){}
+		fn bar2(a *[3]char){}
+		fn bar3(a *char){}
+
+		bar1( "hi" ); // ok. "hi" 类型为 [3]char
+		bar2( "hi" ); // error. "hi" 类型为 [3]char != *[3]char
+		bar3( "hi" ); // error. "hi" 类型为 [3]char != *char
+
+		根据上述例子可以得出: 
+			[N]T => *T // 无法自动转换, 只能显式的获取数组元素的地址进行转换
+			*T => [N]T // 无法转换
+
+			[]i32{1,2,3}: 类型为 [3]i32
+			&[]i32{1,2,3}: 类型为 *[3]i32
+			&([]i32{1,2,3}[0]): 类型为 *i32
+			&([][2]i32{ []i32{1,2}, []i32{3,4} }[0]): 类型为 *[2]i32
+			"hi": 类型为 [3]char
+
+如何实现字符串:
+	方案1:
+		char == u8
+		var c = 'a'; // char type
+		var c = '天'; // 非法. 单引号中的内容必须是一个ASCII 字符. 不支持unicode字符
+		var s = "天"; // char array. [N]char
+
+		fn foo(s *char);
+		foo("天气好");
+	方案2:
+		内置str类型, 常量字符串的默认类型为str. 字符串不以null结尾. 提供size.
+			标准库提供str类型
+			str{
+				field:
+					u64 size;
+					char* data; // malloc
+				method:
+					Size,HasPrefix,HasSuffix,MatchRe,Split,SubStr,Fields,...
+				implement constraint:
+					Copy(深拷贝)
+			}
+
+		也可以显式指定类型为[N]char
+
+		例子:
+			var c = 'a'; // char type
+			var c = '天'; // 非法. 单引号中的内容必须是一个ASCII 字符. 不支持unicode字符
+			var s []char = "天"; // char array. [N]char
+			var s = "天"; // str type.
+
+		fn foo(s *char);
+		foo("天气好");

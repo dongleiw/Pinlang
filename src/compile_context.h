@@ -50,12 +50,22 @@ public:
 
 	bool IsLeftValue() const;
 
+	void			  SetContinueBlock(llvm::BasicBlock* bb) { m_continue_block = bb; }
+	void			  SetBreakBlock(llvm::BasicBlock* bb) { m_break_block = bb; }
+	llvm::BasicBlock* GetContinueBlock() const { return m_continue_block; }
+	llvm::BasicBlock* GetBreakBlock() const { return m_break_block; }
+
 private:
 	llvm::LLVMContext* m_context;
 	llvm::Module*	   m_module;
 	llvm::IRBuilder<>* m_builder;
 	std::list<Block*>  m_blocks;
 	llvm::Function*	   m_cur_fn;
+
+	// continue/break语句跳转的目标block
+	// 由parent-astnode设置 (for, while, switch)
+	llvm::BasicBlock* m_continue_block;
+	llvm::BasicBlock* m_break_block;
 };
 
 #define IRC (cctx.GetContext())

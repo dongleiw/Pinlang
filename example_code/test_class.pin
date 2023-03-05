@@ -1,0 +1,33 @@
+fn test1() i32{
+	class Foo{
+		a i32;
+		b i32;
+	}
+	var f = Foo{
+		a:1,
+		b:2,
+	};
+
+	f.a=100;
+	return f.a+f.b;
+}
+fn test2() i32{
+	class Foo{
+		a i32;
+		b i32;
+
+		fn GetA() i32{
+			return this.a;
+		}
+	}
+	var f = Foo{
+		a:1,
+		b:2,
+	};
+
+	return f.GetA();
+}
+fn main() i32 {
+	//return test1();
+	return test2();
+}

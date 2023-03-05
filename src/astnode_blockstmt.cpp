@@ -159,8 +159,10 @@ void AstNodeBlockStmt::VerifyIdentfier(AstNode* cur_node, std::string id, Verify
 	// panicf("global identifier[%s] not exists", id.c_str());
 }
 llvm::Value* AstNodeBlockStmt::Compile(CompileContext& cctx) {
+	cctx.EnterBlock();
 	for (auto node : m_stmts) {
 		node->Compile(cctx);
 	}
+	cctx.LeaveBlock();
 	return nullptr;
 }

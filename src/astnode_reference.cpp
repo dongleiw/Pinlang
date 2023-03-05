@@ -12,7 +12,7 @@ VerifyContextResult AstNodeReference::Verify(VerifyContext& ctx, VerifyContextPa
 
 	m_compile_to_left_value = vparam.ExpectLeftValue();
 
-	VerifyContextResult vr_value = m_expr->Verify(ctx, VerifyContextParam().SetExepectLeftValue(true));
+	VerifyContextResult vr_value = m_expr->Verify(ctx, VerifyContextParam().SetExepectLeftValue(false));
 
 	TypeInfo* ti = g_typemgr.GetTypeInfo(vr_value.GetResultTypeId());
 	if (!ti->IsPointer()) {
@@ -35,12 +35,11 @@ llvm::Value* AstNodeReference::Compile(CompileContext& cctx) {
 	TypeInfo* ti_pointee = g_typemgr.GetTypeInfo(m_result_typeid);
 
 	llvm::Type* ir_type_pointee = ti_pointee->GetLLVMIRType(cctx);
-	llvm::Type* ir_type_pointer = ir_type_pointee->getPointerTo();
 
 	if (m_compile_to_left_value) {
 		return value;
 	} else {
-		return IRB.CreateLoad(ir_type_pointer, value);
+		return IRB.CreateLoad(ir_type_pointee, value);
 	}
 }
 AstNodeReference* AstNodeReference::DeepCloneT() {

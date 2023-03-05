@@ -8,6 +8,7 @@
 #include "type_mgr.h"
 #include "utils.h"
 #include "variable_table.h"
+#include <llvm-12/llvm/IR/Argument.h>
 #include <llvm-12/llvm/IR/DerivedTypes.h>
 #include <llvm-12/llvm/IR/Type.h>
 
@@ -190,7 +191,14 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 			TypeId	  arg_tid = tifn->GetParamType(i);
 			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
 
-			fn_arg_types.push_back(arg_ti->GetLLVMIRType(cctx));
+			llvm::Type* ir_type_arg = arg_ti->GetLLVMIRType(cctx);
+			if (arg_ti->IsArray()) {
+				// 如果函数参数类型为[N]T, 则替换为*[N]T, 并添加byval属性.
+				// 这样llvm会将数组clone一份新数据, 然后将新的数组的指针传递给callee
+				ir_type_arg = ir_type_arg->getPointerTo();
+			}
+
+			fn_arg_types.push_back(ir_type_arg);
 		}
 		llvm::FunctionType* fn_type = llvm::FunctionType::get(fn_return_type, fn_arg_types, false);
 
@@ -198,7 +206,21 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 		fn_info.llvm_ir_fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage, fn_name, IRM);
 		assert(fn_info.params_name.size() == fn_info.llvm_ir_fn->arg_size());
 		for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
-			fn_info.llvm_ir_fn->getArg(i)->setName(fn_info.params_name.at(i));
+			llvm::Argument* arg = fn_info.llvm_ir_fn->getArg(i);
+
+			arg->setName(fn_info.params_name.at(i));
+
+			TypeId	  arg_tid = tifn->GetParamType(i);
+			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
+
+			llvm::Type* ir_type_arg = arg_ti->GetLLVMIRType(cctx);
+			if (arg_ti->IsArray()) {
+				// 如果函数参数类型为[N]T, 则替换为*[N]T, 并添加byval属性.
+				// 这样llvm会将数组clone一份新数据, 然后将新的数组的指针传递给callee
+				llvm::AttrBuilder attr_builder;
+				attr_builder.addByValAttr(ir_type_arg);
+				arg->addAttrs(attr_builder);
+			}
 		}
 
 		cctx.AddNamedValue(fn_name, fn_info.llvm_ir_fn);

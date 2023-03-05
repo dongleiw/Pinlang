@@ -95,6 +95,7 @@ public:
 	void			   SetFields(std::vector<std::pair<std::string, TypeId>> fields);
 	TypeId			   GetFieldType(std::string field_name) const;
 	std::vector<Field> GetField() const { return m_field_list; }
+	size_t			   GetFieldIndex(std::string field_name) const;
 
 	int GetMemSize() const { return m_mem_size; }
 	int GetMemAlignSize() const { return m_mem_align_size; }

@@ -1,0 +1,17 @@
+fn test1(a bool, b bool) i32{
+	if(a){
+		if(b){
+			return 1;
+		}
+		return 2;
+	}else{
+		if(b){
+			return 3;
+		}
+		return 4;
+	}
+}
+fn main() i32 {
+	var i = test1(false,false);
+	return i;
+}

@@ -37,6 +37,5 @@ private:
 
 	FnAddr m_fn_addr;
 
-	bool   m_array_expr_is_tmp;
 	TypeId m_array_tid;
 };

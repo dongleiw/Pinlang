@@ -1,8 +1,8 @@
 #pragma once
 
+#include "compile_context.h"
 #include "execute_context.h"
 #include "instruction.h"
-#include "compile_context.h"
 #include "type.h"
 #include "variable.h"
 #include "verify_context.h"
@@ -17,7 +17,7 @@ public:
 	};
 
 public:
-	AstNode() : m_result_typeid(TYPE_ID_NONE), m_parent(nullptr), m_verify_status(NOT_VERIFIED), m_is_exit_node(false) {
+	AstNode() : m_result_typeid(TYPE_ID_NONE), m_parent(nullptr), m_verify_status(NOT_VERIFIED), m_is_exit_node(false), m_compile_to_left_value(false) {
 	}
 	TypeId GetResultTypeId() { return m_result_typeid; }
 
@@ -35,6 +35,10 @@ public:
 
 	bool IsExitNode() const { return m_is_exit_node; }
 
+	bool IsCompileToLeftValue() const { return m_compile_to_left_value; }
+	void SetCompileToLeftValue() { m_compile_to_left_value = true; }
+	void SetCompileToRightValue() { m_compile_to_left_value = false; }
+
 protected:
 	void verify_begin();
 	void verify_end();
@@ -44,6 +48,7 @@ protected:
 	AstNode*	 m_parent;
 	VerifyStatus m_verify_status; // 是否已经verify
 	bool		 m_is_exit_node;  // 是否是exitnode
+	bool		 m_compile_to_left_value;
 };
 
 #define M_DEEP_CLONE(node, type) (node == nullptr ? nullptr : dynamic_cast<type>(node->DeepClone()))
