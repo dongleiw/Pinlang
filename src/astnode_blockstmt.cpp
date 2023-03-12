@@ -116,6 +116,7 @@ AstNodeBlockStmt* AstNodeBlockStmt::DeepCloneT() {
 }
 void AstNodeBlockStmt::AddChildStmt(AstNode* node) {
 	m_stmts.push_back(node);
+	node->SetParent(this);
 }
 void AstNodeBlockStmt::MergeAnother(AstNodeBlockStmt& another) {
 	assert(this != &another);

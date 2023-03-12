@@ -2,6 +2,7 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_for.h"
 #include "compile_context.h"
+#include "define.h"
 #include "instruction.h"
 #include "log.h"
 
@@ -13,6 +14,16 @@ bool AstNode::IsInFor() const {
 		}
 		if (nullptr != dynamic_cast<AstNodeComplexFnDef*>(cur)) {
 			return false;
+		}
+		cur = cur->m_parent;
+	}
+	return false;
+}
+bool AstNode::IsInFn() const {
+	AstNode* cur = m_parent;
+	while (cur != nullptr) {
+		if (nullptr != dynamic_cast<AstNodeComplexFnDef*>(cur)) {
+			return true;
 		}
 		cur = cur->m_parent;
 	}
@@ -33,5 +44,8 @@ void AstNode::verify_end() {
 	}
 }
 CompileResult AstNode::Compile(CompileContext& cctx) {
+	panicf("not implemented");
+}
+Variable* AstNode::Execute(ExecuteContext& ctx) {
 	panicf("not implemented");
 }

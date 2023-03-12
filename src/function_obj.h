@@ -11,15 +11,10 @@ class Variable;
 class FunctionObj {
 public:
 	FunctionObj(FunctionObj& another);
-	FunctionObj(Variable* obj, FnAddr fn_addr) {
-		m_obj	   = obj;
-		m_fn_addr = fn_addr;
+	FunctionObj(Variable* obj) {
+		m_obj = obj;
 	}
-
-	FnAddr	  GetFnAddr() { return m_fn_addr; }
-	Variable* Call(ExecuteContext& ctx, std::vector<Variable*> args);
 
 private:
 	Variable* m_obj; // 所属对象. 普通函数则为null
-	FnAddr	  m_fn_addr;
 };

@@ -9,17 +9,6 @@
 
 #include <cassert>
 
-static Variable* builtin_fn_tostring_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(args.size() == 0);
-	if (thisobj->GetValueBool()) {
-		return new Variable(std::string("true"));
-	} else {
-		return new Variable(std::string("false"));
-	}
-}
-static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_BOOL);
-}
 
 TypeInfoBool::TypeInfoBool() {
 	m_name			 = "bool";

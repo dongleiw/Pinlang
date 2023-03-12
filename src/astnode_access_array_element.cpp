@@ -28,7 +28,7 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 		panicf("index type is not int");
 	}
 
-	std::vector<MethodIndex> method_indexs = ti->GetConstraintMethod(ctx, "Index", "index", std::vector<TypeId>{index_tid});
+	std::vector<std::string> method_indexs = ti->GetConstraintMethod(ctx, "Index", "index", std::vector<TypeId>{index_tid}, TYPE_ID_INFER);
 	if (method_indexs.empty()) {
 		panicf("type[%d:%s] not implement constraint Index", m_array_tid, GET_TYPENAME_C(m_array_tid));
 	} else if (method_indexs.size() > 1) {
@@ -36,10 +36,9 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 	} else {
 	}
 
-	MethodIndex method_index = method_indexs.at(0);
-	m_fn_addr				 = ti->GetMethodByIdx(method_index);
-	m_result_typeid			 = ctx.GetFnTable().GetFnReturnTypeId(m_fn_addr);
-	m_compile_to_left_value	 = vparam.ExpectLeftValue();
+	std::string fnid		= method_indexs.at(0);
+	m_result_typeid			= ctx.GetFnTable().GetFnReturnTypeId(fnid);
+	m_compile_to_left_value = vparam.ExpectLeftValue();
 
 	if (ti->IsArray()) {
 		// `array`表达式的rtype是array, 因此需要编译为lvalue, 也就是数组的地址
@@ -52,21 +51,6 @@ VerifyContextResult AstNodeAccessArrayElement::Verify(VerifyContext& ctx, Verify
 	}
 
 	return VerifyContextResult(m_result_typeid).SetTmp(false);
-}
-Variable* AstNodeAccessArrayElement::Execute(ExecuteContext& ctx) {
-	Variable* assign_value = ctx.GetAssignValue();
-	ctx.SetAssignValue(nullptr);
-
-	Variable* v_array = m_array_expr->Execute(ctx);
-	Variable* v_index = m_index_expr->Execute(ctx);
-
-	if (assign_value != nullptr) {
-		v_array->SetValueArrayElement(v_index->GetValueUInt64(), assign_value);
-		return nullptr;
-	} else {
-		std::vector<Variable*> args{v_index};
-		return ctx.GetFnTable().CallFn(m_fn_addr, ctx, v_array, args);
-	}
 }
 AstNodeAccessArrayElement* AstNodeAccessArrayElement::DeepCloneT() {
 	AstNodeAccessArrayElement* newone = new AstNodeAccessArrayElement();

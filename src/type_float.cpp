@@ -16,46 +16,6 @@
 
 #include <cassert>
 
-static Variable* builtin_fn_add_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	float result = thisobj->GetValueFloat() + args.at(0)->GetValueFloat();
-	return new Variable(result);
-}
-static void builtin_fn_add_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_FLOAT);
-}
-
-static Variable* builtin_fn_sub_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	float result = thisobj->GetValueFloat() - args.at(0)->GetValueFloat();
-	return new Variable(result);
-}
-static void builtin_fn_sub_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_FLOAT);
-}
-
-static Variable* builtin_fn_greaterThan_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_FLOAT && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_FLOAT);
-	bool result = thisobj->GetValueFloat() > args.at(0)->GetValueFloat();
-	return new Variable(result);
-}
-static void builtin_fn_greaterThan_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_FLOAT);
-}
-
-static Variable* builtin_fn_div_float(ExecuteContext& ctx, Function* fn, Variable* thisobj, std::vector<Variable*> args) {
-	float result = thisobj->GetValueFloat() / args.at(0)->GetValueFloat();
-	return new Variable(result);
-}
-
-static Variable* builtin_fn_tostring_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(args.size() == 0);
-	char buf[16];
-	snprintf(buf, sizeof(buf), "%f", thisobj->GetValueFloat());
-	return new Variable(std::string(buf));
-}
-static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_FLOAT);
-}
-
 TypeInfoFloat::TypeInfoFloat() {
 	m_name			 = "float";
 	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;

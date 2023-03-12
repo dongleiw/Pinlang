@@ -15,45 +15,6 @@
 
 #include <cassert>
 
-static Variable* builtin_fn_add_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	std::string result = thisobj->GetValueStr();
-	result += args.at(0)->GetValueStr();
-	return new Variable(result);
-}
-static void builtin_fn_add_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_STR);
-}
-
-static Variable* builtin_fn_tostring(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(args.size() == 0);
-	return thisobj;
-}
-static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_STR);
-}
-
-static Variable* builtin_fn_index_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_INT32);
-	const char* value = thisobj->GetValueStr();
-	int32_t		index = args.at(0)->GetValueInt32();
-	if (index < 0 || index >= thisobj->GetValueStrSize()) {
-		panicf("wrong array index");
-	}
-	int32_t ch = value[index];
-	return new Variable(ch);
-}
-static void builtin_fn_index_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_STR);
-}
-
-static Variable* builtin_fn_size_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_STR && args.size() == 0);
-	return new Variable(thisobj->GetValueStrSize());
-}
-static void builtin_fn_size_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_STR);
-}
-
 TypeInfoStr::TypeInfoStr() {
 	m_name			 = "str";
 	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;

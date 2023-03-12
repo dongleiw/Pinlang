@@ -13,7 +13,6 @@
 #include "builtin_fn.h"
 #include "compile_context.h"
 #include "define.h"
-#include "dynamic_loading.h"
 #include "execute_context.h"
 #include "fntable.h"
 #include "function_obj.h"
@@ -74,7 +73,6 @@ void compile(std::string src_path, std::vector<std::string> str_args) {
 		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
 		register_predefine(*predefine_block_stmts);
 		BuiltinFn::register_builtin_fns(*predefine_block_stmts);
-		DynamicLoading::RegisterFn(*predefine_block_stmts);
 	}
 
 	Visitor			  visitor;
@@ -145,7 +143,6 @@ void execute(std::string src_path, std::vector<std::string> str_args) {
 		Visitor visitor;
 		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
 		register_predefine(*predefine_block_stmts);
-		DynamicLoading::RegisterFn(*predefine_block_stmts);
 	}
 
 	Visitor			  visitor;
@@ -201,7 +198,7 @@ void execute(std::string src_path, std::vector<std::string> str_args) {
 		main_fn_arg = new Variable(main_fn_ti->GetParamType(0), str_var_array);
 	}
 
-	Variable* main_ret_v = ectx.GetFnTable().CallFn(main_fn_addr, ectx, nullptr, std::vector<Variable*>{main_fn_arg});
+	//Variable* main_ret_v = ectx.GetFnTable().CallFn(main_fn_addr, ectx, nullptr, std::vector<Variable*>{main_fn_arg});
 	log_info("execute end");
 
 	printf("execute end. succ\n");

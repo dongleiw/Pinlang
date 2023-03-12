@@ -5,9 +5,6 @@
 #include "type_mgr.h"
 #include "utils.h"
 
-static void builtin_fn_index_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-}
-
 TypeInfoPointer::TypeInfoPointer(TypeId pointee_tid) {
 	m_typegroup_id = TYPE_GROUP_ID_POINTER;
 	m_pointee_tid  = pointee_tid;

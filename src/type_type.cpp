@@ -6,37 +6,6 @@
 #include "type_mgr.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_equal_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_TYPE);
-	return new Variable(thisobj->GetValueTid() == args.at(0)->GetValueTid());
-}
-static void builtin_fn_equal_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_TYPE);
-}
-
-static Variable* builtin_fn_tostring_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
-	return new Variable(GET_TYPENAME(thisobj->GetValueTid()));
-}
-static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-}
-
-static Variable* builtin_fn_getTypeName_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
-	return new Variable(GET_TYPENAME(thisobj->GetValueTid()));
-}
-static void builtin_fn_getTypeName_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_TYPE);
-}
-
-static Variable* builtin_fn_getTypeId_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj->GetTypeId() == TYPE_ID_TYPE && args.size() == 0);
-	return new Variable(int(thisobj->GetValueTid()));
-}
-static void builtin_fn_getTypeId_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	assert(builtin_fn_info.obj_tid == TYPE_ID_TYPE);
-}
-
 TypeInfoType::TypeInfoType() {
 	m_name = "type";
 	m_is_value_type	 = true;

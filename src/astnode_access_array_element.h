@@ -23,7 +23,6 @@ public:
 	}
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
-	virtual Variable*			Execute(ExecuteContext& ctx) override;
 	virtual CompileResult		Compile(CompileContext& cctx) override;
 
 	virtual AstNode*		   DeepClone() override { return DeepCloneT(); }
@@ -35,8 +34,6 @@ private:
 private:
 	AstNode* m_array_expr;
 	AstNode* m_index_expr;
-
-	FnAddr m_fn_addr;
 
 	TypeId m_array_tid;
 };

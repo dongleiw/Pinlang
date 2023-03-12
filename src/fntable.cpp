@@ -14,57 +14,10 @@
 #include <llvm-12/llvm/IR/Function.h>
 #include <llvm-12/llvm/IR/Type.h>
 
-Variable* FnTable::CallFn(FnAddr addr, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
-	switch (addr.fn_kind) {
-	case FN_KIND_USERDEF:
-		return call_userDef_fn(m_userdef_fn_table.at(addr.idx), ctx, obj, args);
-		break;
-	case FN_KIND_DYNAMIC:
-		return call_dynamic_fn(m_dynamic_fn_table.at(addr.idx), ctx, obj, args);
-		break;
-	default:
-		panicf("bug");
-		break;
-	}
-}
-Variable* FnTable::call_userDef_fn(UserDefFnInfo& fninfo, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
-	assert(fninfo.params_name.size() == args.size());
-	// 构造block
-	VariableTable* vt_args = new VariableTable();
-	// 将泛参定义到block中
-	for (auto iter : fninfo.gparams) {
-		vt_args->AddVariable(iter.gparam_name, Variable::CreateTypeVariable(iter.gparam_tid));
-	}
-	// 将参数定义到block中
-	for (size_t i = 0; i < args.size(); i++) {
-		vt_args->AddVariable(fninfo.params_name.at(i), args.at(i));
-	}
-	if (obj != nullptr) {
-		assert(obj->GetTypeId() == fninfo.obj_tid);
-		vt_args->AddVariable("this", obj);
-	}
-
-	ctx.PushStack();
-	ctx.GetCurStack()->EnterBlock(vt_args);
-	fninfo.body->Execute(ctx);
-	Variable* ret_var = ctx.GetCurStack()->GetReturnedValue();
-	ctx.PopStack();
-	return ret_var;
-}
-Variable* FnTable::call_dynamic_fn(DynamicFnInfo& fninfo, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
-	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fninfo.fn_tid));
-	assert(tifn->GetParamNum() == args.size());
-	for (size_t i = 0; i < tifn->GetParamNum(); i++) {
-		assert(tifn->GetParamType(i) == args.at(i)->GetTypeId());
-	}
-
-	ctx.PushStack();
-	Variable* ret_var = fninfo.execute_cb(fninfo, ctx, obj, args);
-	ctx.PopStack();
-	return ret_var;
-}
-FnAddr FnTable::AddUserDefineFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body, std::string fnname) {
+std::string FnTable::AddUserDefineFn(VerifyContext& ctx, std::string fnname, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body, bool is_nested) {
 	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
+
+	std::string fnid = generate_fnid(fnname, obj_tid, gparams, fn_tid, is_nested);
 
 	// 构造block
 	VariableTable* params_vt = new VariableTable();
@@ -86,35 +39,45 @@ FnAddr FnTable::AddUserDefineFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_ti
 	body->Verify(ctx, VerifyContextParam().SetReturnTid(tifn->GetReturnTypeId()));
 	ctx.PopSTack();
 
-	UserDefFnInfo fninfo = UserDefFnInfo{
+	FnInfo fninfo = FnInfo{
 		.fnname		 = fnname,
-		.fn_tid		 = fn_tid,
-		.obj_tid	 = obj_tid,
-		.gparams	 = gparams,
-		.params_name = params_name,
-		.body		 = body,
-	};
-	FnAddr fnaddr;
-	fnaddr.fn_kind = FN_KIND_USERDEF;
-	fnaddr.idx	   = m_userdef_fn_table.size();
-	m_userdef_fn_table.push_back(fninfo);
-	return fnaddr;
-}
-FnAddr FnTable::AddBuiltinFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnCompileCallback compile_cb, std::string fnid) {
-	BuiltinFnInfo fninfo = BuiltinFnInfo{
 		.fnid		 = fnid,
 		.fn_tid		 = fn_tid,
 		.obj_tid	 = obj_tid,
 		.gparams	 = gparams,
 		.params_name = params_name,
-		.compile_cb	 = compile_cb,
+		.body		 = body,
+		.compile_cb	 = nullptr,
+		.llvm_ir_fn	 = nullptr,
 	};
 
-	FnAddr fnaddr;
-	fnaddr.fn_kind = FN_KIND_BUILTIN;
-	fnaddr.idx	   = m_builtin_fn_table.size();
-	m_builtin_fn_table.push_back(fninfo);
-	return fnaddr;
+	if (m_fn_table.find(fnid) != m_fn_table.end()) {
+		panicf("duplicate fnid[%s]", fnid.c_str());
+	}
+	m_fn_table[fnid] = fninfo;
+	return fnid;
+}
+std::string FnTable::AddBuiltinFn(VerifyContext& ctx, std::string fnname, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnCompileCallback compile_cb) {
+
+	std::string fnid = generate_fnid(fnname, obj_tid, gparams, fn_tid, false);
+
+	FnInfo fninfo = FnInfo{
+		.fnname		 = fnname,
+		.fnid		 = fnid,
+		.fn_tid		 = fn_tid,
+		.obj_tid	 = obj_tid,
+		.gparams	 = gparams,
+		.params_name = params_name,
+		.body		 = nullptr,
+		.compile_cb	 = compile_cb,
+		.llvm_ir_fn	 = nullptr,
+	};
+
+	if (m_fn_table.find(fnid) != m_fn_table.end()) {
+		panicf("duplicate fnid[%s]", fnid.c_str());
+	}
+	m_fn_table[fnid] = fninfo;
+	return fnid;
 }
 FnAddr FnTable::AddDynamicFn(TypeId fn_tid, int dynlib_instance_id, void* dynlib_fn, DynamicFnExecuteCallback cb) {
 	DynamicFnInfo fninfo = DynamicFnInfo{
@@ -130,39 +93,17 @@ FnAddr FnTable::AddDynamicFn(TypeId fn_tid, int dynlib_instance_id, void* dynlib
 	m_dynamic_fn_table.push_back(fninfo);
 	return fnaddr;
 }
-TypeId FnTable::GetFnTypeId(FnAddr addr) const {
-	switch (addr.fn_kind) {
-	case FN_KIND_USERDEF:
-		return m_userdef_fn_table.at(addr.idx).fn_tid;
-		break;
-	case FN_KIND_BUILTIN:
-		return m_builtin_fn_table.at(addr.idx).fn_tid;
-		break;
-	case FN_KIND_DYNAMIC:
-		return m_dynamic_fn_table.at(addr.idx).fn_tid;
-		break;
-	default:
-		panicf("bug");
-		break;
-	}
-}
-TypeId FnTable::GetFnReturnTypeId(FnAddr addr) const {
-	TypeId		fn_tid = GetFnTypeId(addr);
+TypeId FnTable::GetFnReturnTypeId(std::string fnid) const {
+	TypeId		fn_tid = GetFnTypeId(fnid);
 	TypeInfoFn* tifn   = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
 	return tifn->GetReturnTypeId();
 }
-std::string FnTable::GetFnId(FnAddr addr) const {
-	switch (addr.fn_kind) {
-	case FN_KIND_USERDEF:
-		return m_userdef_fn_table.at(addr.idx).fnname;
-		break;
-	case FN_KIND_BUILTIN:
-		return m_builtin_fn_table.at(addr.idx).fnid;
-		break;
-	default:
-		panicf("bug");
-		break;
+TypeId FnTable::GetFnTypeId(std::string fnid) const {
+	auto found = m_fn_table.find(fnid);
+	if (found == m_fn_table.end()) {
+		panicf("unknown fnid[%s]", fnid.c_str());
 	}
+	return found->second.fn_tid;
 }
 void FnTable::Compile(CompileContext& cctx) {
 	compile_builtin_fn(cctx);
@@ -170,12 +111,17 @@ void FnTable::Compile(CompileContext& cctx) {
 }
 void FnTable::compile_user_define_fn(CompileContext& cctx) {
 	// 构建fn,
-	for (UserDefFnInfo& fn_info : m_userdef_fn_table) {
+	for (auto iter = m_fn_table.begin(); iter != m_fn_table.end(); iter++) {
+		FnInfo& fn_info = iter->second;
+		assert((fn_info.body != nullptr && fn_info.compile_cb == nullptr) || (fn_info.body == nullptr && fn_info.compile_cb != nullptr));
+		if (fn_info.body == nullptr) {
+			continue;
+		}
 		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_info.fn_tid));
 
 		// 如果是main函数, 不增加参数类型和返回值类型信息. 否则没法调用了
-		std::string fn_name = fn_info.fnname;
-		if (fn_info.fnname == "main[]()5:i32") {
+		std::string fn_name = fn_info.fnid;
+		if (fn_info.fnid == "main[]()i32") {
 			fn_name = "main";
 		}
 
@@ -253,7 +199,12 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 
 		cctx.AddNamedValue(fn_name, fn_info.llvm_ir_fn);
 	}
-	for (const UserDefFnInfo& fn_info : m_userdef_fn_table) {
+	for (auto iter = m_fn_table.begin(); iter != m_fn_table.end(); iter++) {
+		FnInfo& fn_info = iter->second;
+		assert((fn_info.body != nullptr && fn_info.compile_cb == nullptr) || (fn_info.body == nullptr && fn_info.compile_cb != nullptr));
+		if (fn_info.body == nullptr) {
+			continue;
+		}
 		cctx.SetCurFn(fn_info.llvm_ir_fn);
 		cctx.SetCurFnIsMethod(fn_info.obj_tid != TYPE_ID_NONE);
 
@@ -284,7 +235,53 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
  */
 void FnTable::compile_builtin_fn(CompileContext& cctx) {
 	// 构建fn
-	for (BuiltinFnInfo& fn_info : m_builtin_fn_table) {
+	for (auto iter = m_fn_table.begin(); iter != m_fn_table.end(); iter++) {
+		FnInfo& fn_info = iter->second;
+		assert((fn_info.body != nullptr && fn_info.compile_cb == nullptr) || (fn_info.body == nullptr && fn_info.compile_cb != nullptr));
+		if (fn_info.body != nullptr) {
+			continue;
+		}
 		fn_info.compile_cb(cctx, fn_info.fnid);
 	}
+}
+std::string FnTable::generate_fnid(std::string fnname, TypeId obj_tid, std::vector<ConcreteGParam> concrete_generic_params, TypeId fn_tid, bool is_nested) {
+	std::string fnid;
+	if (obj_tid != TYPE_ID_NONE) {
+		fnid = sprintf_to_stdstr("%d:%s::", obj_tid, GET_TYPENAME_C(obj_tid));
+	}
+	fnid += fnname + "[";
+	for (size_t i = 0; i < concrete_generic_params.size(); i++) {
+		fnid = fnid + sprintf_to_stdstr("%s", GET_TYPENAME_C(concrete_generic_params.at(i).gparam_tid));
+		if (i + 1 != concrete_generic_params.size()) {
+			fnid += ",";
+		}
+	}
+	fnid += "](";
+
+	// 参数
+	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
+	for (size_t i = 0; i < tifn->GetParamNum(); i++) {
+		fnid = fnid + sprintf_to_stdstr("%s", GET_TYPENAME_C(tifn->GetParamType(i)));
+		if (i + 1 != tifn->GetParamNum()) {
+			fnid += ",";
+		}
+	}
+
+	fnid += ")";
+	if (tifn->GetReturnTypeId() != TYPE_ID_NONE) {
+		fnid += sprintf_to_stdstr("%s", GET_TYPENAME_C(tifn->GetReturnTypeId()));
+	}
+
+	if (is_nested) {
+		auto found = m_nested_fnid_seed.find(fnname);
+		if (found == m_nested_fnid_seed.end()) {
+			fnid += " #1";
+			m_nested_fnid_seed[fnname] = 1;
+		} else {
+			fnid += " #" + to_str(found->second);
+			found->second++;
+		}
+	}
+
+	return fnid;
 }

@@ -19,36 +19,6 @@
 #include "variable_table.h"
 #include "verify_context.h"
 
-static Variable* builtin_fn_tostring_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(args.size() == 0);
-
-	TypeInfoTuple*		ti_tuple		   = dynamic_cast<TypeInfoTuple*>(g_typemgr.GetTypeInfo(builtin_fn_info.obj_tid));
-	std::vector<TypeId> tuple_element_tids = ti_tuple->GetElementTids();
-	assert(tuple_element_tids.size() == builtin_fn_info.fn_list.size());
-	std::string s = "(";
-	for (size_t i = 0; i < tuple_element_tids.size(); i++) {
-		std::string field_name = TypeInfoTuple::GetFieldName(i);
-		Variable*	element	   = thisobj->GetFieldValue(field_name);
-		FnAddr		fn_addr   = builtin_fn_info.fn_list.at(i);
-		Variable*	str_e	   = ctx.GetFnTable().CallFn(fn_addr, ctx, element, std::vector<Variable*>());
-		s += str_e->GetValueStr();
-		if (i + 1 < tuple_element_tids.size()) {
-			s += ",";
-		}
-	}
-	s += ")";
-	return new Variable(s);
-}
-static void builtin_fn_tostring_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-	TypeInfoTuple* ti_tuple = dynamic_cast<TypeInfoTuple*>(g_typemgr.GetTypeInfo(builtin_fn_info.obj_tid));
-	for (auto tid : ti_tuple->GetElementTids()) {
-		TypeInfo*	ti_element	 = g_typemgr.GetTypeInfo(tid);
-		MethodIndex method_index = ti_element->GetMethodIdx("tostring[]()str");
-		FnAddr fn_addr= ti_element->GetMethodByIdx(method_index);
-		builtin_fn_info.fn_list.push_back(fn_addr);
-	}
-}
-
 TypeInfoTuple::TypeInfoTuple(std::vector<TypeId> element_tids) {
 	m_element_tids = element_tids;
 	m_typegroup_id = TYPE_GROUP_ID_TUPLE;
@@ -100,8 +70,6 @@ void TypeInfoTuple::InitBuiltinMethods(VerifyContext& ctx) {
 		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("ToString")->GetValueConstraint();
 		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{});
 		AddConstraint(constraint_tid, fns);
-
-		GetConstraintMethod(ctx, "ToString", "tostring", std::vector<TypeId>()); // 触发tostring函数的实例化
 	}
 	ctx.PopSTack();
 }

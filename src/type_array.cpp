@@ -46,17 +46,6 @@
 //	assert(thisobj != nullptr && args.size() == 0);
 //	return new Variable(thisobj->GetValueArraySize());
 //}
-static void builtin_fn_size_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-}
-
-static Variable* builtin_fn_index_execute(BuiltinFnInfo& builtin_fn_info, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args) {
-	assert(thisobj != nullptr && g_typemgr.GetTypeInfo(thisobj->GetTypeId())->IsArray() && args.size() == 1 && args.at(0)->GetTypeId() == TYPE_ID_UINT64);
-
-	uint64_t index = args.at(0)->GetValueUInt64();
-	return thisobj->GetValueArrayElement(index);
-}
-static void builtin_fn_index_verify(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-}
 
 TypeInfoArray::TypeInfoArray(TypeId element_tid, uint64_t size) {
 	m_element_tid  = element_tid;

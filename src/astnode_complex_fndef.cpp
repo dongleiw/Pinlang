@@ -11,7 +11,10 @@
 AstNodeComplexFnDef::AstNodeComplexFnDef(std::string fn_name, std::vector<Implement> implements) {
 	m_fnname	 = fn_name;
 	m_implements = implements;
-	m_obj_tid	 = TYPE_ID_NONE;
+	for (auto& i : m_implements) {
+		i.SetParent(*this);
+	}
+	m_obj_tid = TYPE_ID_NONE;
 }
 AstNodeComplexFnDef* AstNodeComplexFnDef::DeepCloneT() {
 	std::vector<Implement> implements;
@@ -22,6 +25,27 @@ AstNodeComplexFnDef* AstNodeComplexFnDef::DeepCloneT() {
 	AstNodeComplexFnDef* newone = new AstNodeComplexFnDef(m_fnname, implements);
 	newone->SetObjTypeId(m_obj_tid);
 	return newone;
+}
+AstNodeComplexFnDef::Implement::Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body) {
+	m_generic_params = generic_params;
+	m_params		 = params;
+	m_return_type	 = return_type;
+	m_return_tid	 = TYPE_ID_NONE;
+	m_body			 = body;
+	m_compile_cb	 = nullptr;
+}
+AstNodeComplexFnDef::Implement::Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, BuiltinFnCompileCallback compile_cb) {
+	m_generic_params = generic_params;
+	m_params		 = params;
+	m_return_type	 = return_type;
+	m_return_tid	 = TYPE_ID_NONE;
+	m_body			 = nullptr;
+	m_compile_cb	 = compile_cb;
+}
+void AstNodeComplexFnDef::Implement::SetParent(AstNodeComplexFnDef& node) {
+	if (m_body != nullptr) {
+		m_body->SetParent(&node);
+	}
 }
 AstNodeComplexFnDef::Implement AstNodeComplexFnDef::Implement::DeepClone() {
 	std::vector<ParserGenericParam> generic_params;
@@ -337,20 +361,22 @@ void AstNodeComplexFnDef::instantiate(VerifyContext& ctx, Instance& instance) {
 		});
 	}
 
-	instance.instance_name = TypeInfoFn::GetUniqFnName(m_obj_tid, m_fnname, instance.gparams_tid, instance.params_tid, instance.return_tid);
-	TypeId fn_tid		   = g_typemgr.GetOrAddTypeFn(ctx, instance.params_tid, instance.return_tid);
+	//instance.instance_name = TypeInfoFn::GetUniqFnName(m_obj_tid, m_fnname, instance.gparams_tid, instance.params_tid, instance.return_tid);
+	TypeId fn_tid = g_typemgr.GetOrAddTypeFn(ctx, instance.params_tid, instance.return_tid);
 	if (instance.implement->m_body != nullptr) {
-		instance.fn_addr = ctx.GetFnTable().AddUserDefineFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_body->DeepCloneT(), instance.instance_name);
+		AstNodeBlockStmt* fn_clone_body = instance.implement->m_body->DeepCloneT();
+		fn_clone_body->SetParent(this);
+		instance.instance_name = ctx.GetFnTable().AddUserDefineFn(ctx, m_fnname, fn_tid, m_obj_tid, concrete_gparams, params_name, fn_clone_body, IsInFn());
 	} else {
-		instance.fn_addr = ctx.GetFnTable().AddBuiltinFn(ctx, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_compile_cb, instance.instance_name);
+		instance.instance_name = ctx.GetFnTable().AddBuiltinFn(ctx, m_fnname, fn_tid, m_obj_tid, concrete_gparams, params_name, instance.implement->m_compile_cb);
 	}
 
 	m_instances.push_back(instance);
-	add_instance_to_vt(ctx, instance.instance_name, fn_tid, instance.fn_addr);
+	add_instance_to_vt(ctx, instance.instance_name, fn_tid);
 
 	log_debug("instantiate fn: name[%s] instance_name[%s]", m_fnname.c_str(), instance.instance_name.c_str());
 }
-void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string name, TypeId fn_tid, FnAddr fn_addr) const {
+void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string fnid, TypeId fn_tid) const {
 	if (m_obj_tid != TYPE_ID_NONE) {
 		// 如果是方法, 则跳过. 由TypeInfo来完成instance的保存
 		return;
@@ -359,7 +385,7 @@ void AstNodeComplexFnDef::add_instance_to_vt(VerifyContext& ctx, std::string nam
 	if (vt == nullptr) {
 		panicf("generic_fn[%s] not found", m_fnname.c_str());
 	}
-	vt->AddVariable(name, new Variable(fn_tid, FunctionObj(nullptr, fn_addr)));
+	vt->AddVariable(fnid, new Variable(fn_tid, FunctionObj(nullptr)));
 }
 std::vector<std::string> AstNodeComplexFnDef::Implement::GetGParamsName() const {
 	std::vector<std::string> gparams_name;

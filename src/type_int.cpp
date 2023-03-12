@@ -21,9 +21,6 @@
 #include "variable_table.h"
 #include "verify_context.h"
 
-static void builtin_fn_verify_nop(BuiltinFnInfo& builtin_fn_info, VerifyContext& ctx) {
-}
-
 TypeInfoInt::TypeInfoInt(TypeId tid) {
 	switch (tid) {
 	case TYPE_ID_INT8:

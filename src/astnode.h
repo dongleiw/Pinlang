@@ -22,7 +22,7 @@ public:
 	TypeId GetResultTypeId() { return m_result_typeid; }
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) = 0;
-	virtual Variable*			Execute(ExecuteContext& ctx)						  = 0;
+	virtual Variable*			Execute(ExecuteContext& ctx);
 	virtual CompileResult		Compile(CompileContext& cctx);
 
 	void	 SetParent(AstNode* parent) { m_parent = parent; }
@@ -31,6 +31,7 @@ public:
 	virtual AstNode* DeepClone() = 0;
 
 	bool IsInFor() const;
+	bool IsInFn() const;
 	bool IsVerified() const { return m_verify_status; }
 
 	bool IsExitNode() const { return m_is_exit_node; }

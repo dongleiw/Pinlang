@@ -88,7 +88,9 @@ public:
 	/*
 	 * 根据constraint的名字 + 方法名字 + 方法参数信息搜索方法. 返回所有匹配的函数位置信息
 	 */
-	std::vector<MethodIndex> GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, std::vector<TypeId> method_params_tid);
+	std::vector<std::string> GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, std::vector<TypeId> method_params_tid, TypeId return_tid);
+	std::vector<std::string> GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, TypeId tid);
+	std::vector<std::string> GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name);
 
 	bool HasField(std::string field_name) const;
 	// void			   AddField(std::string field_name, TypeId tid);

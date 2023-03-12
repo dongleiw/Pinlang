@@ -22,7 +22,6 @@ public:
 	AstNodeOperator(AstNode* left_expr, std::string constraint_name, std::string op, AstNode* right_expr);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
-	virtual Variable*			Execute(ExecuteContext& ctx) override;
 	virtual CompileResult		Compile(CompileContext& cctx) override;
 
 	AstNodeOperator* DeepCloneT();
@@ -43,5 +42,4 @@ private:
 	bool m_left_expr_is_tmp;
 	bool m_right_expr_is_tmp;
 
-	FnAddr m_fn_addr;
 };

@@ -23,22 +23,8 @@ public:
 	struct Instance;
 	// 函数的一个定义
 	struct Implement {
-		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body) {
-			m_generic_params = generic_params;
-			m_params		 = params;
-			m_return_type	 = return_type;
-			m_return_tid	 = TYPE_ID_NONE;
-			m_body			 = body;
-			m_compile_cb	 = nullptr;
-		}
-		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, BuiltinFnCompileCallback compile_cb) {
-			m_generic_params = generic_params;
-			m_params		 = params;
-			m_return_type	 = return_type;
-			m_return_tid	 = TYPE_ID_NONE;
-			m_body			 = nullptr;
-			m_compile_cb	 = compile_cb;
-		}
+		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, AstNodeBlockStmt* body);
+		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, BuiltinFnCompileCallback compile_cb);
 
 		void					 Verify(VerifyContext& ctx);
 		Implement				 DeepClone();
@@ -48,6 +34,8 @@ public:
 		TypeId					 infer_return_type_by_gparams(VerifyContext& ctx, std::vector<TypeId> gparams_tid) const;
 		std::vector<std::string> GetGParamsName() const;
 		bool					 is_generic() const { return !m_generic_params.empty(); };
+
+		void SetParent(AstNodeComplexFnDef& node);
 
 	public:
 		std::vector<ParserGenericParam> m_generic_params;
@@ -123,7 +111,7 @@ private:
 	bool get_instance(Instance& instance) const;
 
 	// 将实例添加到vt的合适位置
-	void add_instance_to_vt(VerifyContext& ctx, std::string name, TypeId fn_tid, FnAddr fn_addr) const;
+	void add_instance_to_vt(VerifyContext& ctx, std::string fnid, TypeId fn_tid) const;
 
 private:
 	std::string			   m_fnname;

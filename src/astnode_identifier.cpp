@@ -44,23 +44,20 @@ VerifyContextResult AstNodeIdentifier::Verify(VerifyContext& ctx, VerifyContextP
 			// 这说明该变量是函数
 			// 根据参数类型和结果类型来实例化
 			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate_param_return(ctx, vparam.GetFnCallArgs(), vparam.GetResultTid());
-			m_fn_addr							   = instance.fn_addr;
 			m_fn_id								   = instance.instance_name;
-			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
+			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_id);
 		} else if (vparam.GetResultTid() != TYPE_ID_INFER) {
 			// 父节点传递过来了期望的结果类型
 			// 使用该类型来选择合适的函数重载
 			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate_type(ctx, vparam.GetResultTid());
-			m_fn_addr							   = instance.fn_addr;
 			m_fn_id								   = instance.instance_name;
-			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
+			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_id);
 
 		} else {
 			// 上下文不足无法推断. 最后尝试下只用方法名查找, 如果有多个重名方法, 则失败
 			AstNodeComplexFnDef::Instance instance = astnode_complex_fndef->Instantiate(ctx);
-			m_fn_addr							   = instance.fn_addr;
 			m_fn_id								   = instance.instance_name;
-			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_addr);
+			m_result_typeid						   = ctx.GetFnTable().GetFnTypeId(m_fn_id);
 		}
 	} else {
 		m_is_complex_fn = false;
@@ -82,7 +79,7 @@ Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 		return nullptr;
 	} else {
 		if (m_is_complex_fn) {
-			return new Variable(m_result_typeid, FunctionObj(nullptr, m_fn_addr));
+			return new Variable(m_result_typeid, FunctionObj(nullptr));
 		} else {
 			return ctx.GetCurStack()->GetVariable(m_id);
 		}

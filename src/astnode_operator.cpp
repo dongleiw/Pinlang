@@ -43,7 +43,7 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 
 	std::vector<TypeId> args_tid({tid_right});
 	// 获取左侧类型实现的操作符对应的某个约束下的某个方法
-	std::vector<MethodIndex> method_indexs = ti->GetConstraintMethod(ctx, m_constraint_name, m_op, args_tid);
+	std::vector<std::string> method_indexs = ti->GetConstraintMethod(ctx, m_constraint_name, m_op, args_tid, TYPE_ID_INFER);
 	if (method_indexs.size() > 1) {
 		panicf("multiple candidate");
 	}
@@ -51,17 +51,10 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 		panicfi(m_si_op, "type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left,
 				ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
 	}
-	MethodIndex method_idx = method_indexs.at(0);
-
-	// 检查左表达式的operator对应方法
-	if (!method_idx.IsValid()) {
-		panicfi(m_si_op, "type[%d:%s] doesn't have method[%s:%s] with args[%s]", tid_left,
-				ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str(), g_typemgr.GetTypeName(args_tid).c_str());
-	}
-	m_fn_addr = ti->GetMethodByIdx(method_idx);
+	std::string fnid = method_indexs.at(0);
 
 	// 方法有返回值
-	TypeId return_tid = ctx.GetFnTable().GetFnReturnTypeId(m_fn_addr);
+	TypeId return_tid = ctx.GetFnTable().GetFnReturnTypeId(fnid);
 	if (return_tid == TYPE_ID_NONE) {
 		panicf("type[%d:%s] method[%s:%s] return none", tid_left, ti->GetName().c_str(), m_constraint_name.c_str(), m_op.c_str());
 	}
@@ -70,24 +63,6 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 
 	log_debug("verify pass: type[%s] op[%s:%s] type[%s]", GET_TYPENAME_C(tid_left), m_constraint_name.c_str(), m_op.c_str(), GET_TYPENAME_C(tid_right));
 
-	// 处理编译期常量表达式
-	// 必须是基本类型. 否则是operator overloading. 目前没法确认是否是纯方法. 如果不是纯方法, `left op right`也不是编译期常量表达式
-	//if (vr_left.IsConst()) {
-	//	m_left_expr = new AstNodeCompileConst(vr_left.GetConstResult());
-	//}
-	//if (vr_right.IsConst()) {
-	//	m_right_expr = new AstNodeCompileConst(vr_right.GetConstResult());
-	//}
-	//if (ti->IsPrimaryType() && vr_left.IsConst() && vr_right.IsConst()) {
-	//	// 这里临时搞了一个ExecuteContext用来调用方法. TODO 太丑陋了
-	//	ExecuteContext exe_ctx;
-	//	exe_ctx.SetFnTable(ctx.GetFnTable());
-	//	Variable*			   v_left = vr_left.GetConstResult();
-	//	std::vector<Variable*> args{vr_right.GetConstResult()};
-	//	Variable*			   v_result = exe_ctx.GetFnTable().CallFn(m_fn_addr, exe_ctx, v_left, args);
-	//	vr.SetConstResult(v_result);
-	//}
-
 	m_left_expr_tid	 = vr_left.GetResultTypeId();
 	m_right_expr_tid = vr_right.GetResultTypeId();
 
@@ -95,15 +70,6 @@ VerifyContextResult AstNodeOperator::Verify(VerifyContext& ctx, VerifyContextPar
 	m_right_expr_is_tmp = vr_right.IsTmp();
 
 	return vr;
-}
-Variable* AstNodeOperator::Execute(ExecuteContext& ctx) {
-	Variable*			   left_v  = m_left_expr->Execute(ctx);
-	Variable*			   right_v = m_right_expr->Execute(ctx);
-	std::vector<Variable*> args;
-	args.push_back(right_v);
-	Variable* result = ctx.GetFnTable().CallFn(m_fn_addr, ctx, left_v, args);
-	log_debug("%s.%s(%s)=>%s", left_v->ToString().c_str(), m_op.c_str(), right_v->ToString().c_str(), result->ToString().c_str());
-	return result;
 }
 AstNodeOperator* AstNodeOperator::DeepCloneT() {
 	AstNodeOperator* newone = new AstNodeOperator(m_left_expr->DeepClone(), m_constraint_name, m_op, m_right_expr->DeepClone());

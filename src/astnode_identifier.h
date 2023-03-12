@@ -33,7 +33,6 @@ public:
 private:
 	std::string m_id;
 
-	FnAddr		m_fn_addr; // 如果identier为静态函数, 则保存函数地址
 	std::string m_fn_id;   // 如果identifier为静态函数, 保存函数的实际的名字
 	bool		m_is_complex_fn;
 };
