@@ -1,0 +1,103 @@
+规则:
+	e.ltype = *(e.rtype)
+	`&e`.rtype = e.ltype
+	`*e`.rtype = (-*) e.rtype
+
+	`&e`.ltype // 无效
+
+	(-*)(*T) = T
+	*((-*)T) = T
+
+	// 假设 var id = init_expr;
+	id.rtype = init_expr.rtype
+
+
+	假设
+		array.rtype = [N]T
+	规则
+		`array[0]`.rtype = T.rtype = T
+		`array`表达式返回lvalue
+	推导
+		`array[0]`.ltype = * `array[0]`.rtype = *T
+		`&(array[0])`.rtype = `array[0]`.ltype = *T
+
+	假设
+		array.rtype = *T
+		`array`表达式返回rvalue
+	规则
+		`array[0]`.rtype = T.rtype = T
+	推导
+		`array[0]`.ltype = * `array[0]`.rtype = *T
+		`&(array[0])`.rtype = `array[0]`.ltype = *T
+
+	`[2]i32{1,2}`.rtype = [2]i32
+	`[2]i32{1,2}`.ltype = *[2]i32 // 禁止
+
+	
+
+测试:
+	var array = [2]i32{1,2}; 
+	var p = &array;
+	var q = &(array[0]);
+	var a = array[0];
+	var b = (*p)[0];
+	var c = q[0];
+	var d = p[0];
+		array
+			array.rtype = `[2]i32{1,2}`.rtype = [2]i32
+		p
+			p.rtype = `&array`.rtype = array.ltype = *[2]i32
+		*p
+			`*p`.rtype = (-*) p.rtype = [2]i32
+		q
+			q.rtype = `&(array[0])`.rtype = *i32
+		a	
+			a.rtype = `array[0]`.rtype = i32
+		b
+			b.rtype = `(*p)[0]`.rtype = i32
+		c
+			c.rtype = `q[0]`.rtype = i32
+		d
+			d.rtype = `p[0]`.rtype = [2]i32
+
+	var array = [2][3]i32{ {1,2,3}, {4,5,6} }; 
+	var p = &array;
+	var q = &(array[0]);
+	var a = array[0];
+	var b = (*p)[0];
+	var c = q[0];
+	var d = p[0];
+	var e = &(array[0][0]);
+		array
+			array.rtype = `[2][3]i32{ {1,2,3}, {4,5,6} }`.rtype = [2][3]i32
+		p
+			p.rtype = `&array`.rtype = array.ltype = *[2][3]i32
+		*p
+			`*p`.rtype = (-*) p.rtype = [2][3]i32
+		q
+			q.rtype = `&(array[0])`.rtype = *[3]i32
+		*q
+			`*q`.rtype = (-*) q.rtype = [3]i32
+		a	
+			a.rtype = `array[0]`.rtype = [3]i32
+		b
+			b.rtype = `(*p)[0]`.rtype = [3]i32
+		c
+			c.rtype = `q[0]`.rtype = [3]i32
+		d
+			d.rtype = `p[0]`.rtype = [2][3]i32
+		e
+			e.rtype = `&(array[0][0])`.rtype = `&([3]i32[0])`.rtype = `&(i32)`.rtype = i32.ltype = *i32
+			e.rtype 
+				= `&(array[0][0])`.rtype 
+				= `array[0][0]`.ltype   
+				= * `array[0][0]`.rtype   将array[0]替代为S. S.rtype = [3]i32
+				= * `S[0]`.rtype
+				= * i32
+
+	struct Foo{
+		array [2]i32
+	}
+
+结论:
+	似乎没有语义冲突了

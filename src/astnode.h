@@ -23,7 +23,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) = 0;
 	virtual Variable*			Execute(ExecuteContext& ctx)						  = 0;
-	virtual llvm::Value*		Compile(CompileContext& cctx);
+	virtual CompileResult		Compile(CompileContext& cctx);
 
 	void	 SetParent(AstNode* parent) { m_parent = parent; }
 	AstNode* GetParent() { return m_parent; }

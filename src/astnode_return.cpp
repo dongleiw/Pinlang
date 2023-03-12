@@ -1,4 +1,5 @@
 #include "astnode_return.h"
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
 #include "log.h"
@@ -49,15 +50,15 @@ AstNodeReturn* AstNodeReturn::DeepCloneT() {
 
 	return newone;
 }
-llvm::Value* AstNodeReturn::Compile(CompileContext& cctx) {
+CompileResult AstNodeReturn::Compile(CompileContext& cctx) {
 	if (m_returned_expr == nullptr) {
 		IRB.CreateRetVoid();
 	} else {
-		TypeInfo*	 ti_return = g_typemgr.GetTypeInfo(m_returned_expr_tid);
-		llvm::Value* ret_value = m_returned_expr->Compile(cctx);
+		TypeInfo*	  ti_return	   = g_typemgr.GetTypeInfo(m_returned_expr_tid);
+		CompileResult cr_ret_value = m_returned_expr->Compile(cctx);
 
-		assert(ret_value->getType() == ti_return->GetLLVMIRType(cctx));
-		IRB.CreateRet(ret_value);
+		assert(cr_ret_value.GetResult()->getType() == ti_return->GetLLVMIRType(cctx));
+		IRB.CreateRet(cr_ret_value.GetResult());
 	}
-	return nullptr;
+	return CompileResult();
 }

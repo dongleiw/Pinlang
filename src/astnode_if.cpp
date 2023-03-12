@@ -1,5 +1,6 @@
 #include "astnode_if.h"
 #include "astnode_blockstmt.h"
+#include "compile_context.h"
 #include "define.h"
 #include "fntable.h"
 #include "log.h"
@@ -126,7 +127,7 @@ AstNodeIf* AstNodeIf::DeepCloneT() {
  *		}
  * }
  */
-llvm::Value* AstNodeIf::Compile(CompileContext& cctx) {
+CompileResult AstNodeIf::Compile(CompileContext& cctx) {
 	std::vector<llvm::BasicBlock*> branchs;
 	llvm::BasicBlock*			   block_after_if = nullptr;
 	if (!m_is_exit_node) {
@@ -135,7 +136,8 @@ llvm::Value* AstNodeIf::Compile(CompileContext& cctx) {
 
 	const int cond_num = m_cond_block_list.size() + (m_else_cond_block == nullptr ? 0 : 1);
 	for (size_t i = 0; i < m_cond_expr_list.size(); i++) {
-		llvm::Value* cond_value = m_cond_expr_list.at(i)->Compile(cctx);
+		CompileResult cr_cond_value = m_cond_expr_list.at(i)->Compile(cctx);
+		assert(cr_cond_value.GetResult()->getType() == IRB.getInt1Ty());
 
 		llvm::BasicBlock* true_block = llvm::BasicBlock::Create(IRC, sprintf_to_stdstr("if_branch_%lu", i), cctx.GetCurFn());
 		branchs.push_back(true_block);
@@ -143,14 +145,7 @@ llvm::Value* AstNodeIf::Compile(CompileContext& cctx) {
 		llvm::BasicBlock* false_block = llvm::BasicBlock::Create(IRC, sprintf_to_stdstr("if_branch_%lu", i + 1), cctx.GetCurFn());
 		branchs.push_back(false_block);
 
-		if (cond_value->getType() != IRB.getInt1Ty()) {
-			if (cond_value->getType() == IRB.getInt1Ty()->getPointerTo()) {
-				cond_value = IRB.CreateLoad(IRB.getInt1Ty(), cond_value, "if_cond_value");
-			} else {
-				panicf("bug");
-			}
-		}
-		IRB.CreateCondBr(cond_value, true_block, false_block);
+		IRB.CreateCondBr(cr_cond_value.GetResult(), true_block, false_block);
 	}
 	for (size_t i = 0; i < m_cond_block_list.size(); i++) {
 		IRB.SetInsertPoint(branchs.at(2 * i));
@@ -179,5 +174,5 @@ llvm::Value* AstNodeIf::Compile(CompileContext& cctx) {
 	if (!m_is_exit_node) {
 		IRB.SetInsertPoint(block_after_if);
 	}
-	return nullptr;
+	return CompileResult();
 }

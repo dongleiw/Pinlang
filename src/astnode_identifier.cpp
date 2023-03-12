@@ -1,5 +1,6 @@
 #include "astnode_identifier.h"
 #include "astnode_complex_fndef.h"
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
 #include "type.h"
@@ -10,6 +11,8 @@
 
 #include "log.h"
 #include "verify_context.h"
+#include <llvm-12/llvm/IR/Function.h>
+#include <llvm-12/llvm/Support/Casting.h>
 
 AstNodeIdentifier::AstNodeIdentifier(std::string id) : m_id(id), m_is_complex_fn(false) {
 }
@@ -88,30 +91,44 @@ Variable* AstNodeIdentifier::Execute(ExecuteContext& ctx) {
 AstNodeIdentifier* AstNodeIdentifier::DeepCloneT() {
 	return new AstNodeIdentifier(m_id);
 }
-llvm::Value* AstNodeIdentifier::Compile(CompileContext& cctx) {
+CompileResult AstNodeIdentifier::Compile(CompileContext& cctx) {
 	if (m_is_complex_fn) {
 		// 是一个静态函数 (目前只支持静态函数)
 		// 返回函数id
 		if (!cctx.HasNamedValue(m_fn_id)) {
 			panicf("fn[%s] not defined", m_fn_id.c_str());
 		}
-		return cctx.GetNamedValue(m_fn_id);
+		llvm::Value* f = cctx.GetNamedValue(m_fn_id);
+		assert(llvm::Function::classof(f));
+		return CompileResult().SetResultFn((llvm::Function*)f);
 	} else {
-		if (m_compile_to_left_value) {
-			return cctx.GetNamedValue(m_id);
-		} else {
-			llvm::Value* v = cctx.GetNamedValue(m_id);
+		TypeInfo*	 ti		 = g_typemgr.GetTypeInfo(m_result_typeid);
+		llvm::Type*	 ir_type = ti->GetLLVMIRType(cctx);
+		llvm::Value* v		 = cctx.GetNamedValue(m_id);
 
-			TypeInfo*	ti		= g_typemgr.GetTypeInfo(m_result_typeid);
-			llvm::Type* ir_type = ti->GetLLVMIRType(cctx);
-
-			if (v->getType() == ir_type) {
-				return v;
-			} else if (v->getType() == ir_type->getPointerTo()) {
-				return IRB.CreateLoad(ti->GetLLVMIRType(cctx), v);
+		// named value map中存储的可能是一个指向value的指针, 也可能是一个register value
+		// 例如分配在栈上的变量就是一个pointer, 而参数传递过来的值就是register value
+		llvm::Value* result_v = nullptr;
+		if (v->getType() == ir_type) {
+			if (m_compile_to_left_value) {
+				// 当前变量是一个value, 但是parent-node要求返回lvalue. 这里需要先store到栈内存, 然后获取内存地址返回
+				llvm::Value* ptr = IRB.CreateAlloca(ir_type);
+				IRB.CreateStore(v, ptr);
+				// 使用ptr替换掉named value map中的value. 后续获取的变量都是ptr. ptr中的值可能被修改, 不替换的话会导致获取的可能是旧值
+				cctx.ReplaceNamedValue(m_id, ptr);
+				result_v = ptr;
 			} else {
-				panicf("bug");
+				result_v = v;
 			}
+		} else if (v->getType() == ir_type->getPointerTo()) {
+			if (m_compile_to_left_value) {
+				result_v = v;
+			} else {
+				result_v = IRB.CreateLoad(ir_type, v);
+			}
+		} else {
+			panicf("bug");
 		}
+		return CompileResult().SetResult(result_v);
 	}
 }

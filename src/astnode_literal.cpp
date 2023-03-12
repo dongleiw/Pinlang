@@ -1,4 +1,5 @@
 #include "astnode_literal.h"
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
 #include "log.h"
@@ -159,32 +160,44 @@ void AstNodeLiteral::CastToInt64() {
 	assert(m_result_typeid == TYPE_ID_INT32);
 	m_result_typeid = TYPE_ID_INT64;
 }
-llvm::Value* AstNodeLiteral::Compile(CompileContext& cctx) {
+CompileResult AstNodeLiteral::Compile(CompileContext& cctx) {
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
+
+	llvm::Value* result = nullptr;
 	if (ti->IsPointer()) {
-		return llvm::ConstantPointerNull::get((llvm::PointerType*)(ti->GetLLVMIRType(cctx)));
+		result = llvm::ConstantPointerNull::get((llvm::PointerType*)(ti->GetLLVMIRType(cctx)));
 	}
 	switch (m_result_typeid) {
 	case TYPE_ID_INT8:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(8, m_value_int, true));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(8, m_value_int, true));
+		break;
 	case TYPE_ID_UINT8:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(8, m_value_int, false));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(8, m_value_int, false));
+		break;
 	case TYPE_ID_INT16:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(16, m_value_int, true));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(16, m_value_int, true));
+		break;
 	case TYPE_ID_UINT16:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(16, m_value_int, false));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(16, m_value_int, false));
+		break;
 	case TYPE_ID_INT32:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(32, m_value_int, true));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(32, m_value_int, true));
+		break;
 	case TYPE_ID_UINT32:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(32, m_value_int, false));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(32, m_value_int, false));
+		break;
 	case TYPE_ID_INT64:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(64, m_value_int, true));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(64, m_value_int, true));
+		break;
 	case TYPE_ID_UINT64:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(64, m_value_int, false));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(64, m_value_int, false));
+		break;
 	case TYPE_ID_FLOAT:
-		return llvm::ConstantFP::get(IRC, llvm::APFloat(m_value_float));
+		result = llvm::ConstantFP::get(IRC, llvm::APFloat(m_value_float));
+		break;
 	case TYPE_ID_BOOL:
-		return llvm::ConstantInt::get(IRC, llvm::APInt(1, m_value_bool ? 1 : 0, false));
+		result = llvm::ConstantInt::get(IRC, llvm::APInt(1, m_value_bool ? 1 : 0, false));
+		break;
 	case TYPE_ID_STR: // str是reference type, 真实数据在堆上, 栈上只是一个指针
 	{
 		panicf("not implemented yet");
@@ -194,4 +207,6 @@ llvm::Value* AstNodeLiteral::Compile(CompileContext& cctx) {
 		panicf("unknown literal type[%d]", m_result_typeid);
 		break;
 	}
+
+	return CompileResult().SetResult(result);
 }

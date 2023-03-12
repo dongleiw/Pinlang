@@ -3,6 +3,7 @@
 #include <string>
 
 #include "astnode.h"
+#include "compile_context.h"
 #include "define.h"
 #include "execute_context.h"
 #include "fntable.h"
@@ -22,13 +23,14 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
-	virtual llvm::Value*		Compile(CompileContext& cctx) override;
+	virtual CompileResult		Compile(CompileContext& cctx) override;
 
 	AstNodeDereference* DeepCloneT();
 	virtual AstNode*	DeepClone() override { return DeepCloneT(); }
 
 private:
-	AstNodeDereference(){}
+	AstNodeDereference() {}
+
 private:
-	AstNode*	m_value_expr;
+	AstNode* m_value_expr;
 };

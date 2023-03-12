@@ -22,8 +22,8 @@ Variable* AstNodeBreak::Execute(ExecuteContext& ctx) {
 AstNodeBreak* AstNodeBreak::DeepCloneT() {
 	return new AstNodeBreak();
 }
-llvm::Value* AstNodeBreak::Compile(CompileContext& cctx) {
+CompileResult AstNodeBreak::Compile(CompileContext& cctx) {
 	assert(cctx.GetBreakBlock() != nullptr);
 	IRB.CreateBr(cctx.GetBreakBlock());
-	return nullptr;
+	return CompileResult();
 }

@@ -1,8 +1,8 @@
 #pragma once
 
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
-#include "compile_context.h"
 
 #include <llvm-12/llvm/IR/Function.h>
 #include <vector>
@@ -65,10 +65,8 @@ struct DynamicFnInfo {
 };
 
 /*
- * 统一将所有函数(包括方法)保存到该表中, 对外提供固定不变的函数地址, 供获取和调用.
- * 这样做的意义:
- *		1. 在执行阶段不再需要查找函数地址(比如获取类型信息然后查找方法), 可以减少运行时对类型的依赖
- *		2. 方便后续
+ * 保存所有函数(包括方法)
+ * TODO: 改成唯一fnid
  */
 class FnTable {
 public:

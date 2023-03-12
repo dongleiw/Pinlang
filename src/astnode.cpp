@@ -1,6 +1,7 @@
 #include "astnode.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_for.h"
+#include "compile_context.h"
 #include "instruction.h"
 #include "log.h"
 
@@ -31,6 +32,6 @@ void AstNode::verify_end() {
 		m_verify_status = VERIFIED;
 	}
 }
-llvm::Value* AstNode::Compile(CompileContext& cctx) {
+CompileResult AstNode::Compile(CompileContext& cctx) {
 	panicf("not implemented");
 }

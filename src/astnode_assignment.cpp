@@ -1,5 +1,6 @@
 #include "astnode_assignment.h"
 #include "astnode_complex_fndef.h"
+#include "compile_context.h"
 #include "define.h"
 #include "log.h"
 #include "type.h"
@@ -44,15 +45,16 @@ AstNodeAssignment* AstNodeAssignment::DeepCloneT() {
 
 	return newone;
 }
-llvm::Value* AstNodeAssignment::Compile(CompileContext& cctx) {
-	llvm::Value* left_value	 = m_left->Compile(cctx);
-	llvm::Value* right_value = m_right->Compile(cctx);
+CompileResult AstNodeAssignment::Compile(CompileContext& cctx) {
+	CompileResult cr_left_value	 = m_left->Compile(cctx);
+	CompileResult cr_right_value = m_right->Compile(cctx);
 
-	llvm::Type* ir_type_left  = left_value->getType();
-	llvm::Type* ir_type_right = right_value->getType();
+	llvm::Type* ir_type_left  = cr_left_value.GetResult()->getType();
+	llvm::Type* ir_type_right = cr_right_value.GetResult()->getType();
 
 	assert(g_typemgr.GetTypeInfo(m_right->GetResultTypeId())->GetLLVMIRType(cctx) == ir_type_right);
 	assert(ir_type_left == ir_type_right->getPointerTo());
 
-	return IRB.CreateStore(right_value, left_value);
+	llvm::Value* result = IRB.CreateStore(cr_right_value.GetResult(), cr_left_value.GetResult());
+	return CompileResult().SetResult(result);
 }

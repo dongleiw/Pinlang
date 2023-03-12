@@ -187,6 +187,11 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 			fn_return_type = llvm::Type::getVoidTy(IRC);
 		}
 		std::vector<llvm::Type*> fn_arg_types;
+		if (fn_info.obj_tid != TYPE_ID_NONE) {
+			// 如果是方法, 增加一个隐藏的this指针指向当前obj
+			TypeInfo* ti_obj = g_typemgr.GetTypeInfo(fn_info.obj_tid);
+			fn_arg_types.push_back(ti_obj->GetLLVMIRType(cctx)->getPointerTo());
+		}
 		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
 			TypeId	  arg_tid = tifn->GetParamType(i);
 			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
@@ -204,22 +209,44 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 
 		// 构建fn
 		fn_info.llvm_ir_fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage, fn_name, IRM);
-		assert(fn_info.params_name.size() == fn_info.llvm_ir_fn->arg_size());
-		for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
-			llvm::Argument* arg = fn_info.llvm_ir_fn->getArg(i);
+		if (fn_info.obj_tid != TYPE_ID_NONE) {
+			assert(fn_info.params_name.size() + 1 == fn_info.llvm_ir_fn->arg_size());
+			fn_info.llvm_ir_fn->getArg(0)->setName("this");
+			for (size_t i = 1; i < fn_info.llvm_ir_fn->arg_size(); i++) {
+				llvm::Argument* arg = fn_info.llvm_ir_fn->getArg(i);
 
-			arg->setName(fn_info.params_name.at(i));
+				arg->setName(fn_info.params_name.at(i - 1));
 
-			TypeId	  arg_tid = tifn->GetParamType(i);
-			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
+				TypeId	  arg_tid = tifn->GetParamType(i - 1);
+				TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
 
-			llvm::Type* ir_type_arg = arg_ti->GetLLVMIRType(cctx);
-			if (arg_ti->IsArray()) {
-				// 如果函数参数类型为[N]T, 则替换为*[N]T, 并添加byval属性.
-				// 这样llvm会将数组clone一份新数据, 然后将新的数组的指针传递给callee
-				llvm::AttrBuilder attr_builder;
-				attr_builder.addByValAttr(ir_type_arg);
-				arg->addAttrs(attr_builder);
+				llvm::Type* ir_type_arg = arg_ti->GetLLVMIRType(cctx);
+				if (arg_ti->IsArray()) {
+					// 如果函数参数类型为[N]T, 则替换为*[N]T, 并添加byval属性.
+					// 这样llvm会将数组clone一份新数据, 然后将新的数组的指针传递给callee
+					llvm::AttrBuilder attr_builder;
+					attr_builder.addByValAttr(ir_type_arg);
+					arg->addAttrs(attr_builder);
+				}
+			}
+		} else {
+			assert(fn_info.params_name.size() == fn_info.llvm_ir_fn->arg_size());
+			for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
+				llvm::Argument* arg = fn_info.llvm_ir_fn->getArg(i);
+
+				arg->setName(fn_info.params_name.at(i));
+
+				TypeId	  arg_tid = tifn->GetParamType(i);
+				TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
+
+				llvm::Type* ir_type_arg = arg_ti->GetLLVMIRType(cctx);
+				if (arg_ti->IsArray()) {
+					// 如果函数参数类型为[N]T, 则替换为*[N]T, 并添加byval属性.
+					// 这样llvm会将数组clone一份新数据, 然后将新的数组的指针传递给callee
+					llvm::AttrBuilder attr_builder;
+					attr_builder.addByValAttr(ir_type_arg);
+					arg->addAttrs(attr_builder);
+				}
 			}
 		}
 
@@ -227,13 +254,14 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 	}
 	for (const UserDefFnInfo& fn_info : m_userdef_fn_table) {
 		cctx.SetCurFn(fn_info.llvm_ir_fn);
+		cctx.SetCurFnIsMethod(fn_info.obj_tid != TYPE_ID_NONE);
 
 		cctx.EnterBlock();
 
 		// 声明参数到符号表
-		assert(fn_info.params_name.size() == fn_info.llvm_ir_fn->arg_size());
 		for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
-			cctx.AddNamedValue(fn_info.params_name.at(i), fn_info.llvm_ir_fn->getArg(i));
+			llvm::Argument* arg = fn_info.llvm_ir_fn->getArg(i);
+			cctx.AddNamedValue(arg->getName().str(), arg);
 		}
 		llvm::BasicBlock* entry_block = llvm::BasicBlock::Create(IRC, "entry", fn_info.llvm_ir_fn);
 		IRB.SetInsertPoint(entry_block);

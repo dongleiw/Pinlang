@@ -1,6 +1,7 @@
 #pragma once
 
 #include "astnode.h"
+#include "compile_context.h"
 #include "execute_context.h"
 #include "instruction.h"
 #include "type.h"
@@ -20,7 +21,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
-	virtual llvm::Value*		Compile(CompileContext& cctx) override;
+	virtual CompileResult		Compile(CompileContext& cctx) override;
 
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeLiteral*	 DeepCloneT();

@@ -81,7 +81,7 @@ AstNodeFor* AstNodeFor::DeepCloneT() {
 						  m_loop_expr == nullptr ? nullptr : m_loop_expr->DeepClone(),
 						  m_body->DeepClone());
 }
-llvm::Value* AstNodeFor::Compile(CompileContext& cctx) {
+CompileResult AstNodeFor::Compile(CompileContext& cctx) {
 	if (m_init_expr != nullptr) {
 		m_init_expr->Compile(cctx);
 	}
@@ -94,8 +94,8 @@ llvm::Value* AstNodeFor::Compile(CompileContext& cctx) {
 	IRB.SetInsertPoint(for_cond_block);
 
 	if (m_cond_expr != nullptr) {
-		llvm::Value* cond_value = m_cond_expr->Compile(cctx);
-		IRB.CreateCondBr(cond_value, for_body_block, for_end_block);
+		CompileResult cr_cond_value = m_cond_expr->Compile(cctx);
+		IRB.CreateCondBr(cr_cond_value.GetResult(), for_body_block, for_end_block);
 	} else {
 		IRB.CreateBr(for_body_block);
 	}
@@ -118,5 +118,5 @@ llvm::Value* AstNodeFor::Compile(CompileContext& cctx) {
 	IRB.CreateBr(for_cond_block);
 
 	IRB.SetInsertPoint(for_end_block);
-	return nullptr;
+	return CompileResult();
 }

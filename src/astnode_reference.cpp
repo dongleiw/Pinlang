@@ -1,4 +1,5 @@
 #include "astnode_reference.h"
+#include "compile_context.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "type_pointer.h"
@@ -29,17 +30,18 @@ VerifyContextResult AstNodeReference::Verify(VerifyContext& ctx, VerifyContextPa
 Variable* AstNodeReference::Execute(ExecuteContext& ctx) {
 	panicf("not implemented");
 }
-llvm::Value* AstNodeReference::Compile(CompileContext& cctx) {
-	llvm::Value* value = m_expr->Compile(cctx); // 返回的可能是pointee value, 也可能是pointer to pointee value
+CompileResult AstNodeReference::Compile(CompileContext& cctx) {
+	CompileResult cr_value = m_expr->Compile(cctx);
 
 	TypeInfo* ti_pointee = g_typemgr.GetTypeInfo(m_result_typeid);
 
 	llvm::Type* ir_type_pointee = ti_pointee->GetLLVMIRType(cctx);
+	assert(cr_value.GetResult()->getType() == ir_type_pointee->getPointerTo());
 
 	if (m_compile_to_left_value) {
-		return value;
+		return CompileResult().SetResult(cr_value.GetResult());
 	} else {
-		return IRB.CreateLoad(ir_type_pointee, value);
+		return CompileResult().SetResult(IRB.CreateLoad(ir_type_pointee, cr_value.GetResult()));
 	}
 }
 AstNodeReference* AstNodeReference::DeepCloneT() {

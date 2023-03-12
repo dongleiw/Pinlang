@@ -1,4 +1,5 @@
 #include "astnode_fncall.h"
+#include "compile_context.h"
 #include "define.h"
 #include "function_obj.h"
 #include "instruction.h"
@@ -78,36 +79,30 @@ AstNodeFnCall* AstNodeFnCall::DeepCloneT() {
 
 	return newone;
 }
-llvm::Value* AstNodeFnCall::Compile(CompileContext& cctx) {
+CompileResult AstNodeFnCall::Compile(CompileContext& cctx) {
 	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_fn_tid));
 
-	llvm::Function* fn = (llvm::Function*)m_fn_expr->Compile(cctx);
-	assert(fn->arg_size() == m_args.size());
+	CompileResult			  cr_fn = m_fn_expr->Compile(cctx);
+	llvm::Function*			  fn	= cr_fn.GetResultFn();
 	std::vector<llvm::Value*> args;
+	if (cr_fn.IsMethod()) {
+		assert(fn->arg_size() == m_args.size() + 1); // 包括this
+		args.push_back(cr_fn.GetThisObj());
+	} else {
+		assert(fn->arg_size() == m_args.size());
+	}
 	for (size_t i = 0; i < m_args.size(); i++) {
-		TypeId		 tid_arg   = tifn->GetParamType(i);
-		TypeInfo*	 ti_arg	   = g_typemgr.GetTypeInfo(tid_arg);
-		llvm::Value* arg_value = m_args.at(i)->Compile(cctx);
-		assert(arg_value->getType() == fn->getArg(i)->getType());
-		args.push_back(arg_value);
-		//if (ti_arg->IsArray()) {
-		//	// 如果参数是数组, 那么会被替换为指向数组的指针.
-		//}
-		//if (arg_value->getType() == fn->getArg(i)->getType()) {
-		//} else if (arg_value->getType() == fn->getArg(i)->getType()->getPointerTo()) {
-		//	args.push_back(IRB.CreateLoad(fn->getArg(i)->getType(), arg_value, sprintf_to_stdstr("load_arg_%lu", i)));
-		//} else {
-		//	arg_value->getType()->print(llvm::outs(), true);
-		//	printf("\n");
-		//	fn->getArg(i)->getType()->print(llvm::outs(), true);
-		//	printf("\n");
-		//	panicf("bug");
-		//}
+		TypeId		  tid_arg = tifn->GetParamType(i);
+		TypeInfo*	  ti_arg  = g_typemgr.GetTypeInfo(tid_arg);
+		CompileResult cr_arg  = m_args.at(i)->Compile(cctx);
+		assert(cr_arg.GetResult()->getType() == fn->getArg(i)->getType());
+		args.push_back(cr_arg.GetResult());
 	}
 	if (fn->getReturnType()->isVoidTy()) {
-		IRB.CreateCall((llvm::Function*)fn, args); // return void 的情况下名字必须为空
-		return nullptr;
+		IRB.CreateCall(fn, args); // return void 的情况下名字必须为空
+		return CompileResult();
 	} else {
-		return IRB.CreateCall((llvm::Function*)fn, args, "fn_call_ret");
+		llvm::Value* call_ret = IRB.CreateCall(fn, args, "fn_call_ret");
+		return CompileResult().SetResult(call_ret);
 	}
 }

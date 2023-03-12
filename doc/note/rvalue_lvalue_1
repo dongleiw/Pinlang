@@ -1,0 +1,78 @@
+规则:
+	e.ltype = *(e.rtype)
+	`&e`.rtype = e.ltype
+	`*e`.rtype = (-*) e.rtype
+
+	`&e`.ltype // 无效
+
+	(-*)(*T) = T
+	*((-*)T) = T
+
+	// 假设 var id = init_expr;
+	id.rtype = init_expr.rtype
+
+
+	假设
+		array.rtype = [N]T
+	规则
+		`array[0]`.rtype = T.rtype = T
+	推导
+		`array[0]`.ltype = * `array[0]`.rtype = *T
+		`&(array[0])`.rtype = `array[0]`.ltype = *T
+
+	`[2]i32{1,2}`.rtype = [2]i32
+	`[2]i32{1,2}`.ltype = *[2]i32 // 禁止
+
+测试:
+	var array = [2]i32{1,2}; 
+	var p = &array;
+	var q = &(array[0]);
+	var a = array[0];
+	var b = (*p)[0];
+	var c = (*q)[0];
+		array
+			array.rtype = `[2]i32{1,2}`.rtype = [2]i32
+		p
+			p.rtype = `&array`.rtype = array.ltype = *[2]i32
+		*p
+			`*p`.rtype = (-*) p.rtype = [2]i32
+		q
+			q.rtype = `&(array[0])`.rtype = *i32
+		*q
+			`*q`.rtype = (-*) q.rtype = i32
+		a	
+			a.rtype = `array[0]`.rtype = i32
+		b
+			b.rtype = `(*p)[0]`.rtype = i32
+		c
+			c.rtype = `(*q)[0]`.rtype = i32
+
+	var array = [2][3]i32{ {1,2,3}, {4,5,6} }; 
+	var p = &array;
+	var q = &(array[0]);
+	var a = array[0];
+	var b = (*p)[0];
+	var c = (*q)[0];
+		array
+			array.rtype = `[2][3]i32{ {1,2,3}, {4,5,6} }`.rtype = [2][3]i32
+		p
+			p.rtype = `&array`.rtype = array.ltype = *[2][3]i32
+		*p
+			`*p`.rtype = (-*) p.rtype = [2][3]i32
+		q
+			q.rtype = `&(array[0])`.rtype = *[3]i32
+		*q
+			`*q`.rtype = (-*) q.rtype = [3]i32
+		a	
+			a.rtype = `array[0]`.rtype = [3]i32
+		b
+			b.rtype = `(*p)[0]`.rtype = [3]i32
+		c
+			c.rtype = `(*q)[0]`.rtype = i32 // 这里有问题. 同样的形式, 一维数组和二维数组的输出类型不一致
+
+	struct Foo{
+		array [2]i32
+	}
+
+结论:
+	存在语义冲突. 一维数组和二维数组的结果类型不一致

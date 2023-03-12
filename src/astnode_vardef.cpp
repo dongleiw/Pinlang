@@ -7,6 +7,7 @@
 #include "astnode_literal.h"
 #include "astnode_type.h"
 #include "astnode_vardef.h"
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
 #include "log.h"
@@ -80,22 +81,17 @@ AstNodeVarDef* AstNodeVarDef::DeepCloneT() {
 
 	return newone;
 }
-llvm::Value* AstNodeVarDef::Compile(CompileContext& cctx) {
+CompileResult AstNodeVarDef::Compile(CompileContext& cctx) {
 	TypeInfo*		  ti		  = g_typemgr.GetTypeInfo(m_result_typeid);
-	llvm::Type*		  type		  = ti->GetLLVMIRType(cctx);
-	llvm::AllocaInst* alloca_inst = IRB.CreateAlloca(type, nullptr, m_varname);
+	llvm::Type*		  ir_type	  = ti->GetLLVMIRType(cctx);
+	llvm::AllocaInst* alloca_inst = IRB.CreateAlloca(ir_type, nullptr, m_varname);
 
 	cctx.AddNamedValue(m_varname, alloca_inst);
 
 	if (m_init_expr != nullptr) {
-		llvm::Value* init_value = m_init_expr->Compile(cctx);
-		if (init_value->getType() == type) {
-			// 初始化值的类型和类型相同, 直接store过去
-		} else if (init_value->getType() == type->getPointerTo()) {
-			// 初始化值的类型是变量类型的指针类型, 需要先load出来
-			init_value = IRB.CreateLoad(type, init_value, "load_init_value");
-		}
-		IRB.CreateStore(init_value, alloca_inst);
+		CompileResult cr_init_value = m_init_expr->Compile(cctx);
+		assert(cr_init_value.GetResult()->getType() == ir_type);
+		IRB.CreateStore(cr_init_value.GetResult(), alloca_inst);
 	}
-	return alloca_inst;
+	return CompileResult().SetResult(alloca_inst);
 }

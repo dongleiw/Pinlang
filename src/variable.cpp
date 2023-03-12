@@ -15,7 +15,7 @@
 
 Variable::Variable(TypeId tid) {
 	construct_init(tid, nullptr);
-	set_default_value();
+	//set_default_value();
 }
 
 Variable::Variable(int8_t value) {

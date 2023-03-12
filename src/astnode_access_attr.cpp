@@ -1,4 +1,5 @@
 #include "astnode_access_attr.h"
+#include "astnode_fncall.h"
 #include "compile_context.h"
 #include "define.h"
 #include "type.h"
@@ -8,6 +9,8 @@
 
 #include "log.h"
 #include "verify_context.h"
+#include <llvm-12/llvm/IR/Function.h>
+#include <llvm-12/llvm/Support/Casting.h>
 
 AstNodeAccessAttr::AstNodeAccessAttr(AstNode* obj_expr, std::string attr_name) {
 	m_obj_expr	= obj_expr;
@@ -87,22 +90,25 @@ AstNodeAccessAttr* AstNodeAccessAttr::DeepCloneT() {
 	AstNodeAccessAttr* newone = new AstNodeAccessAttr(m_obj_expr->DeepClone(), m_attr_name);
 	return newone;
 }
-llvm::Value* AstNodeAccessAttr::Compile(CompileContext& cctx) {
+CompileResult AstNodeAccessAttr::Compile(CompileContext& cctx) {
+	CompileResult cr_obj = m_obj_expr->Compile(cctx);
+
 	if (m_is_field) {
-		llvm::Value* obj		 = m_obj_expr->Compile(cctx);
-		TypeInfo*	 ti_obj		 = g_typemgr.GetTypeInfo(m_obj_tid);
-		llvm::Type*	 ir_type_obj = ti_obj->GetLLVMIRType(cctx);
-		assert(ir_type_obj->getPointerTo() == obj->getType());
-		llvm::Value* attr_value = IRB.CreateConstGEP2_32(ir_type_obj, obj, 0, ti_obj->GetFieldIndex(m_attr_name));
+		TypeInfo*	ti_obj		= g_typemgr.GetTypeInfo(m_obj_tid);
+		llvm::Type* ir_type_obj = ti_obj->GetLLVMIRType(cctx);
+		assert(ir_type_obj->getPointerTo() == cr_obj.GetResult()->getType());
+		llvm::Value* attr_value = IRB.CreateConstGEP2_32(ir_type_obj, cr_obj.GetResult(), 0, ti_obj->GetFieldIndex(m_attr_name));
 		if (!m_compile_to_left_value) {
 			TypeInfo* ti_field = g_typemgr.GetTypeInfo(m_result_typeid);
 			attr_value		   = IRB.CreateLoad(ti_field->GetLLVMIRType(cctx), attr_value);
 		}
-		return attr_value;
+		return CompileResult().SetResult(attr_value);
 	} else {
 		if (!cctx.HasNamedValue(m_fnid)) {
 			panicf("fn[%s] not defined", m_fnid.c_str());
 		}
-		return cctx.GetNamedValue(m_fnid);
+		llvm::Value* v = cctx.GetNamedValue(m_fnid);
+		assert(llvm::Function::classof(v));
+		return CompileResult().SetResultFn((llvm::Function*)cctx.GetNamedValue(m_fnid));
 	}
 }

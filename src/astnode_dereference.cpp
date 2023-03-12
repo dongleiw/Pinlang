@@ -1,4 +1,5 @@
 #include "astnode_dereference.h"
+#include "compile_context.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "type_pointer.h"
@@ -21,14 +22,14 @@ VerifyContextResult AstNodeDereference::Verify(VerifyContext& ctx, VerifyContext
 Variable* AstNodeDereference::Execute(ExecuteContext& ctx) {
 	panicf("not implemented");
 }
-llvm::Value* AstNodeDereference::Compile(CompileContext& cctx) {
-	llvm::Value* value = m_value_expr->Compile(cctx); // 返回的可能是pointee value, 也可能是pointer to pointee value
+CompileResult AstNodeDereference::Compile(CompileContext& cctx) {
+	CompileResult cr = m_value_expr->Compile(cctx);
 
 	TypeInfoPointer* ti_pointer = dynamic_cast<TypeInfoPointer*>(g_typemgr.GetTypeInfo(m_result_typeid));
 
 	llvm::Type* ir_type_pointer = ti_pointer->GetLLVMIRType(cctx);
-	assert(value->getType() == ir_type_pointer);
-	return value;
+	assert(cr.GetResult()->getType() == ir_type_pointer);
+	return CompileResult().SetResult(cr.GetResult());
 }
 AstNodeDereference* AstNodeDereference::DeepCloneT() {
 	AstNodeDereference* newone = new AstNodeDereference();

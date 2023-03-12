@@ -22,8 +22,8 @@ Variable* AstNodeContinue::Execute(ExecuteContext& ctx) {
 AstNodeContinue* AstNodeContinue::DeepCloneT() {
 	return new AstNodeContinue();
 }
-llvm::Value* AstNodeContinue::Compile(CompileContext& cctx) {
+CompileResult AstNodeContinue::Compile(CompileContext& cctx) {
 	assert(cctx.GetContinueBlock() != nullptr);
 	IRB.CreateBr(cctx.GetContinueBlock());
-	return nullptr;
+	return CompileResult();
 }

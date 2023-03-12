@@ -358,25 +358,25 @@ const void* VM::GetRegisterAddr(RegisterId rid) {
 	//assert(m_registers.at(rid).is_empty == false);
 	return (const void*)&m_registers.at(rid).value;
 }
-bool CompileResult::IsFnId() const {
-	assert(m_unset == false);
-	return m_fn_id.empty() == false;
-}
-std::string CompileResult::GetFnId() const {
-	return m_fn_id;
-}
-RegisterId CompileResult::GetRegisterId() const {
-	assert(m_unset == false && m_fn_id.empty());
-	return m_rid;
-}
-bool CompileResult::IsValue() const {
-	assert(m_unset == false && m_fn_id.empty());
-	return m_is_value;
-}
-std::string CompileResult::GetStackVarName() const {
-	assert(m_unset == false && m_fn_id.empty());
-	return m_stack_var_name;
-}
+//bool CompileResult::IsFnId() const {
+//	assert(m_unset == false);
+//	return m_fn_id.empty() == false;
+//}
+//std::string CompileResult::GetFnId() const {
+//	return m_fn_id;
+//}
+//RegisterId CompileResult::GetRegisterId() const {
+//	assert(m_unset == false && m_fn_id.empty());
+//	return m_rid;
+//}
+//bool CompileResult::IsValue() const {
+//	assert(m_unset == false && m_fn_id.empty());
+//	return m_is_value;
+//}
+//std::string CompileResult::GetStackVarName() const {
+//	assert(m_unset == false && m_fn_id.empty());
+//	return m_stack_var_name;
+//}
 bool FnInstructionMaker::HasInstruction(const Instruction* instruction) const {
 	for (size_t i = 0; i < m_instructions.size(); i++) {
 		if (m_instructions[i] == instruction) {

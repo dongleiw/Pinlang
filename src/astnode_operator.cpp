@@ -1,6 +1,7 @@
 #include "astnode_operator.h"
 #include "astnode_compile_const.h"
 #include "astnode_literal.h"
+#include "compile_context.h"
 #include "define.h"
 #include "execute_context.h"
 #include "instruction.h"
@@ -11,6 +12,8 @@
 #include "utils.h"
 #include "variable.h"
 #include "verify_context.h"
+#include <llvm-12/llvm/IR/Type.h>
+#include <llvm-12/llvm/IR/Value.h>
 #include <vector>
 
 AstNodeOperator::AstNodeOperator(AstNode* left_expr, std::string constraint_name, std::string op, AstNode* right_expr) {
@@ -106,69 +109,71 @@ AstNodeOperator* AstNodeOperator::DeepCloneT() {
 	AstNodeOperator* newone = new AstNodeOperator(m_left_expr->DeepClone(), m_constraint_name, m_op, m_right_expr->DeepClone());
 	return newone;
 }
-llvm::Value* AstNodeOperator::Compile(CompileContext& cctx) {
-	llvm::Value* left_value	 = m_left_expr->Compile(cctx);
-	llvm::Value* right_value = m_right_expr->Compile(cctx);
+CompileResult AstNodeOperator::Compile(CompileContext& cctx) {
+	CompileResult cr_left_value	 = m_left_expr->Compile(cctx);
+	CompileResult cr_right_value = m_right_expr->Compile(cctx);
 
-	if (left_value->getType()->isPointerTy()) {
-		TypeInfo* ti_left = g_typemgr.GetTypeInfo(m_left_expr_tid);
-		left_value		  = IRB.CreateLoad(ti_left->GetLLVMIRType(cctx), left_value, "left_operand");
-	}
+	llvm::Value* left_value	 = cr_left_value.GetResult();
+	llvm::Value* right_value = cr_right_value.GetResult();
 
-	if (right_value->getType()->isPointerTy()) {
-		TypeInfo* ti_right = g_typemgr.GetTypeInfo(m_right_expr_tid);
-		right_value		   = IRB.CreateLoad(ti_right->GetLLVMIRType(cctx), right_value, "right_operand");
-	}
+	TypeInfo* ti_left  = g_typemgr.GetTypeInfo(m_left_expr_tid);
+	TypeInfo* ti_right = g_typemgr.GetTypeInfo(m_right_expr_tid);
 
+	llvm::Type* ir_type_left  = ti_left->GetLLVMIRType(cctx);
+	llvm::Type* ir_type_right = ti_right->GetLLVMIRType(cctx);
+
+	assert(left_value->getType() == ir_type_left && right_value->getType() == ir_type_right);
+
+	llvm::Value* result = nullptr;
 	if (is_integer_type(m_left_expr_tid)) {
 		assert(m_left_expr_tid == m_right_expr_tid);
 		if (m_op == "add") {
-			return IRB.CreateAdd(left_value, right_value, "add_result");
+			result = IRB.CreateAdd(left_value, right_value, "add_result");
 		} else if (m_op == "sub") {
-			return IRB.CreateSub(left_value, right_value, "sub_result");
+			result = IRB.CreateSub(left_value, right_value, "sub_result");
 		} else if (m_op == "mul") {
-			return IRB.CreateMul(left_value, right_value, "mul_result");
+			result = IRB.CreateMul(left_value, right_value, "mul_result");
 		} else if (m_op == "div") {
 			if (is_unsigned_integer_type(m_left_expr_tid)) {
-				return IRB.CreateUDiv(left_value, right_value, "div_result");
+				result = IRB.CreateUDiv(left_value, right_value, "div_result");
 			} else if (is_signed_integer_type(m_left_expr_tid)) {
-				return IRB.CreateSDiv(left_value, right_value, "div_result");
+				result = IRB.CreateSDiv(left_value, right_value, "div_result");
 			} else {
 				panicf("not implemented yet");
 			}
 		} else if (m_op == "equal") {
-			return IRB.CreateICmpEQ(left_value, right_value, "eq_result");
+			result = IRB.CreateICmpEQ(left_value, right_value, "eq_result");
 		} else if (m_op == "notEqual") {
-			return IRB.CreateICmpNE(left_value, right_value, "ne_result");
+			result = IRB.CreateICmpNE(left_value, right_value, "ne_result");
 		} else if (m_op == "lessThan") {
 			if (is_unsigned_integer_type(m_left_expr_tid)) {
-				return IRB.CreateICmpULT(left_value, right_value, "lt_result");
+				result = IRB.CreateICmpULT(left_value, right_value, "lt_result");
 			} else if (is_signed_integer_type(m_left_expr_tid)) {
-				return IRB.CreateICmpSLT(left_value, right_value, "lt_result");
+				result = IRB.CreateICmpSLT(left_value, right_value, "lt_result");
 			} else {
 				panicf("not implemented yet");
 			}
 		} else if (m_op == "lessEqual") {
 			if (is_unsigned_integer_type(m_left_expr_tid)) {
-				return IRB.CreateICmpULE(left_value, right_value, "le_result");
+				result = IRB.CreateICmpULE(left_value, right_value, "le_result");
 			} else if (is_signed_integer_type(m_left_expr_tid)) {
-				return IRB.CreateICmpSLE(left_value, right_value, "le_result");
+				result = IRB.CreateICmpSLE(left_value, right_value, "le_result");
 			} else {
 				panicf("not implemented yet");
 			}
 		} else if (m_op == "greaterThan") {
 			if (is_unsigned_integer_type(m_left_expr_tid)) {
-				return IRB.CreateICmpUGT(left_value, right_value, "gt_result");
+				result = IRB.CreateICmpUGT(left_value, right_value, "gt_result");
 			} else if (is_signed_integer_type(m_left_expr_tid)) {
-				return IRB.CreateICmpSGT(left_value, right_value, "gt_result");
+				result = IRB.CreateICmpSGT(left_value, right_value, "gt_result");
 			} else {
 				panicf("not implemented yet");
 			}
 		} else if (m_op == "greaterEqual") {
 			if (is_unsigned_integer_type(m_left_expr_tid)) {
-				return IRB.CreateICmpUGE(left_value, right_value, "ge_result");
+				result = IRB.CreateICmpUGE(left_value, right_value, "ge_result");
 			} else if (is_signed_integer_type(m_left_expr_tid)) {
-				return IRB.CreateICmpSGE(left_value, right_value, "ge_result");
+				result = IRB.CreateICmpSGE(left_value, right_value, "ge_result");
 			} else {
 				panicf("not implemented yet");
 			}
@@ -178,4 +183,5 @@ llvm::Value* AstNodeOperator::Compile(CompileContext& cctx) {
 	} else {
 		panicf("not implemented yet");
 	}
+	return CompileResult().SetResult(result);
 }

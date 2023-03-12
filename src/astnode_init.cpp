@@ -108,7 +108,7 @@ AstNodeInit* AstNodeInit::DeepCloneT() {
 	}
 	return newone;
 }
-llvm::Value* AstNodeInit::Compile(CompileContext& cctx) {
+CompileResult AstNodeInit::Compile(CompileContext& cctx) {
 	// 获取类型
 	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
 	if (ti->IsArray()) {
@@ -118,21 +118,18 @@ llvm::Value* AstNodeInit::Compile(CompileContext& cctx) {
 		llvm::Type*	   ir_type_element = ti_element->GetLLVMIRType(cctx);
 		if (ti_array->IsStaticSize()) {
 			// 静态大小数组是一个value type, 直接分配在stack上.
-			llvm::Value* pv_array = IRB.CreateAlloca(ti_array->GetLLVMIRType(cctx));
+			llvm::Value* array = IRB.CreateAlloca(ti_array->GetLLVMIRType(cctx));
 			for (size_t i = 0; i < m_elements.size(); i++) {
 				assert(m_elements.at(i).attr_name.empty());
-				llvm::Value* element_value = m_elements.at(i).attr_value->Compile(cctx);
-				if (element_value->getType() == ir_type_element) {
-				} else if (element_value->getType() == ir_type_element->getPointerTo()) {
-					// 返回的是一个指向数组元素数据的指针, 需要load出来
-					element_value = IRB.CreateLoad(ir_type_element, element_value);
-				} else {
-					panicf("bug");
-				}
-				llvm::Value* pv_array_element = IRB.CreateConstGEP2_64(ir_type_array, pv_array, 0, i); // 获取第`i`个数组元素的地址
-				IRB.CreateStore(element_value, pv_array_element);									   // 将初始化的值存储到数组元素位置
+				CompileResult element_value = m_elements.at(i).attr_value->Compile(cctx);
+				assert(element_value.GetResult()->getType() == ir_type_element);
+				llvm::Value* pv_array_element = IRB.CreateConstGEP2_64(ir_type_array, array, 0, i); // 获取第`i`个数组元素的地址
+				IRB.CreateStore(element_value.GetResult(), pv_array_element);						// 将初始化的值存储到数组元素位置
 			}
-			return pv_array;
+			if (!m_compile_to_left_value) {
+				array = IRB.CreateLoad(ir_type_array, array);
+			}
+			return CompileResult().SetResult(array);
 		} else {
 			// 数组大小是动态的. 是一个reference type, 需要在heap上分配内存. 还不支持
 			panicf("not implemented yet");
@@ -142,11 +139,11 @@ llvm::Value* AstNodeInit::Compile(CompileContext& cctx) {
 		llvm::Value* class_inst	   = IRB.CreateAlloca(ir_type_class, nullptr, sprintf_to_stdstr("class_inst_%s", ti->GetName().c_str()));
 		for (size_t i = 0; i < m_elements.size(); i++) {
 			assert(!m_elements.at(i).attr_name.empty());
-			llvm::Value* element_value = m_elements.at(i).attr_value->Compile(cctx);
-			llvm::Value* element_addr  = IRB.CreateConstGEP2_32(ir_type_class, class_inst, 0, (int)ti->GetFieldIndex(m_elements.at(i).attr_name));
-			IRB.CreateStore(element_value, element_addr);
+			CompileResult element_value = m_elements.at(i).attr_value->Compile(cctx);
+			llvm::Value*  element_addr	= IRB.CreateConstGEP2_32(ir_type_class, class_inst, 0, (int)ti->GetFieldIndex(m_elements.at(i).attr_name));
+			IRB.CreateStore(element_value.GetResult(), element_addr);
 		}
-		return class_inst;
+		return CompileResult().SetResult(class_inst);
 	} else {
 		panicf("not implemented yet");
 	}

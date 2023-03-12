@@ -17,8 +17,82 @@ fn modify_array_element_ptr_array(array *[2]i32){
 fn modify_array_element_ptr_array_element(array *i32){
 	array[0]=100;
 }
+// 一维数组
+fn test1() i32{
+	var array = [2]i32{1,2};  // array.rtype = [2]i32
+
+	// 指向整个数组的指针
+	{
+		var ptr_to_array = &array; // p.rtype = *[2]i32
+
+		var a = (*ptr_to_array)[0]; // b.ltype = i32
+		var b = ptr_to_array[0]; // d.ltype = [2]i32; d is a copy of array
+	}
+
+	// 指向数组元素的指针
+	{
+	}
+
+	//var q = &(array[0]); // q.ltype = *i32
+	//var c = q[0]; // c.ltype = i32
+
+	//var a = array[0]; // a.ltype = i32
+
+	return array[1];
+}
+// 二维数组
+fn test2() i32{
+	// array.rtype = [2][3]i32
+	// array.ltype = *[2][3]i32
+	var array = [2][3]i32{ {1,2,3}, {4,5,6} };  
+
+	// 指向整个数组的指针
+	{
+		// ptr_to_array.rtype = `&array`.rtype = array.ltype = *[2][3]i32
+		//var ptr_to_array = &array; 
+		//var e1 = (*ptr_to_array)[0]; // e1.ltype = [3]i32; e1 is a copy of array[0]
+		//e1[0]=100;
+		//var e2 = p1[0]; // e2.ltype = [2][3]i32; e2 is a copy of array
+		//e2[0][0]=100;
+
+		// `ptr_to_array[0]`.rtype = [2][3]i32
+		//ptr_to_array[0][0][0]=10;
+
+		// `*ptr_to_array`.rtype = (-*) ptr_to_array.rtype = [2][3]i32
+		//(*ptr_to_array)[0][0]=11;
+	}
+
+	// 指向第二维数组的指针
+	{
+		//var ptr_to_dimension_2 = &(array[0]); // ptr_to_dimension_2.ltype = *[3]i32
+		//var e3 = ptr_to_dimension_2[0]; // e3.ltype = [3]i32
+		//(*ptr_to_dimension_2)[0]=10;
+
+		// `ptr_to_dimension_2[1]`.rtype = [3]i32
+		//ptr_to_dimension_2[1][0]=40; 
+	}
+
+	// 指向数组元素的指针
+	{
+		// `array[0]`.rtype = [3]i32
+		// `&(array[0][0])`.rtype = `array[0][0]`.ltype = *i32
+		var ptr_to_element = &(array[0][0]);
+		*ptr_to_element = 100;
+
+		var e = *ptr_to_element;
+
+		var p2 = ptr_to_element;
+		*p2 = 200;
+	}
+
+	return array[0][0];
+}
+
 fn main() i32 {
-	var array = [2]i32{1,2};
+	//return test1();
+	return test2();
+
+	//var array = [2]i32{1,2};
 
 	//var idx u64 = 1;
 	//return array[idx];

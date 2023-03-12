@@ -40,34 +40,34 @@ struct MemAddr {
 	std::string ToString(FnInstructionMaker& maker) const;
 };
 
-class CompileResult {
-public:
-	CompileResult() : m_unset(true) {
-	}
-	CompileResult(RegisterId rid, bool is_value, std::string stack_var_name) {
-		m_unset			 = false;
-		m_rid			 = rid;
-		m_is_value		 = is_value;
-		m_stack_var_name = stack_var_name;
-	}
-	CompileResult(std::string fn_id) {
-		m_unset = false;
-		m_fn_id = fn_id;
-	}
-
-	bool		IsFnId() const;
-	std::string GetFnId() const;
-	RegisterId	GetRegisterId() const;
-	bool		IsValue() const;
-	std::string GetStackVarName() const;
-
-private:
-	bool		m_unset;
-	std::string m_fn_id; // 是一个静态函数. 这里记录函数的id. 此时rid未定义
-	RegisterId	m_rid;
-	bool		m_is_value;		  // 寄存器中是一个指向实际数据的指针, 还是一个值
-	std::string m_stack_var_name; // 如果申请了临时栈内存, 这里记录名字. 否则为空
-};
+//class CompileResult {
+//public:
+//	CompileResult() : m_unset(true) {
+//	}
+//	CompileResult(RegisterId rid, bool is_value, std::string stack_var_name) {
+//		m_unset			 = false;
+//		m_rid			 = rid;
+//		m_is_value		 = is_value;
+//		m_stack_var_name = stack_var_name;
+//	}
+//	CompileResult(std::string fn_id) {
+//		m_unset = false;
+//		m_fn_id = fn_id;
+//	}
+//
+//	bool		IsFnId() const;
+//	std::string GetFnId() const;
+//	RegisterId	GetRegisterId() const;
+//	bool		IsValue() const;
+//	std::string GetStackVarName() const;
+//
+//private:
+//	bool		m_unset;
+//	std::string m_fn_id; // 是一个静态函数. 这里记录函数的id. 此时rid未定义
+//	RegisterId	m_rid;
+//	bool		m_is_value;		  // 寄存器中是一个指向实际数据的指针, 还是一个值
+//	std::string m_stack_var_name; // 如果申请了临时栈内存, 这里记录名字. 否则为空
+//};
 
 /*
  * 指令的构造函数中的参数必须都是编译期确定不变的值. 因为指令在执行时, 没有参数传入.

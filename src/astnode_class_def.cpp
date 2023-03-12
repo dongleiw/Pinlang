@@ -1,6 +1,7 @@
 #include "astnode_class_def.h"
 #include "astnode_complex_fndef.h"
 #include "astnode_constraint.h"
+#include "compile_context.h"
 #include "define.h"
 #include "log.h"
 #include "type.h"
@@ -84,7 +85,7 @@ AstNodeClassDef* AstNodeClassDef::DeepCloneT() {
 
 	return newone;
 }
-llvm::Value* AstNodeClassDef::Compile(CompileContext& cctx) {
+CompileResult AstNodeClassDef::Compile(CompileContext& cctx) {
 	std::vector<llvm::Type*> ir_type_fields;
 	TypeInfo*				 ti = g_typemgr.GetTypeInfo(m_class_tid);
 	for (auto f : ti->GetField()) {
@@ -92,5 +93,5 @@ llvm::Value* AstNodeClassDef::Compile(CompileContext& cctx) {
 		ir_type_fields.push_back(ti_field->GetLLVMIRType(cctx));
 	}
 	llvm::StructType* ty = llvm::StructType::create(ir_type_fields, m_class_name);
-	return nullptr;
+	return CompileResult();
 }

@@ -4,6 +4,7 @@
 #include "astnode_complex_fndef.h"
 #include "astnode_return.h"
 #include "astnode_vardef.h"
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
 #include "log.h"
@@ -158,11 +159,11 @@ void AstNodeBlockStmt::VerifyIdentfier(AstNode* cur_node, std::string id, Verify
 	}
 	// panicf("global identifier[%s] not exists", id.c_str());
 }
-llvm::Value* AstNodeBlockStmt::Compile(CompileContext& cctx) {
+CompileResult AstNodeBlockStmt::Compile(CompileContext& cctx) {
 	cctx.EnterBlock();
 	for (auto node : m_stmts) {
 		node->Compile(cctx);
 	}
 	cctx.LeaveBlock();
-	return nullptr;
+	return CompileResult();
 }
