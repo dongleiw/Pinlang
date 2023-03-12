@@ -578,12 +578,12 @@ std::any Visitor::visitExpr_primary_access_attr(PinlangParser::Expr_primary_acce
 	return (AstNode*)new AstNodeAccessAttr(expr, attr_name);
 }
 std::any Visitor::visitExpr_dereference(PinlangParser::Expr_dereferenceContext* ctx) {
-	AstNode*			value_expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
+	AstNode*			value_expr = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
 	AstNodeDereference* n		   = new AstNodeDereference(value_expr);
 	return (AstNode*)n;
 }
 std::any Visitor::visitExpr_reference(PinlangParser::Expr_referenceContext* ctx) {
-	AstNode*		  value_expr = std::any_cast<AstNode*>(ctx->expr()->accept(this));
+	AstNode*		  value_expr = std::any_cast<AstNode*>(ctx->expr_primary()->accept(this));
 	AstNodeReference* n			 = new AstNodeReference(value_expr);
 	return (AstNode*)n;
 }

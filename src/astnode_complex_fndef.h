@@ -5,6 +5,7 @@
 #include "astnode.h"
 #include "astnode_blockstmt.h"
 #include "astnode_type.h"
+#include "builtin_fn.h"
 #include "define.h"
 #include "execute_context.h"
 #include "fntable.h"
@@ -28,15 +29,15 @@ public:
 			m_return_type	 = return_type;
 			m_return_tid	 = TYPE_ID_NONE;
 			m_body			 = body;
-			m_verify_cb		 = nullptr;
+			m_compile_cb	 = nullptr;
 		}
-		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, BuiltinFnVerifyCallback verify_cb) {
+		Implement(std::vector<ParserGenericParam> generic_params, std::vector<ParserParameter> params, AstNodeType* return_type, BuiltinFnCompileCallback compile_cb) {
 			m_generic_params = generic_params;
 			m_params		 = params;
 			m_return_type	 = return_type;
 			m_return_tid	 = TYPE_ID_NONE;
 			m_body			 = nullptr;
-			m_verify_cb		 = verify_cb;
+			m_compile_cb	 = compile_cb;
 		}
 
 		void					 Verify(VerifyContext& ctx);
@@ -53,7 +54,7 @@ public:
 		std::vector<ParserParameter>	m_params;
 		AstNodeType*					m_return_type;
 		AstNodeBlockStmt*				m_body;
-		BuiltinFnVerifyCallback			m_verify_cb;
+		BuiltinFnCompileCallback		m_compile_cb;
 
 		// 如果该实现不是泛型(也就是参数类型和返回值类型是固定的), 则根据上下文推导出以下两个信息
 		std::vector<TypeId> m_params_tid;
@@ -75,6 +76,7 @@ public:
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vparam) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
+	virtual CompileResult		Compile(CompileContext& cctx) override;
 
 	virtual AstNode*	 DeepClone() override { return DeepCloneT(); }
 	AstNodeComplexFnDef* DeepCloneT();

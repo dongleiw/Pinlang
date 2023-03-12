@@ -10,6 +10,7 @@
 #include "antlr4-runtime.h"
 #include "astnode_blockstmt.h"
 #include "astnode_complex_fndef.h"
+#include "builtin_fn.h"
 #include "compile_context.h"
 #include "define.h"
 #include "dynamic_loading.h"
@@ -72,6 +73,7 @@ void compile(std::string src_path, std::vector<std::string> str_args) {
 		Visitor visitor;
 		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
 		register_predefine(*predefine_block_stmts);
+		BuiltinFn::register_builtin_fns(*predefine_block_stmts);
 		DynamicLoading::RegisterFn(*predefine_block_stmts);
 	}
 

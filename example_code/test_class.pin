@@ -1,4 +1,4 @@
-fn test1() i32{
+fn test1() {
 	class Foo{
 		a i32;
 		b i32;
@@ -8,10 +8,14 @@ fn test1() i32{
 		b:2,
 	};
 
+	assert(f.a==1);
+	assert(f.b==2);
+
 	f.a=100;
-	return f.a+f.b;
+	assert(f.a==100);
+	assert(f.b==2);
 }
-fn test2() i32{
+fn test2() {
 	class Foo{
 		a i32;
 		b i32;
@@ -24,10 +28,13 @@ fn test2() i32{
 		a:1,
 		b:2,
 	};
+	assert(f.a==1);
+	assert(f.b==2);
 
-	return f.GetA();
+	assert(f.GetA()==1);
 }
 fn main() i32 {
-	//return test1();
-	return test2();
+	test1();
+	test2();
+	return 0;
 }

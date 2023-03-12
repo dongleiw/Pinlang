@@ -1,5 +1,6 @@
 #include "fntable.h"
 #include "astnode_blockstmt.h"
+#include "builtin_fn.h"
 #include "define.h"
 #include "instruction.h"
 #include "log.h"
@@ -10,6 +11,7 @@
 #include "variable_table.h"
 #include <llvm-12/llvm/IR/Argument.h>
 #include <llvm-12/llvm/IR/DerivedTypes.h>
+#include <llvm-12/llvm/IR/Function.h>
 #include <llvm-12/llvm/IR/Type.h>
 
 Variable* FnTable::CallFn(FnAddr addr, ExecuteContext& ctx, Variable* obj, std::vector<Variable*> args) {
@@ -98,16 +100,15 @@ FnAddr FnTable::AddUserDefineFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_ti
 	m_userdef_fn_table.push_back(fninfo);
 	return fnaddr;
 }
-FnAddr FnTable::AddBuiltinFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnVerifyCallback verify_cb, std::string fnid) {
+FnAddr FnTable::AddBuiltinFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnCompileCallback compile_cb, std::string fnid) {
 	BuiltinFnInfo fninfo = BuiltinFnInfo{
 		.fnid		 = fnid,
 		.fn_tid		 = fn_tid,
 		.obj_tid	 = obj_tid,
 		.gparams	 = gparams,
 		.params_name = params_name,
-		.verify_cb	 = verify_cb,
+		.compile_cb	 = compile_cb,
 	};
-	verify_cb(fninfo, ctx);
 
 	FnAddr fnaddr;
 	fnaddr.fn_kind = FN_KIND_BUILTIN;
@@ -164,8 +165,8 @@ std::string FnTable::GetFnId(FnAddr addr) const {
 	}
 }
 void FnTable::Compile(CompileContext& cctx) {
+	compile_builtin_fn(cctx);
 	compile_user_define_fn(cctx);
-	//compile_builtin_fn(llvm_ir);
 }
 void FnTable::compile_user_define_fn(CompileContext& cctx) {
 	// 构建fn,
@@ -284,32 +285,6 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 void FnTable::compile_builtin_fn(CompileContext& cctx) {
 	// 构建fn
 	for (BuiltinFnInfo& fn_info : m_builtin_fn_table) {
-		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_info.fn_tid));
-
-		// 构建fn type
-		llvm::Type* fn_return_type = nullptr;
-		if (tifn->GetReturnTypeId() != TYPE_ID_NONE) {
-			TypeInfo* ti_return = g_typemgr.GetTypeInfo(tifn->GetReturnTypeId());
-			fn_return_type		= ti_return->GetLLVMIRType(cctx);
-		} else {
-			fn_return_type = llvm::Type::getVoidTy(IRC);
-		}
-		std::vector<llvm::Type*> fn_arg_types;
-		for (size_t i = tifn->GetParamNum(); i > 0; i--) {
-			TypeId	  arg_tid = tifn->GetParamType(i - 1);
-			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
-
-			fn_arg_types.push_back(arg_ti->GetLLVMIRType(cctx));
-		}
-		llvm::FunctionType* fn_type = llvm::FunctionType::get(fn_return_type, fn_arg_types, false);
-
-		// 构建fn
-		fn_info.llvm_ir_fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage, fn_info.fnid, IRM);
-		assert(fn_info.params_name.size() == fn_info.llvm_ir_fn->arg_size());
-		for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
-			fn_info.llvm_ir_fn->getArg(i)->setName(fn_info.params_name.at(i));
-		}
-
-		cctx.AddNamedValue(fn_info.fnid, fn_info.llvm_ir_fn);
+		fn_info.compile_cb(cctx, fn_info.fnid);
 	}
 }

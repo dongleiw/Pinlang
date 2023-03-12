@@ -1,5 +1,6 @@
 #pragma once
 
+#include "builtin_fn.h"
 #include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
@@ -53,7 +54,7 @@ struct BuiltinFnInfo {
 	std::vector<ConcreteGParam> gparams;
 	std::vector<std::string>	params_name;
 	std::vector<FnAddr>			fn_list; // 存放verify阶段确定的函数地址
-	BuiltinFnVerifyCallback		verify_cb;
+	BuiltinFnCompileCallback	compile_cb;
 	llvm::Function*				llvm_ir_fn;
 };
 // 运行时动态导入函数
@@ -80,7 +81,7 @@ public:
 	std::string GetFnId(FnAddr addr) const;
 
 	FnAddr AddUserDefineFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body, std::string fnname);
-	FnAddr AddBuiltinFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnVerifyCallback verify_cb, std::string fnid);
+	FnAddr AddBuiltinFn(VerifyContext& ctx, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnCompileCallback compile_cb, std::string fnid);
 	FnAddr AddDynamicFn(TypeId fn_tid, int dynlib_instance_id, void* dynlib_fn, DynamicFnExecuteCallback cb);
 
 private:

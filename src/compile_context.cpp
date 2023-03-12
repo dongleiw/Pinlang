@@ -63,8 +63,8 @@ void CompileContext::EnterBlock() {
 void CompileContext::LeaveBlock() {
 	assert(!m_blocks.empty());
 	Block* block = *m_blocks.rbegin();
-	delete block;
 	m_blocks.pop_back();
+	delete block;
 }
 void CompileContext::Block::AddNamedValue(std::string name, llvm::Value* value) {
 	if (m_named_values.find(name) != m_named_values.end()) {

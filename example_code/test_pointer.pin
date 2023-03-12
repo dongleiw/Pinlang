@@ -1,30 +1,48 @@
 // 指针
-fn get_value_from_pointer(ptr *int) int{
-	return *ptr;
+
+
+fn test1(){
+	var i = 100;
+	assert(i==100);
+
+	var pi *int = &i;
+	assert(*pi==100);
+	*pi = 200;
+	assert(*pi==200);
 }
-fn modify_value_from_pointer(ptr *int) {
-	*ptr=2;
+
+fn test2(){
+	fn get_value_from_pointer(ptr *int) int{
+		return *ptr;
+	}
+	fn modify_value_from_pointer(ptr *int) {
+		*ptr=2;
+	}
+
+	var i=1;
+	assert( get_value_from_pointer(&i) == 1 );
+	modify_value_from_pointer(&i);
+	assert( 2 == i);
 }
-fn swap_value(a *int, b *int) {
-	var tmp = *a;
-	*a = *b;
-	*b = tmp;
+
+fn test3(){
+	fn swap_value(a *int, b *int) {
+		var tmp = *a;
+		*a = *b;
+		*b = tmp;
+	}
+
+	var a=1;
+	var b=2;
+	swap_value(&a, &b);
+	assert(a==2);
+	assert(b==1);
 }
+
 fn main() i32 {
-	//var i = 100;
-	//var pi *int = &i;
-	//*pi = 200;
-	//return *pi;
+	test1();
+	test2();
+	test3();
 
-	//var i=1;
-	//return get_value_from_pointer(&i);
-
-	//var i=1;
-	//modify_value_from_pointer(&i);
-	//return i;
-
-	//var a=1;
-	//var b=2;
-	//swap_value(&a, &b);
-	//return b;
+	return 0;
 }

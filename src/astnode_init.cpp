@@ -136,14 +136,17 @@ CompileResult AstNodeInit::Compile(CompileContext& cctx) {
 		}
 	} else if (ti->IsClass()) {
 		llvm::Type*	 ir_type_class = ti->GetLLVMIRType(cctx);
-		llvm::Value* class_inst	   = IRB.CreateAlloca(ir_type_class, nullptr, sprintf_to_stdstr("class_inst_%s", ti->GetName().c_str()));
+		llvm::Value* obj		   = IRB.CreateAlloca(ir_type_class, nullptr, sprintf_to_stdstr("class_inst_%s", ti->GetName().c_str()));
 		for (size_t i = 0; i < m_elements.size(); i++) {
 			assert(!m_elements.at(i).attr_name.empty());
 			CompileResult element_value = m_elements.at(i).attr_value->Compile(cctx);
-			llvm::Value*  element_addr	= IRB.CreateConstGEP2_32(ir_type_class, class_inst, 0, (int)ti->GetFieldIndex(m_elements.at(i).attr_name));
+			llvm::Value*  element_addr	= IRB.CreateConstGEP2_32(ir_type_class, obj, 0, (int)ti->GetFieldIndex(m_elements.at(i).attr_name));
 			IRB.CreateStore(element_value.GetResult(), element_addr);
 		}
-		return CompileResult().SetResult(class_inst);
+		if (!m_compile_to_left_value) {
+			obj = IRB.CreateLoad(ir_type_class, obj);
+		}
+		return CompileResult().SetResult(obj);
 	} else {
 		panicf("not implemented yet");
 	}

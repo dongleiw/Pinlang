@@ -109,6 +109,7 @@ CompileResult AstNodeAccessAttr::Compile(CompileContext& cctx) {
 		}
 		llvm::Value* v = cctx.GetNamedValue(m_fnid);
 		assert(llvm::Function::classof(v));
-		return CompileResult().SetResultFn((llvm::Function*)cctx.GetNamedValue(m_fnid));
+
+		return CompileResult().SetResultMethod((llvm::Function*)cctx.GetNamedValue(m_fnid), cr_obj.GetResult());
 	}
 }

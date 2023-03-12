@@ -23,7 +23,7 @@ static void builtin_fn_never_call_verify(BuiltinFnInfo& builtin_fn_info, VerifyC
 	builtin_fn_info.fn_list.push_back(fn_addr);
 }
 
-void TypeInfoConstraint::FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGType& ti) const {
+/*void TypeInfoConstraint::FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGType& ti) const {
 	std::vector<AstNodeComplexFnDef*> fns;
 	for (auto rule : m_rules) {
 		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(rule.fn_tid));
@@ -53,4 +53,4 @@ void TypeInfoConstraint::FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGTyp
 	}
 
 	ti.AddConstraint(GetTypeId(), fns);
-}
+}*/

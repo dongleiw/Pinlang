@@ -215,7 +215,7 @@ AstNodeType* AstNodeType::DeepCloneT() {
 		break;
 	case TYPE_KIND_POINTER:
 		newone->m_pointee_type	  = m_pointee_type->DeepCloneT();
-		newone->m_array_size_expr = m_array_size_expr == nullptr ? nullptr : m_array_size_expr->DeepClone();
+	//	newone->m_array_size_expr = m_array_size_expr == nullptr ? nullptr : m_array_size_expr->DeepClone();
 		break;
 	case TYPE_KIND_TUPLE:
 		for (auto iter : m_tuple_element_types) {

@@ -45,3 +45,10 @@ constraint Fn{
 //	type ReturnT;
 //	fn index(idx int) ReturnT;
 //}
+
+fn assert(cond bool){
+	if(cond){
+	}else{
+		abort();
+	}
+}

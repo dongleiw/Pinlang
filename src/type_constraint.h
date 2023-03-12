@@ -28,7 +28,7 @@ public:
 	}
 
 	// 生成一个虚拟的泛型类型, 满足该约束
-	void FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGType& ti) const;
+	//void FillVirtualType(VerifyContext& ctx, TypeInfoVirtualGType& ti) const;
 
 	std::string GetConstraintName() const { return m_constraint_name; }
 

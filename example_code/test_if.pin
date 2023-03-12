@@ -12,6 +12,9 @@ fn test1(a bool, b bool) i32{
 	}
 }
 fn main() i32 {
-	var i = test1(false,false);
-	return i;
+	assert( 1 == test1(true,true) );
+	assert( 2 == test1(true,false) );
+	assert( 3 == test1(false,true) );
+	assert( 4 == test1(false,false) );
+	return 0;
 }

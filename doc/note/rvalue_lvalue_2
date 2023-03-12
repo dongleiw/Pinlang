@@ -14,6 +14,7 @@
 
 	假设
 		array.rtype = [N]T
+		`array`表达式返回lvalue, 即数组的地址
 	规则
 		`array[0]`.rtype = T.rtype = T
 		`array`表达式返回lvalue
@@ -23,7 +24,7 @@
 
 	假设
 		array.rtype = *T
-		`array`表达式返回rvalue
+		`array`表达式返回rvalue, 即数组的地址
 	规则
 		`array[0]`.rtype = T.rtype = T
 	推导

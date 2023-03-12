@@ -1,50 +1,22 @@
 #pragma once
 
+#include "compile_context.h"
 #include "define.h"
-#include "fntable.h"
-#include "variable.h"
-#include <vector>
+#include <llvm-12/llvm/IR/Function.h>
 
-class AstNode;
-class VerifyContext;
-class BuiltinFn;
+class AstNodeBlockStmt;
+class AstNodeComplexFnDef;
 
-// 指向内置函数的执行函数的指针
-typedef Variable* (*BuiltinFnCallback)(BuiltinFn& builtin_fn, ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);
+typedef void (*BuiltinFnCompileCallback)(CompileContext& cctx, std::string fnid);
 
-// 指向内置函数的verify函数的指针
-typedef void (*BuiltinFnVerify)(BuiltinFn& builtin_fn, VerifyContext& ctx);
+class BuiltinFn {
 
-/*
- * 内置函数
- */
-struct BuiltinFn {
-	BuiltinFn() {}
-	BuiltinFn(TypeId obj_tid, BuiltinFnCallback callback, BuiltinFnVerify verify) {
-		this->obj_tid  = obj_tid;
-		this->callback = callback;
-		this->verify   = verify;
-	}
-	BuiltinFn(TypeId obj_tid, BuiltinFnCallback callback, BuiltinFnVerify verify, int dynlib_instance_id, void* dynlib_fn) {
-		this->obj_tid			 = obj_tid;
-		this->callback			 = callback;
-		this->verify			 = verify;
-		this->dynlib_instance_id = dynlib_instance_id;
-		this->dynlib_fn			 = dynlib_fn;
-	}
-	TypeId				 obj_tid;
-	TypeId				 fn_tid;
-	BuiltinFnCallback	 callback;
-	BuiltinFnVerify		 verify;
-	std::vector<FnAddr> fn_list; // 存放verify阶段确定的函数地址
+public:
+	static void register_builtin_fns(AstNodeBlockStmt& astnode_block_stmt);
 
-	// 动态库加载得到的函数
-	int	  dynlib_instance_id;
-	void* dynlib_fn;
+	static void compile_nop(CompileContext& cctx, std::string fnid);
 
-	void	  SetFnTid(TypeId fn_tid) { this->fn_tid = fn_tid; }
-	void	  Verify(VerifyContext& ctx);
-	Variable* Call(ExecuteContext& ctx, Variable* thisobj, std::vector<Variable*> args);
-	int		  GetDynLibInstanceId() const { return dynlib_instance_id; }
-	void*	  GetDynLibFn() const { return dynlib_fn; }
+private:
+	static AstNodeComplexFnDef* register_bfn_abort();
+	static void					compile_bfn_abort(CompileContext& cctx, std::string fnid);
 };

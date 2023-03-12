@@ -1,42 +1,43 @@
 // test `loop`
-fn test1() i32{
+
+fn test1() {
 	var sum=0;
 	for var i=1; i<=10; i=i+1{
 		sum = sum+i;
 	}
-	return sum;
+	assert(sum==55);
 }
 
-fn test2() i32{
+fn test2() {
 	var sum=0;
 	for var i=1; i<=10; {
 		sum = sum+i;
 		i=i+1;
 	}
-	return sum;
+	assert(sum==55);
 }
 
-fn test3() i32{
+fn test3() {
 	var sum=0;
 	var i=1;
 	for ; i<=10; {
 		sum = sum+i;
 		i=i+1;
 	}
-	return sum;
+	assert(sum==55);
 }
 
-fn test4() i32{
+fn test4() {
 	var sum=0;
 	var i=1;
 	while i<=10 {
 		sum = sum+i;
 		i=i+1;
 	}
-	return sum;
+	assert(sum==55);
 }
 
-fn test5() i32{
+fn test5() {
 	var sum=0;
 	var i=1;
 	for ;; {
@@ -46,10 +47,10 @@ fn test5() i32{
 		sum = sum+i;
 		i=i+1;
 	}
-	return sum;
+	assert(sum==55);
 }
 
-fn test6() i32{
+fn test6() {
 	var sum=0;
 	var i=1;
 	while true {
@@ -59,10 +60,10 @@ fn test6() i32{
 		sum = sum+i;
 		i=i+1;
 	}
-	return sum;
+	assert(sum==55);
 }
 
-fn test7() i32{
+fn test7() {
 	var sum=0;
 	var i=1;
 	while true {
@@ -73,17 +74,17 @@ fn test7() i32{
 		}
 		break;
 	}
-	return sum;
+	assert(sum==55);
 }
 
 fn main() i32{
-	//var ret = test1();
-	//var ret = test2();
-	//var ret = test3();
-	//var ret = test4();
-	//var ret = test5();
-	//var ret = test5();
-	var ret = test7();
+	test1();
+	test2();
+	test3();
+	test4();
+	test5();
+	test5();
+	test7();
 
-	return ret;
+	return 0;
 }
