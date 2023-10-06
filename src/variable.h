@@ -22,6 +22,7 @@ class Variable {
 public:
 	Variable(TypeId tid);
 	Variable(float value);
+	Variable(double value);
 	Variable(bool value);
 	Variable(std::string value);
 	Variable(TypeId fn_tid, FunctionObj fnobj);
@@ -36,14 +37,9 @@ public:
 	TypeId GetTypeId() const { return m_tid; }
 
 	TypeId				 GetValueTid() const;
-	float				 GetValueFloat() const;
-	bool				 GetValueBool() const;
-	FunctionObj*		 GetValueFunctionObj() const;
+	uint64_t			 GetValueU64() const;
 	AstNodeConstraint*	 GetValueConstraint() const;
 	AstNodeComplexFnDef* GetValueComplexFn() const;
-
-	Variable* GetValueArrayElement(int idx);
-	void	  SetValueArrayElement(int idx, Variable* element);
 
 	Variable(int8_t value);
 	Variable(int16_t value);
@@ -53,25 +49,7 @@ public:
 	Variable(uint16_t value);
 	Variable(uint32_t value);
 	Variable(uint64_t value);
-	int8_t	 GetValueInt8() const;
-	int16_t	 GetValueInt16() const;
-	int32_t	 GetValueInt32() const;
-	int64_t	 GetValueInt64() const;
-	uint8_t	 GetValueUInt8() const;
-	uint16_t GetValueUInt16() const;
-	uint32_t GetValueUInt32() const;
-	uint64_t GetValueUInt64() const;
 
-	char*		GetValueStr();
-	const char* GetValueStr() const;
-	int			GetValueStrSize() const;
-
-	std::string ToString() const;
-
-	Variable* GetFieldValue(std::string field_name);
-	void	  SetFieldValue(std::string field_name, Variable* v);
-
-	void Assign(Variable* tmp);
 	void InitField(std::map<std::string, Variable*> fields);
 
 private:
@@ -81,10 +59,9 @@ private:
 private:
 	TypeId m_tid;
 
-	// 变量的数据
-	uint8_t* m_data;
-
 	// 编译阶段使用
+	TypeId				 m_value_tid;
+	uint64_t			 m_value_u64;
 	AstNodeConstraint*	 m_value_constraint;
 	AstNodeComplexFnDef* m_value_complex_fn;
 };

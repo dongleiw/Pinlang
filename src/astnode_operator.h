@@ -14,7 +14,7 @@
 #include "verify_context.h"
 
 /*
- * 操作符: + - * / % >= <= > < != []
+ * 操作符: + - * / % >= <= > < !=
  * 将操作符转换为(某个constraint的)方法的调用
  */
 class AstNodeOperator : public AstNode {
@@ -38,8 +38,4 @@ private:
 
 	TypeId m_left_expr_tid;
 	TypeId m_right_expr_tid;
-
-	bool m_left_expr_is_tmp;
-	bool m_right_expr_is_tmp;
-
 };

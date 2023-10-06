@@ -1,0 +1,43 @@
+fn __compile_i32_tostring(v i32) String{
+	if v>=0 {
+		return __compile_u32_tostring(v as u32);
+	}else{
+		var uv = (-1*v) as u32;
+
+		var size u64 = 0;
+		if uv>=1000000000 {
+			size=10;
+		}else if uv>=100000000{
+			size=9;
+		}else if uv>=10000000{
+			size=8;
+		}else if uv>=1000000{
+			size=7;
+		}else if uv>=100000{
+			size=6;
+		}else if uv>=10000{
+			size=5;
+		}else if uv>=1000{
+			size=4;
+		}else if uv>=100{
+			size=3;
+		}else if uv>=10{
+			size=2;
+		}else{
+			size=1;
+		}
+		size = size+1; // include '-'
+		var buf = new [size]u8();
+		buf[0]=45; // '-'
+
+		var i = size;
+		while i>1 {
+		    i = i-1;
+		    var c = (uv%10) as u8;
+		    buf[i] = c+48;
+		    uv = uv / 10;
+		}
+
+		return String(size, buf);
+	}
+}

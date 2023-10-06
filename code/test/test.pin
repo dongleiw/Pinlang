@@ -1,0 +1,42 @@
+fn test1(){
+	var i_1 u8=1;	
+	var i_2 u16=32476;	
+	var i_3 u32=429496726;	
+	var i_4 u64=18446744073709551615;	
+	var i_5 i8=-13;
+	var i_6 i16=-32000;
+	var i_7 i32=-129496726;
+	var i_8 i64=-8446744073709551615;
+
+	i_1.tostring();
+	i_2.tostring();
+	i_3.tostring();
+	i_4.tostring();
+	i_5.tostring();
+	i_6.tostring();
+	i_7.tostring();
+	i_8.tostring();
+}
+fn test2(){
+	var newline = []u8{10};
+	var newline_s = String(1, &(newline[0]));
+
+	print( 1u8.tostring() );
+	print(newline_s);
+	
+	print( 1u16.tostring() );
+	print(newline_s);
+
+	print( 429496725u32.tostring() );
+	print(newline_s);
+}
+fn test3(){
+	print(1i8, "\n");
+	print(32, "\n");
+	print(-8446744073709551615i64, "\n");
+	print("hello", "world\n");
+}
+fn main() i32 {
+	test3();
+	return 0;
+}

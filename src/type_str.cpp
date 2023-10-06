@@ -18,96 +18,75 @@
 TypeInfoStr::TypeInfoStr() {
 	m_name			 = "str";
 	m_typegroup_id	 = TYPE_GROUP_ID_PRIMARY;
-	m_mem_size		 = 16;
-	m_mem_align_size = 16;
 }
 void TypeInfoStr::InitBuiltinMethods(VerifyContext& ctx) {
 	ctx.PushStack();
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
 	// 手动实现Add约束
-	{
-		std::vector<AstNodeComplexFnDef*> fns;
-		{
-			std::vector<AstNodeComplexFnDef::Implement> implements;
-			{
-				std::vector<ParserGenericParam> gparams;
-				std::vector<ParserParameter>	params;
-				{
-					AstNodeType* another_value_type = new AstNodeType();
-					another_value_type->InitWithIdentifier("str");
-					params.push_back({ParserParameter{
-						.name = "a",
-						.type = another_value_type,
-					}});
-				}
+	//{
+	//	std::vector<AstNodeComplexFnDef*> fns;
+	//	{
+	//		std::vector<AstNodeComplexFnDef::Implement> implements;
+	//		{
+	//			std::vector<ParserGenericParam> gparams;
+	//			std::vector<ParserParameter>	params;
+	//			{
+	//				AstNodeType* another_value_type = new AstNodeType();
+	//				another_value_type->InitWithIdentifier("str");
+	//				params.push_back({ParserParameter{
+	//					.name = "a",
+	//					.type = another_value_type,
+	//				}});
+	//			}
 
-				AstNodeType* return_type = new AstNodeType();
-				return_type->InitWithIdentifier("str");
+	//			AstNodeType* return_type = new AstNodeType();
+	//			return_type->InitWithIdentifier("str");
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, BuiltinFn::compile_nop));
-			}
+	//			implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, BuiltinFn::compile_nop));
+	//		}
 
-			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements);
-			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+	//		AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("add", implements, FnAttr::FN_ATTR_NONE);
+	//		astnode_complex_fndef->Verify(ctx, VerifyContextParam());
 
-			fns.push_back(astnode_complex_fndef);
-		}
+	//		fns.push_back(astnode_complex_fndef);
+	//	}
 
-		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Add")->GetValueConstraint();
-		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_STR});
-		AddConstraint(constraint_tid, fns);
-	}
+	//	AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Add")->GetValueConstraint();
+	//	TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_STR, TYPE_ID_STR});
+	//	AddConstraint(constraint_tid, fns);
+	//}
 	// 手动实现Index约束
-	{
-		std::vector<AstNodeComplexFnDef*> fns;
-		{
-			std::vector<AstNodeComplexFnDef::Implement> implements;
-			{
-				std::vector<ParserGenericParam> gparams;
-				std::vector<ParserParameter>	params;
-				{
-					AstNodeType* index_type = new AstNodeType();
-					index_type->InitWithIdentifier("i32");
-					params.push_back({ParserParameter{
-						.name = "a",
-						.type = index_type,
-					}});
-				}
+	//{
+	//	std::vector<AstNodeComplexFnDef*> fns;
+	//	{
+	//		std::vector<AstNodeComplexFnDef::Implement> implements;
+	//		{
+	//			std::vector<ParserGenericParam> gparams;
+	//			std::vector<ParserParameter>	params;
+	//			{
+	//				AstNodeType* index_type = new AstNodeType();
+	//				index_type->InitWithIdentifier("i32");
+	//				params.push_back({ParserParameter{
+	//					.name = "a",
+	//					.type = index_type,
+	//				}});
+	//			}
 
-				AstNodeType* return_type = new AstNodeType();
-				return_type->InitWithIdentifier("int");
+	//			AstNodeType* return_type = new AstNodeType();
+	//			return_type->InitWithIdentifier("int");
 
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, BuiltinFn::compile_nop));
-			}
+	//			implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, BuiltinFn::compile_nop));
+	//		}
 
-			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("index", implements);
-			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
+	//		AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("index", implements, FnAttr::FN_ATTR_NONE);
+	//		astnode_complex_fndef->Verify(ctx, VerifyContextParam());
 
-			fns.push_back(astnode_complex_fndef);
-		}
+	//		fns.push_back(astnode_complex_fndef);
+	//	}
 
-		AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Index")->GetValueConstraint();
-		TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_STR});
-		AddConstraint(constraint_tid, fns);
-	}
-	// 增加内置方法
-	{
-		std::vector<AstNodeComplexFnDef*> fns;
-		// 增加Size()int
-		{
-			std::vector<AstNodeComplexFnDef::Implement> implements;
-			{
-				std::vector<ParserGenericParam> gparams;
-				std::vector<ParserParameter>	params;
-				AstNodeType*					return_type = new AstNodeType();
-				return_type->InitWithIdentifier("i32");
-				implements.push_back(AstNodeComplexFnDef::Implement(gparams, params, return_type, BuiltinFn::compile_nop));
-			}
-			AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("Size", implements);
-			astnode_complex_fndef->Verify(ctx, VerifyContextParam());
-			fns.push_back(astnode_complex_fndef);
-		}
-		AddConstraint(CONSTRAINT_ID_NONE, fns);
-	}
-	ctx.PopSTack();
+	//	AstNodeConstraint* constraint	  = ctx.GetCurStack()->GetVariable("Index")->GetValueConstraint();
+	//	TypeId			   constraint_tid = constraint->Instantiate(ctx, std::vector<TypeId>{TYPE_ID_STR});
+	//	AddConstraint(constraint_tid, fns);
+	//}
+	ctx.PopStack();
 }

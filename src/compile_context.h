@@ -12,6 +12,8 @@
 #include "llvm-12/llvm/IR/Type.h"
 #include "llvm-12/llvm/IR/Verifier.h"
 #include <list>
+#include <llvm-12/llvm/IR/Constant.h>
+#include <llvm-12/llvm/IR/GlobalValue.h>
 #include <llvm-12/llvm/IR/Value.h>
 
 class CompileContext {
@@ -61,6 +63,8 @@ public:
 	void		 SetMethodObj(llvm::Value* obj) { m_method_obj = obj; }
 	llvm::Value* GetMethodObj() const { return m_method_obj; }
 
+	llvm::Constant* AddGlobalValue(std::string name_prefix, llvm::Type* type, llvm::Constant* initializer);
+
 private:
 	llvm::LLVMContext* m_context;
 	llvm::Module*	   m_module;
@@ -74,6 +78,8 @@ private:
 	// 由parent-astnode设置 (for, while, switch)
 	llvm::BasicBlock* m_continue_block;
 	llvm::BasicBlock* m_break_block;
+
+	size_t m_global_var_name_seed;
 };
 
 class CompileResult {

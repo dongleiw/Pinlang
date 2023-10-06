@@ -14,10 +14,7 @@
  */
 class AstNodeAssignment : public AstNode {
 public:
-	AstNodeAssignment(AstNode* left, AstNode* right) {
-		m_left	= left;
-		m_right = right;
-	}
+	AstNodeAssignment(AstNode* left, AstNode* right);
 
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;

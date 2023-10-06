@@ -1,4 +1,5 @@
 #include "astnode_assignment.h"
+#include "astnode.h"
 #include "astnode_complex_fndef.h"
 #include "compile_context.h"
 #include "define.h"
@@ -11,7 +12,16 @@
 #include <cassert>
 #include <llvm-12/llvm/Support/Alignment.h>
 
+AstNodeAssignment::AstNodeAssignment(AstNode* left, AstNode* right) {
+	m_left	= left;
+	m_right = right;
+
+	m_left->SetParent(this);
+	m_right->SetParent(this);
+}
 VerifyContextResult AstNodeAssignment::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	log_debug("verify assigment");
 
 	VerifyContextResult vr_left = m_left->Verify(ctx, VerifyContextParam().SetExepectLeftValue(true));
@@ -19,10 +29,10 @@ VerifyContextResult AstNodeAssignment::Verify(VerifyContext& ctx, VerifyContextP
 		panicf("type of left expr in assignment is none");
 	}
 	if (vr_left.IsTmp()) {
-		panicf("result of left expr in assignment is tmp");
+		panicf("cannot assign temporary value");
 	}
 
-	VerifyContextResult vr_right = m_right->Verify(ctx, VerifyContextParam().SetResultTid(vr_left.GetResultTypeId()));
+	VerifyContextResult vr_right = m_right->Verify(ctx, VerifyContextParam().SetExpectResultTid(vr_left.GetResultTypeId()));
 	if (vr_right.GetResultTypeId() != vr_left.GetResultTypeId()) {
 		panicf("type not match in assignment: left[%d:%s] right[%d:%s]", vr_left.GetResultTypeId(), GET_TYPENAME_C(vr_left.GetResultTypeId()),
 			   vr_right.GetResultTypeId(), GET_TYPENAME_C(vr_right.GetResultTypeId()));
@@ -38,11 +48,8 @@ Variable* AstNodeAssignment::Execute(ExecuteContext& ctx) {
 	return nullptr;
 }
 AstNodeAssignment* AstNodeAssignment::DeepCloneT() {
-	AstNodeAssignment* newone = new AstNodeAssignment();
-
-	newone->m_left	= m_left->DeepClone();
-	newone->m_right = m_right->DeepClone();
-
+	AstNodeAssignment* newone = new AstNodeAssignment(m_left->DeepClone(), m_right->DeepClone());
+	newone->Copy(*this);
 	return newone;
 }
 CompileResult AstNodeAssignment::Compile(CompileContext& cctx) {

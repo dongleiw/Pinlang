@@ -5,6 +5,9 @@
 int str_to_int(const std::string& s) {
 	return std::stoi(s.c_str());
 }
+uint64_t str_to_uint64(const std::string& s) {
+	return std::stoull(s.c_str());
+}
 float str_to_float(const std::string& s) {
 	return std::stof(s.c_str());
 }

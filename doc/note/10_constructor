@@ -1,0 +1,343 @@
+构造函数
+	目前只支持new的方式调用构造函数, 还需要支持在stack上构造
+	语法:
+		var f = Foo(1,2);
+		转换为: 
+			var f Foo;
+			Foo(&f, 1, 2);
+
+		var f = new Foo(1,2);
+			var f = malloc(sizeof(Foo));
+			Foo(f, 1, 2);
+
+		Foo(1, 2)
+			var ptr = alloca( sizeof(Foo) );
+			Foo(ptr, 1, 2)
+			返回值 *Foo
+
+		new Foo(1,2)
+			var ptr = malloc( sizeof(Foo) );
+			Foo(ptr, 1, 2)
+			返回值 *Foo
+			
+
+构造函数不需要显式写返回类型, 实际返回类型是Class类型.
+	在verify阶段自动给构造函数加上返回类型. 
+	由于实际函数内部没有return this. 因此compile阶段需要特殊处理
+非static方法和构造函数都有一个隐藏的this参数
+	在verify阶段, 将this参数加入到函数的类型中. 
+	在匹配函数和参数校验时, 需要忽略这个隐藏参数
+
+
+f.print(1,2);
+	foo::print(f, 1, 2);
+
+-------------
+var a = 1;
+var a = 1+2;
+var a = fnlist[0]();
+
+var a = Foo();
+	转换:
+		var a Foo;
+		Foo(&a);
+	不转换:
+		var tmp = alloca(Foo);
+		Foo(tmp);
+		var a = tmp;
+
+var a = Foo().a + 1;
+	转换:
+		var tmp Foo;
+		Foo(&tmp);
+		var a = tmp.a + 1;
+	不转换:
+		var tmp Foo;
+		Foo(&tmp);
+		var a = tmp.a + 1;
+
+print( Foo() );
+	转换:
+		var tmp Foo;
+		Foo(&tmp);
+		print(tmp);
+	不转换:
+		var tmp Foo;
+		Foo(&tmp);
+		print(tmp);
+		
+
+####### 构造函数是语法糖, 编译时要转换
+var a = new Foo();
+	var a = malloc(Foo);
+	Foo(a);
+
+var a = (new Foo()).a + 1;
+	var tmp = malloc(Foo);
+	Foo(tmp);
+	var a = tmp.a + 1;
+
+var a = Foo(); a.id = 1;
+	var a Foo;
+	Foo(&a);
+
+	a.id = 1;
+	
+Foo().id = 1;
+	var tmp Foo;
+	Foo(&tmp);
+	tmp.id = 1;
+
+####### 构造函数是表达式
+Foo()
+	是一个expr
+	结果:
+		rtype = Foo
+		ltype = *Foo
+		是一个tmpvalue
+	编译时:
+		%tmp = call alloca( sizeof(Foo) );
+		call Foo( %tmp );
+		# result = %tmp
+
+
+new Foo()
+	是一个expr
+	结果:
+		rtype = *Foo
+		ltype = 无效
+		是一个rvalue
+		是一个tmpvalue
+	编译时:
+		%tmp = call malloc( sizeof(Foo) );
+		call Foo( %tmp );
+		# result = %tmp
+
+例子:
+	var a = Foo();
+		`a`.rtype = `Foo()`.rtype = Foo
+		`a`.ltype = *Foo
+
+		编译时:
+			由于`Foo()`编译结果是一个`*Foo`, 而且是一个tmpvalue.
+			因此无需再创建一个`a`对象, 直接将临时对象改名为`a`即可
+
+		Foo(&a);
+
+	Foo().id + 1;
+		类型检查:
+			`Foo()`的结果类型是Foo, Foo有`id`字段, `id`字段
+		编译:
+			var ptr_tmp_foo = compile(`Foo()`);
+			var ptr_id = compile( `ptr_tmp.id` );
+
+	Foo().id = 1;
+		类型检查:
+			`Foo()`的结果类型是Foo, Foo有`id`字段, `id`字段
+		编译:
+			var ptr_tmp = compile(`Foo()`);
+			var ptr_id = compile( `ptr_tmp.id` );
+
+
+	var a = new Foo();
+		类型检查:
+			`a`.rtype = `new Foo()`.rtype = *Foo
+			`a`.ltype = *Foo
+
+		编译:
+			var ptr_tmp_foo = compile( `new Foo()` );
+			由于`ptr_tmp_foo`是一个tmpvalue, 因此直接改名变成a即可
+
+var a = (new Foo()).a + 1;
+	var tmp = malloc(Foo);
+	Foo(tmp);
+	var a = tmp.a + 1;
+
+	
+Foo().id = 1;
+	var tmp Foo;
+	Foo(&tmp);
+	tmp.id = 1;
+
+
+
+############# var f = Foo(); 是语法糖
+var f = Foo();
+	是语法糖. 而不是一个正常的赋值语句. 其实这个过程中并没有赋值操作. 仅仅是一个申请内存+初始化的过程
+	实际的代码是:
+		var f Foo; // 创建一个对象`f`, 未初始化
+		Foo.Foo(&f); // 调用构造函数Foo进行初始化
+		
+		Foo f = Foo();
+		var f Foo();
+
+var f = new Foo();
+	这个语句中是有赋值操作的. 
+
+
+
+var f = Foo();
+var a = Foo().a;
+var a = Foo().a+1;
+var a = Foo().a + Foo().b;
+
+
+一个表达式的返回值:
+	result{
+		type // 返回的类型
+		has_mem_addr // 是否有内存地址. 
+	}
+
+	var a=1;
+		`1`:
+			类型为i32. 
+			被期望返回rvalue. 因此结果是值. 没有内存地址
+			return constant_int(1);
+
+	var a=1;
+	var b=a;
+		`a`:
+			类型为i32
+			被期望返回rvalue. 因此结果是值, 没有内存地址
+			编译:
+				return load(a);
+
+	class Foo{
+		id i32;
+	}
+	var f=Foo{id:1};
+	var c=f.id
+		`f.id`:
+			类型为i32
+			被期望返回rvalue. 因此结果是值. 没有内存地址
+		`f`:
+			类型为Foo
+			被期望返回lvalue. 因此结果是f的内存地址
+			编译:
+				编译阶段, f是一个内存地址
+				return f;
+
+	class Foo{
+		id i32;
+	}
+	var f=Foo{id:1};
+	var pf=&f;
+	var c=pf.id
+		`pf.id`:
+			类型为i32
+			被期望返回rvalue. 因此结果是值. 没有内存地址
+			语法上有不同:
+				不同于C语言中的`obj.attr`和`obj->attr`语法, 该语言中只有`obj.attr`一种语法.
+				该语法同时支持obj是值和指针的情况.
+				当obj是值时, `obj`返回lvalue
+				当obj是指针时, `obj返回rvalue
+		`pf`:
+			类型为*Foo
+			被期望返回rvalue. 因此结果是pf的内存地址.
+			
+	class Foo{
+		id i32;
+		fn Foo(id i32){
+			this.id=id;
+		}
+	}
+	var f=Foo(1);
+		`1`: 
+			类型为i32
+			被期望返回rvalue. 因此结果是值. 没有内存地址
+		`Foo(1)`:
+			类型是Foo
+			被期望返回rvalue. 因此结果是值. 没有内存地址
+			编译:
+				var tmp = alloca(Foo);
+				Foo(tmp, 1);
+				return load(tmp); // 从内存中加载到register中, 得到一个值
+
+	class Foo{
+		id i32;
+		fn Foo(id i32){
+			this.id=id;
+		}
+	}
+	var f=Foo(1).id;
+		`Foo(1).id`:
+			类型是i32
+			被期望返回rvalue. 因此结果是值. 没有内存地址
+		`Foo(1)`:
+			类型是Foo
+			被期望返回lvalue. 因此结果是内存地址
+			编译:
+				var tmp = alloca(Foo);
+				Foo(tmp, 1);
+				return tmp;
+
+
+	class Foo{
+		fn Foo(){
+		}
+	}
+	var f = new Foo();
+		`new Foo()`:
+			类型为*Foo
+			被期望返回rvalue. 结果是创建的对象的内存地址
+			编译:
+				var tmp = call malloc(Foo);
+				Foo(tmp);
+				return tmp;
+
+	class Foo{
+		id i32;
+		fn Foo(){
+		}
+	}
+	var f = new Foo();
+	var q = f.id;
+		`f.id`:
+			类型为i32
+			被期望返回rvalue. 因此结果是值. 没有内存地址
+			语法上有不同:
+				不同于C语言中的`obj.attr`和`obj->attr`语法, 该语言中只有`obj.attr`一种语法.
+				该语法同时支持obj是值和指针的情况.
+				当obj是值时, `obj`返回lvalue
+				当obj是指针时, `obj返回rvalue
+		`f`:
+			类型为*i32
+			被期望返回rvalue. 因此结果是f的值, 也就是对象的地址
+
+	class Foo{
+		id i32;
+		fn Foo(){
+		}
+	}
+	var q = new Foo().id;
+		`new Foo().id`:
+			类型为i32
+			被期望返回rvalue. 因此结果是值. 没有内存地址
+			语法上有不同:
+				不同于C语言中的`obj.attr`和`obj->attr`语法, 该语言中只有`obj.attr`一种语法.
+				该语法同时支持obj是值和指针的情况.
+				当obj是值时, `obj`返回lvalue
+				当obj是指针时, `obj返回rvalue
+		`new Foo()`:
+			类型为*Foo
+			被期望返回rvalue. 因此结果是创建的对象的内存地址
+			编译:
+				var tmp = call malloc(Foo);
+				Foo(tmp);
+				return tmp;
+
+	var f=Foo();
+	var a=f.tostring();
+		`f.tostring()`: 
+			类型为Str, 因此结果是值. 没有内存地址
+			编译:
+				var result = compile(`f`);
+				var str = call Foo::tostring(result);
+		`f`:
+			被期望返回lvalue. 因此结果是f的内存地址
+
+	var a=(1+2).tostring();
+		`(1+2).tostring()`: 
+			内置函数, 并不是普通的方法调用. 而是转换为:
+				i32::tostring( (1+2) );
+			期望`(1+2)`返回rvalue

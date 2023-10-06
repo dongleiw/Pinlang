@@ -1,0 +1,6 @@
+parse的过程:
+	1. 加载predefine, 放入一个global-block-stmt
+	2. 加载所有源文件, 每个源文件放入一个global-block-stmt
+	3. verify predefine
+	4. 初始化内置类型的内置方法
+	5. 顺序解析其他global-block-stmt. 如果解析过程中遇到未定义符号. 则从全局block中查找并递归verify

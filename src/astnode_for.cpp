@@ -1,4 +1,5 @@
 #include "astnode_for.h"
+#include "astnode.h"
 #include "compile_context.h"
 #include "define.h"
 #include "log.h"
@@ -26,6 +27,8 @@ AstNodeFor::AstNodeFor(AstNode* init_expr, AstNode* cond_expr, AstNode* loop_exp
 	m_body->SetParent(this);
 }
 VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	log_debug("verify for");
 	ctx.GetCurStack()->EnterBlock(new VariableTable());
 
@@ -33,7 +36,7 @@ VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vp
 		m_init_expr->Verify(ctx, VerifyContextParam());
 	}
 	if (m_cond_expr != nullptr) {
-		VerifyContextResult vr_cond = m_cond_expr->Verify(ctx, VerifyContextParam().SetResultTid(TYPE_ID_BOOL));
+		VerifyContextResult vr_cond = m_cond_expr->Verify(ctx, VerifyContextParam().SetExpectResultTid(TYPE_ID_BOOL));
 		if (vr_cond.GetResultTypeId() != TYPE_ID_BOOL) {
 			panicf("type of cond expr is not bool");
 		}
@@ -42,7 +45,7 @@ VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vp
 		m_loop_expr->Verify(ctx, VerifyContextParam());
 	}
 
-	m_body->Verify(ctx, VerifyContextParam().SetReturnTid(vparam.GetReturnTid()));
+	m_body->Verify(ctx, VerifyContextParam().SetExpectReturnTid(vparam.GetExpectReturnTid()));
 
 	ctx.GetCurStack()->LeaveBlock();
 
@@ -50,36 +53,15 @@ VerifyContextResult AstNodeFor::Verify(VerifyContext& ctx, VerifyContextParam vp
 	return VerifyContextResult(m_result_typeid);
 }
 Variable* AstNodeFor::Execute(ExecuteContext& ctx) {
-	ctx.GetCurStack()->EnterBlock(new VariableTable());
-	if (m_init_expr != nullptr) {
-		m_init_expr->Execute(ctx);
-	}
-	while (true) {
-		if (m_cond_expr != nullptr) {
-			Variable* v_cond = m_cond_expr->Execute(ctx);
-			if (v_cond->GetValueBool() == false) {
-				break;
-			}
-		}
-
-		m_body->Execute(ctx);
-		if (ctx.GetCurStack()->HasReturned() || ctx.GetCurStack()->IsBreaked()) {
-			break;
-		}
-
-		if (m_loop_expr != nullptr) {
-			m_loop_expr->Execute(ctx);
-		}
-	}
-	ctx.GetCurStack()->SetBreaked(false); // 清掉break
-	ctx.GetCurStack()->LeaveBlock();
 	return nullptr;
 }
 AstNodeFor* AstNodeFor::DeepCloneT() {
-	return new AstNodeFor(m_init_expr == nullptr ? nullptr : m_init_expr->DeepClone(),
+	AstNodeFor* newone = new AstNodeFor(m_init_expr == nullptr ? nullptr : m_init_expr->DeepClone(),
 						  m_cond_expr == nullptr ? nullptr : m_cond_expr->DeepClone(),
 						  m_loop_expr == nullptr ? nullptr : m_loop_expr->DeepClone(),
 						  m_body->DeepClone());
+	newone->Copy(*this);
+	return newone;
 }
 CompileResult AstNodeFor::Compile(CompileContext& cctx) {
 	if (m_init_expr != nullptr) {

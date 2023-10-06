@@ -44,4 +44,6 @@ private:
 	AstNodeType* m_declared_type;
 	AstNode*	 m_init_expr;
 	bool		 m_is_const;
+
+	VerifyContextResult m_vr_init_expr;
 };

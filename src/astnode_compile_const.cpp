@@ -1,4 +1,5 @@
 #include "astnode_compile_const.h"
+#include "astnode.h"
 #include "define.h"
 #include "type.h"
 #include "type_mgr.h"
@@ -8,6 +9,8 @@
 #include "verify_context.h"
 
 VerifyContextResult AstNodeCompileConst::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	return VerifyContextResult(m_result_typeid);
 }
 Variable* AstNodeCompileConst::Execute(ExecuteContext& ctx) {

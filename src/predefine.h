@@ -1,5 +1,5 @@
 #pragma once
 
-#include "astnode_blockstmt.h"
+class AstNodeBlockStmt;
 
-void register_predefine(AstNodeBlockStmt& astnode_block_stmt);
+AstNodeBlockStmt* load_predefine();

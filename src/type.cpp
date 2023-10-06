@@ -8,53 +8,27 @@
 #include "type_constraint.h"
 #include "type_fn.h"
 #include "type_mgr.h"
+#include "utils.h"
 #include "verify_context.h"
 #include <cassert>
 
-MethodIndex TypeInfo::GetMethodIdx(std::string method_name) const {
-	TypeId			 constraint_tid = TYPE_ID_NONE;
-	std::vector<int> match_idx_list;
-	for (auto& constraint : m_constraints) {
-		for (size_t i = 0; i < constraint.concrete_methods.size(); i++) {
-			if (constraint.concrete_methods.at(i).method_name == method_name) {
-				match_idx_list.push_back(i);
-				constraint_tid = constraint.constraint_tid;
-			}
-		}
-	}
-	if (match_idx_list.empty()) {
-		return MethodIndex();
-	} else if (match_idx_list.size() > 1) {
-		panicf("multiple candidate of method[%s]", method_name.c_str());
-	} else {
-		return MethodIndex(constraint_tid, match_idx_list.at(0));
-	}
-}
-FnAddr TypeInfo::GetMethodByIdx(MethodIndex method_idx) {
-	assert(method_idx.IsValid());
+bool TypeInfo::MatchConstraint(ConstraintInstance constraint_instance) const {
 	for (auto constraint : m_constraints) {
-		if (constraint.constraint_tid != method_idx.constraint_tid)
-			continue;
-		return constraint.concrete_methods.at(method_idx.method_idx).fn_addr;
-	}
-	panicf("invalid method idx: constraint_tid[%d] method_idx[%d]", method_idx.constraint_tid, method_idx.method_idx);
-	return FnAddr();
-}
-bool TypeInfo::MatchConstraint(TypeId tid) const {
-	for (auto constraint : m_constraints) {
-		if (constraint.constraint_tid == tid)
+		if (constraint.constraint_instance.constraint_instance_name == constraint_instance.constraint_instance_name) {
+			assert(constraint.constraint_instance.constraint_name == constraint_instance.constraint_name);
 			return true;
+		}
 	}
 	return false;
 }
-void TypeInfo::AddConstraint(TypeId constraint_tid, std::vector<AstNodeComplexFnDef*> methods) {
+void TypeInfo::AddConstraint(ConstraintInstance constraint_instance, std::vector<AstNodeComplexFnDef*> methods) {
 	for (auto& constraint : m_constraints) {
-		if (constraint.constraint_tid == constraint_tid) {
+		if (constraint.constraint_instance.constraint_instance_name == constraint_instance.constraint_instance_name) {
 			panicf("constraint already exists");
 		}
 	}
 	Constraint constraint;
-	constraint.constraint_tid = constraint_tid;
+	constraint.constraint_instance = constraint_instance;
 	for (auto iter : methods) {
 		iter->SetObjTypeId(GetTypeId());
 		constraint.methods.push_back(Method{
@@ -64,142 +38,45 @@ void TypeInfo::AddConstraint(TypeId constraint_tid, std::vector<AstNodeComplexFn
 	}
 	m_constraints.push_back(constraint);
 }
-bool TypeInfo::HasField(std::string field_name) const {
-	for (auto iter : m_field_list) {
-		if (iter.name == field_name) {
-			return true;
-		}
-	}
-	return false;
-}
-// void TypeInfo::AddField(std::string field_name, TypeId tid) {
-//	assert(!HasField(field_name));
-//	m_field_list.push_back(Field{
-//		.name = field_name,
-//		.tid  = tid,
-//	});
-// }
-void TypeInfo::SetFields(std::vector<std::pair<std::string, TypeId>> fields) {
-	assert(m_field_list.empty());
-	for (auto iter : fields) {
-		m_field_list.push_back(Field{
-			.name = iter.first,
-			.tid  = iter.second,
-		});
-	}
-	align_field();
-}
-TypeId TypeInfo::GetFieldType(std::string field_name) const {
-	for (auto iter : m_field_list) {
-		if (iter.name == field_name) {
-			return iter.tid;
-		}
-	}
-	panicf("bug");
-}
-size_t TypeInfo::GetFieldIndex(std::string field_name) const {
-	for (size_t i = 0; i < m_field_list.size(); i++) {
-		if (m_field_list.at(i).name == field_name) {
-			return i;
-		}
-	}
-	panicf("bug");
-}
-MethodIndex TypeInfo::GetConcreteMethod(VerifyContext& ctx, std::string method_name, std::vector<TypeId> args_tid, TypeId return_tid) {
-	int method_count = 0;
-	for (auto constraint : m_constraints) {
-		for (size_t i = 0; i < constraint.methods.size(); i++) {
-			const Method& method = constraint.methods.at(i);
-			if (method.method_name == method_name) {
-				method_count++;
-			}
-		}
-	}
-	if (method_count > 1) {
-		// 多个约束有同名方法. 目前处理不了
-		panicf("same method name[%s] in multiple constraint", method_name.c_str());
-	}
-
-	for (auto& constraint : m_constraints) {
-		for (size_t i = 0; i < constraint.methods.size(); i++) {
-			const Method& method = constraint.methods.at(i);
-			if (method.method_name == method_name) {
-				AstNodeComplexFnDef::Instance method_instance = method.method_node->Instantiate_param_return(ctx, args_tid, return_tid);
-
-				MethodIndex method_index = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fn_addr);
-				return method_index;
-			}
-		}
-	}
-	return MethodIndex();
-}
-MethodIndex TypeInfo::GetConcreteMethod(VerifyContext& ctx, std::string method_name, TypeId tid) {
-	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(tid));
-	return GetConcreteMethod(ctx, method_name, tifn->GetParmsTid(), tifn->GetReturnTypeId());
-}
-MethodIndex TypeInfo::GetConcreteMethod(VerifyContext& ctx, std::string method_name) {
-	int method_count = 0;
-	for (auto constraint : m_constraints) {
-		for (size_t i = 0; i < constraint.methods.size(); i++) {
-			const Method& method = constraint.methods.at(i);
-			if (method.method_name == method_name) {
-				method_count++;
-			}
-		}
-	}
-	if (method_count > 1) {
-		// 多个约束有同名方法. 目前处理不了
-		panicf("same method name[%s] in multiple constraint", method_name.c_str());
-	}
-
-	for (auto& constraint : m_constraints) {
-		for (size_t i = 0; i < constraint.methods.size(); i++) {
-			const Method& method = constraint.methods.at(i);
-			if (method.method_name == method_name) {
-				AstNodeComplexFnDef::Instance method_instance = method.method_node->Instantiate(ctx);
-
-				MethodIndex method_index = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fn_addr);
-				return method_index;
-			}
-		}
-	}
-	return MethodIndex();
-}
-MethodIndex TypeInfo::Constraint::AddConcreteMethod(std::string method_name, FnAddr fn_addr) {
-	for (size_t i = 0; i < concrete_methods.size(); i++) {
-		if (concrete_methods.at(i).method_name == method_name) {
-			return MethodIndex(constraint_tid, i);
-		}
-	}
-	concrete_methods.push_back(MethodInstance{
-		.method_name = method_name,
-		.fn_addr	 = fn_addr,
-	});
-
-	return MethodIndex(constraint_tid, concrete_methods.size() - 1);
-}
 std::vector<std::string> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name, std::vector<TypeId> method_params_tid, TypeId return_tid) {
 	std::vector<std::string> method_indexs;
 	for (auto& constraint : m_constraints) {
-		if (constraint.constraint_tid == CONSTRAINT_ID_NONE) {
+		if (constraint.constraint_instance.constraint_instance_name.empty()) {
 			if (constraint_name.empty()) {
-				for (auto& c : m_constraints) {
-					for (auto& m : c.methods) {
-						AstNodeComplexFnDef::Instance method_instance = m.method_node->Instantiate_param_return(ctx, method_params_tid, return_tid);
-						method_indexs.push_back(method_instance.instance_name);
+				for (auto& m : constraint.methods) {
+					if (m.method_name == method_name) {
+						std::string fn_id = m.method_node->Instantiate_param_return(ctx, method_params_tid, return_tid);
+						if (!fn_id.empty()) {
+							method_indexs.push_back(fn_id);
+						}
 					}
 				}
 			}
 		} else {
-			TypeInfoConstraint* ti_constraint = dynamic_cast<TypeInfoConstraint*>(g_typemgr.GetTypeInfo(constraint.constraint_tid));
-			if (ti_constraint->GetConstraintName() == constraint_name) {
+			if (constraint.constraint_instance.constraint_name == constraint_name) {
 				for (size_t i = 0; i < constraint.methods.size(); i++) {
 					const Method& method = constraint.methods.at(i);
 					if (method.method_name == method_name) {
-						AstNodeComplexFnDef::Instance method_instance = method.method_node->Instantiate_param_return(ctx, method_params_tid, return_tid);
-						//MethodIndex					  method_index	  = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fn_addr);
-						method_indexs.push_back(method_instance.instance_name);
+						std::string fn_id = method.method_node->Instantiate_param_return(ctx, method_params_tid, return_tid);
+						if (!fn_id.empty()) {
+							method_indexs.push_back(fn_id);
+						}
 					}
+				}
+			}
+		}
+	}
+	return method_indexs;
+}
+std::vector<std::string> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::string method_name, std::vector<TypeId> method_params_tid, TypeId return_tid) {
+	std::vector<std::string> method_indexs;
+	for (auto& constraint : m_constraints) {
+		for (size_t i = 0; i < constraint.methods.size(); i++) {
+			const Method& method = constraint.methods.at(i);
+			if (method.method_name == method_name) {
+				std::string fn_id = method.method_node->Instantiate_param_return(ctx, method_params_tid, return_tid);
+				if (!fn_id.empty()) {
+					method_indexs.push_back(fn_id);
 				}
 			}
 		}
@@ -210,27 +87,33 @@ std::vector<std::string> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::
 	TypeInfoFn* ti = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(tid));
 	return GetConstraintMethod(ctx, constraint_name, method_name, ti->GetParmsTid(), ti->GetReturnTypeId());
 }
+std::vector<std::string> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::string method_name, TypeId tid) {
+	TypeInfoFn* ti = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(tid));
+	return GetConstraintMethod(ctx, method_name, ti->GetParmsTid(), ti->GetReturnTypeId());
+}
 std::vector<std::string> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::string constraint_name, std::string method_name) {
 	std::vector<std::string> method_indexs;
 	for (auto& constraint : m_constraints) {
-		if (constraint.constraint_tid == CONSTRAINT_ID_NONE) {
+		if (constraint.constraint_instance.constraint_instance_name.empty()) {
 			if (constraint_name.empty()) {
 				for (auto& c : m_constraints) {
 					for (auto& m : c.methods) {
-						AstNodeComplexFnDef::Instance method_instance = m.method_node->Instantiate(ctx);
-						method_indexs.push_back(method_instance.instance_name);
+						std::string fn_id = m.method_node->Instantiate(ctx);
+						if (!fn_id.empty()) {
+							method_indexs.push_back(fn_id);
+						}
 					}
 				}
 			}
 		} else {
-			TypeInfoConstraint* ti_constraint = dynamic_cast<TypeInfoConstraint*>(g_typemgr.GetTypeInfo(constraint.constraint_tid));
-			if (ti_constraint->GetConstraintName() == constraint_name) {
+			if (constraint.constraint_instance.constraint_name == constraint_name) {
 				for (size_t i = 0; i < constraint.methods.size(); i++) {
 					const Method& method = constraint.methods.at(i);
 					if (method.method_name == method_name) {
-						AstNodeComplexFnDef::Instance method_instance = method.method_node->Instantiate(ctx);
-						//MethodIndex					  method_index	  = constraint.AddConcreteMethod(method_instance.instance_name, method_instance.fn_addr);
-						method_indexs.push_back(method_instance.instance_name);
+						std::string fn_id = method.method_node->Instantiate(ctx);
+						if (!fn_id.empty()) {
+							method_indexs.push_back(fn_id);
+						}
 					}
 				}
 			}
@@ -238,34 +121,121 @@ std::vector<std::string> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::
 	}
 	return method_indexs;
 }
-void TypeInfo::align_field() {
-	uint32_t total_mem_size		= 0;
-	uint32_t max_mem_align_size = 1; // 最大的对齐需求
-	for (auto& iter : m_field_list) {
-		TypeInfo* ti				   = g_typemgr.GetTypeInfo(iter.tid);
-		uint32_t  field_mem_size	   = ti->GetMemSize();
-		uint32_t  field_mem_align_size = ti->GetMemAlignSize();
-
-		// 将当前地址补齐, 以满足当前字段对对齐的需求
-		total_mem_size = (total_mem_size + field_mem_align_size - 1) & (~(field_mem_align_size - 1));
-		// 记录当前字段的起始偏移
-		iter.mem_offset = total_mem_size;
-		// 增加当前字段的内存长度
-		total_mem_size += field_mem_size;
-
-		if (max_mem_align_size < field_mem_align_size) {
-			max_mem_align_size = field_mem_align_size;
+std::vector<std::string> TypeInfo::GetConstraintMethod(VerifyContext& ctx, std::string method_name) {
+	std::vector<std::string> method_indexs;
+	for (auto& constraint : m_constraints) {
+		for (size_t i = 0; i < constraint.methods.size(); i++) {
+			const Method& method = constraint.methods.at(i);
+			if (method.method_name == method_name) {
+				std::string fn_id = method.method_node->Instantiate(ctx);
+				if (!fn_id.empty()) {
+					method_indexs.push_back(fn_id);
+				}
+			}
 		}
 	}
-
-	// 将整个类型的内存大小再进行一次对齐. 确保该元素后续可以
-	// TODO 应该可以省去这个对齐
-	total_mem_size = (total_mem_size + max_mem_align_size - 1) & (~(max_mem_align_size - 1));
-
-	m_mem_size		 = total_mem_size;
-	m_mem_align_size = max_mem_align_size;
+	return method_indexs;
+}
+std::vector<std::string> TypeInfo::GetConstructor(VerifyContext& ctx, std::string method_name, std::vector<TypeId> params_tid) {
+	std::vector<std::string> method_indexs;
+	for (auto& constraint : m_constraints) {
+		if (!constraint.constraint_instance.constraint_name.empty()) {
+			continue;
+		}
+		for (auto& c : m_constraints) {
+			for (auto& m : c.methods) {
+				if (m.method_node->GetFnAttr() & FnAttr::FN_ATTR_CONSTRUCTOR && m.method_node->GetName() == method_name) {
+					std::string fn_id = m.method_node->Instantiate_param_return(ctx, params_tid, TYPE_ID_NONE);
+					if (!fn_id.empty()) {
+						method_indexs.push_back(fn_id);
+					}
+				}
+			}
+		}
+	}
+	return method_indexs;
+}
+std::vector<std::string> TypeInfo::GetConstructor(VerifyContext& ctx, std::string method_name) {
+	std::vector<std::string> method_indexs;
+	for (auto& constraint : m_constraints) {
+		if (!constraint.constraint_instance.constraint_name.empty()) {
+			continue;
+		}
+		for (auto& c : m_constraints) {
+			for (auto& m : c.methods) {
+				if (m.method_node->GetFnAttr() & FnAttr::FN_ATTR_CONSTRUCTOR && m.method_node->GetName() == method_name) {
+					std::string fn_id = m.method_node->Instantiate(ctx);
+					if (!fn_id.empty()) {
+						method_indexs.push_back(fn_id);
+					}
+				}
+			}
+		}
+	}
+	return method_indexs;
+}
+bool TypeInfo::IsSimpleConstrcutor(std::string method_name) const {
+	std::vector<std::string> method_indexs;
+	for (auto& constraint : m_constraints) {
+		if (!constraint.constraint_instance.constraint_name.empty()) {
+			continue;
+		}
+		for (auto& c : m_constraints) {
+			for (auto& m : c.methods) {
+				if (m.method_node->GetFnAttr() & FnAttr::FN_ATTR_CONSTRUCTOR && m.method_node->GetName() == method_name) {
+					if (m.method_node->IsSimpleFn()) {
+						return true;
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+bool TypeInfo::IsSimpleMethod(std::string method_name) const {
+	std::vector<std::string> method_indexs;
+	for (auto& constraint : m_constraints) {
+		for (auto& c : m_constraints) {
+			for (auto& m : c.methods) {
+				if (m.method_node->GetName() == method_name) {
+					if (m.method_node->IsSimpleFn()) {
+						return true;
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+bool TypeInfo::HasConstructor() const {
+	for (auto& constraint : m_constraints) {
+		if (!constraint.constraint_instance.constraint_name.empty()) {
+			continue;
+		}
+		for (auto& c : m_constraints) {
+			for (auto& m : c.methods) {
+				if (m.method_node->GetFnAttr() & FnAttr::FN_ATTR_CONSTRUCTOR) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
 }
 llvm::Type* TypeInfo::GetLLVMIRType(CompileContext& cctx) {
 	panicf("not implemented");
 	return nullptr;
+}
+void TypeInfo::ConstructFields(CompileContext& cctx, llvm::Value* obj) {
+}
+void TypeInfo::ConstructDefault(CompileContext& cctx, llvm::Value* obj) {
+	panicf("not implemented");
+}
+void TypeInfo::SetTypeId(TypeId tid) {
+	m_typeid = tid;
+	if (IsClass()) {
+		m_name = m_original_name + "#" + to_str(m_typeid);
+	} else {
+		m_name = m_original_name;
+	}
 }

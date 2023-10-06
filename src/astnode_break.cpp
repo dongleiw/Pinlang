@@ -9,6 +9,8 @@ AstNodeBreak::AstNodeBreak() {
 }
 
 VerifyContextResult AstNodeBreak::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	if (!IsInFor()) {
 		panicf("break can only be used in for statement");
 	}
@@ -20,7 +22,9 @@ Variable* AstNodeBreak::Execute(ExecuteContext& ctx) {
 	return nullptr;
 }
 AstNodeBreak* AstNodeBreak::DeepCloneT() {
-	return new AstNodeBreak();
+	AstNodeBreak* newone = new AstNodeBreak();
+	newone->Copy(*this);
+	return newone;
 }
 CompileResult AstNodeBreak::Compile(CompileContext& cctx) {
 	assert(cctx.GetBreakBlock() != nullptr);

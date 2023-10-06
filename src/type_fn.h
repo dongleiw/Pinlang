@@ -24,7 +24,7 @@ public:
 	TypeInfoFn(std::vector<TypeId> params, TypeId return_tid);
 
 	TypeId GetReturnTypeId() const { return m_return_tid; }
-	bool   VerifyArgsType(std::vector<TypeId> args_type);
+	bool   VerifyArgsType(std::vector<TypeId> args_type, bool has_hidden_param);
 
 	size_t GetParamNum() const { return m_params.size(); }
 	TypeId GetParamType(size_t idx) const { return m_params.at(idx); }

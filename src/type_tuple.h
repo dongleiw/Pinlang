@@ -8,15 +8,6 @@
  */
 class TypeInfoTuple : public TypeInfo {
 public:
-	// 内存结构
-	struct MemStructure {
-		uint64_t size; // 元素个数
-		uint8_t* data; // 数据.  data length = size * sizeof(ArrayType)
-
-		MemStructure() : size(0), data(nullptr) {
-		}
-	};
-public:
 	static std::string GetFieldName(int idx);
 public:
 	TypeInfoTuple(std::vector<TypeId> element_tids);

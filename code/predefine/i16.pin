@@ -1,0 +1,33 @@
+fn __compile_i16_tostring(v i16) String{
+	if v>=0 {
+		return __compile_u16_tostring(v as u16);
+	}else{
+		var uv = (-1*v) as u16;
+
+		var size u64 = 0;
+		if uv>=10000 {
+			size=5;
+		}else if uv>=1000{
+			size=4;
+		}else if uv>=100{
+			size=3;
+		}else if uv>=10{
+			size=2;
+		}else{
+			size=1;
+		}
+		size = size+1; // include '-'
+		var buf = new [size]u8();
+		buf[0]=45; // '-'
+
+		var i = size;
+		while i>1 {
+		    i = i-1;
+		    var c = (uv%10) as u8;
+		    buf[i] = c+48;
+		    uv = uv / 10;
+		}
+
+		return String(size, buf);
+	}
+}

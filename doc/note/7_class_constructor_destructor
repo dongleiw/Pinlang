@@ -1,0 +1,35 @@
+构造函数
+	如果没有显式定义构造函数, 则自动提供默认构造函数
+		class Foo{
+			a T;
+			b K;
+		}
+		var f Foo;
+		自动增加一个空的构造函数:
+			Foo::Foo(){
+			}
+
+	1. 函数名和class名相同的, 是构造函数
+	2. 构造函数可以overload
+	3. 可以显式将某个函数标记为构造函数. 这在某些情况下比overload更加清晰, 更加灵活
+		class Foo{
+			fn Foo{
+				(){
+				}
+
+				(a i32){
+				}
+			}
+			fn constructor Bar(){
+			}
+		}
+
+		var f = Foo();
+		var f = Foo(1);
+		var f = Foo.Bar(1);
+
+		var f = new Foo();
+		var f = new Foo(1);
+		var f = new Foo.Bar(1);
+	
+	4. member的构造函数尚未实现

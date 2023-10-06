@@ -1,4 +1,5 @@
 #include "astnode_init.h"
+#include "astnode.h"
 #include "astnode_type.h"
 #include "compile_context.h"
 #include "define.h"
@@ -15,10 +16,12 @@
 #include <llvm-12/llvm/IR/Type.h>
 
 VerifyContextResult AstNodeInit::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	log_debug("verify init");
 
 	// 获取类型
-	TypeId tid = vparam.GetResultTid();
+	TypeId tid = vparam.GetExpectResultTid();
 	if (m_type != nullptr) {
 		tid = m_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
 	}
@@ -32,11 +35,22 @@ VerifyContextResult AstNodeInit::Verify(VerifyContext& ctx, VerifyContextParam v
 		// 类型为数组, 检查所有元素类型是否正确
 		TypeInfoArray* ti_array			 = dynamic_cast<TypeInfoArray*>(ti);
 		TypeId		   array_element_tid = ti_array->GetElementType();
+		if (ti_array->GetStaticSize() == 0) {
+			// 没有声明数组大小, 则大小默认为初始化元素个数
+			tid						= g_typemgr.GetOrAddTypeArray(ctx, array_element_tid, m_elements.size());
+			TypeInfoArray* ti_array = dynamic_cast<TypeInfoArray*>(g_typemgr.GetTypeInfo(tid));
+			ti						= ti_array;
+		} else {
+			if (ti_array->GetStaticSize() != m_elements.size()) {
+				// 后续可以允许声明的大小>初始化的元素个数
+				panicf("declared array size != init element number");
+			}
+		}
 		for (auto& iter : m_elements) {
 			if (!iter.attr_name.empty()) {
 				panicf("attribute name is not allowed in array-init");
 			}
-			VerifyContextResult vresult = iter.attr_value->Verify(ctx, VerifyContextParam().SetResultTid(array_element_tid));
+			VerifyContextResult vresult = iter.attr_value->Verify(ctx, VerifyContextParam().SetExpectResultTid(array_element_tid));
 			if (vresult.GetResultTypeId() != array_element_tid) {
 				panicf("element type[%d:%s] is wrong. should be type[%d:%s]", vresult.GetResultTypeId(), GET_TYPENAME_C(vresult.GetResultTypeId()),
 					   array_element_tid, GET_TYPENAME_C(array_element_tid));
@@ -50,7 +64,7 @@ VerifyContextResult AstNodeInit::Verify(VerifyContext& ctx, VerifyContextParam v
 				panicf("attribute name should be provided in class-init");
 			}
 			TypeId				attr_tid = ti_class->GetFieldType(iter.attr_name);
-			VerifyContextResult vresult	 = iter.attr_value->Verify(ctx, VerifyContextParam().SetResultTid(attr_tid));
+			VerifyContextResult vresult	 = iter.attr_value->Verify(ctx, VerifyContextParam().SetExpectResultTid(attr_tid));
 			if (vresult.GetResultTypeId() != attr_tid) {
 				panicf("attr[%s] type[%d:%s] is wrong. should be type[%d:%s]", iter.attr_name.c_str(),
 					   vresult.GetResultTypeId(), GET_TYPENAME_C(vresult.GetResultTypeId()),
@@ -66,7 +80,7 @@ VerifyContextResult AstNodeInit::Verify(VerifyContext& ctx, VerifyContextParam v
 }
 Variable* AstNodeInit::Execute(ExecuteContext& ctx) {
 	// 获取类型
-	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
+	/*TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
 
 	if (ti->IsArray()) {
 		std::vector<Variable*> array_elements;
@@ -98,7 +112,8 @@ Variable* AstNodeInit::Execute(ExecuteContext& ctx) {
 		return class_obj;
 	} else {
 		panicf("bug");
-	}
+	}*/
+	return nullptr;
 }
 AstNodeInit* AstNodeInit::DeepCloneT() {
 	AstNodeInit* newone = new AstNodeInit();
@@ -135,12 +150,13 @@ CompileResult AstNodeInit::Compile(CompileContext& cctx) {
 			panicf("not implemented yet");
 		}
 	} else if (ti->IsClass()) {
-		llvm::Type*	 ir_type_class = ti->GetLLVMIRType(cctx);
-		llvm::Value* obj		   = IRB.CreateAlloca(ir_type_class, nullptr, sprintf_to_stdstr("class_inst_%s", ti->GetName().c_str()));
+		TypeInfoClass* ti_class		 = dynamic_cast<TypeInfoClass*>(ti);
+		llvm::Type*	   ir_type_class = ti_class->GetLLVMIRType(cctx);
+		llvm::Value*   obj			 = IRB.CreateAlloca(ir_type_class, nullptr, sprintf_to_stdstr("class_inst_%s", ti_class->GetName().c_str()));
 		for (size_t i = 0; i < m_elements.size(); i++) {
 			assert(!m_elements.at(i).attr_name.empty());
 			CompileResult element_value = m_elements.at(i).attr_value->Compile(cctx);
-			llvm::Value*  element_addr	= IRB.CreateConstGEP2_32(ir_type_class, obj, 0, (int)ti->GetFieldIndex(m_elements.at(i).attr_name));
+			llvm::Value*  element_addr	= IRB.CreateConstGEP2_32(ir_type_class, obj, 0, (int)ti_class->GetFieldIndex(m_elements.at(i).attr_name));
 			IRB.CreateStore(element_value.GetResult(), element_addr);
 		}
 		if (!m_compile_to_left_value) {

@@ -1,0 +1,65 @@
+fn test1(){
+	var i = new i32(100);
+	assert(*i == 100);
+
+	*i = 10;
+	assert(*i == 10);
+}
+
+fn test2(){
+	var array = new [3]i32();
+
+	array[0]=100;
+	assert(array[0]==100);
+}
+
+fn test3(){
+	fn foo(i *i32){
+		assert(*i == 1);
+		*i=2;
+	}
+	var i = new i32(1);
+
+	foo(i);
+	assert(*i == 2);
+
+	*i=3;
+	assert(*i == 3);
+}
+
+fn test4(){
+	fn foo(i *i32){
+		assert(*i == 1);
+		*i=2;
+		assert(*i == 2);
+	}
+
+	foo(new i32(1));
+}
+
+// new class
+fn test5() {
+	class Foo{
+		a i32;
+
+		fn Foo(*self){
+			self.a=1;
+		}
+	}
+	var f = new Foo();
+
+	assert(f.a==1);
+	f.a=2;
+	assert(f.a==2);
+
+	assert( new Foo().a==1 );
+}
+
+fn main() i32 {
+	test1();
+	test2();
+	test3();
+	test4();
+	test5();
+	return 0;
+}

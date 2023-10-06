@@ -4,35 +4,20 @@ import Pinlang_lex;
 type_integer: INT_U8 | INT_U16 | INT_U32 | INT_U64 | INT_I8 | INT_I16 | INT_I32 | INT_I64 ;
 type_float: FLOAT_F32 | FLOAT_F64 ;
 type_bool: BOOL ;
-type_str: STR ;
-type_array_static_size: L_BRACKET expr R_BRACKET type ;
-type_array_dynamic_size: L_BRACKET R_BRACKET type ;
-type_array: type_array_static_size | type_array_dynamic_size ;
+type_array: L_BRACKET expr R_BRACKET type ;
+type_array_size_optional: L_BRACKET expr? R_BRACKET type ;
 type_tuple: L_PAREN type_list R_PAREN ;
 type_fn: FN L_PAREN parameter_list R_PAREN type? ;
+type_pointer: '*' type;
 
-type_value
+type
 	: TYPE
 	| type_integer
 	| type_float
 	| type_bool
-	| type_array_static_size
+	| type_array
 	| type_fn
-	;
-
-type_reference
-	: type_array_dynamic_size
-	| type_str
 	| type_tuple
-	;
-
-type_pointer
-	: '*' type
-	;
-
-type
-    : type_value
-	| type_reference
 	| type_pointer
 	| Identifier
 	;
@@ -50,19 +35,32 @@ expr_init_body
     : L_CURLY expr_init_element (',' expr_init_element)* ','? R_CURLY
     | L_CURLY R_CURLY
     ;
-expr_init : (type_array | Identifier) expr_init_body ;
+expr_init : ( TYPE | type_integer | type_float | type_bool | type_array_size_optional | type_fn | type_tuple | type_pointer | Identifier ) expr_init_body ;
+
+expr_new
+ 	//: NEW type (L_PAREN R_PAREN)? // 会和函数调用冲突
+ 	: NEW Identifier (. Identifier)* L_PAREN expr_list_optional R_PAREN
+ 	| NEW type L_PAREN expr_list_optional R_PAREN
+ 	;
+ 
+// expr_constructor
+// 	: Identifier (. Identifier)* L_PAREN expr_list_optional R_PAREN
+// 	;
 
 expr_primary
-    : literal                                           # expr_primary_literal
-    | Identifier                                        # expr_primary_identifier
-    | L_PAREN expr_list R_PAREN                         # expr_primary_parens  // 如果有多个expr, 则是tuple
-	| expr_primary L_PAREN expr_list_optional R_PAREN   # expr_primary_fncall
-	// | Identifier '::<' type_list GREATER             # expr_primary_gparam       // 提供泛参将泛型函数实例化. 由于仅仅通过泛参无法实例化, 这个先搁置了
-	| expr_primary L_BRACKET expr R_BRACKET             # expr_primary_access_array_element // 数组下标访问
-	| expr_primary '.' Identifier                       # expr_primary_access_attr  // 访问属性
-	| expr_init                                         # expr_primary_init   // 初始化
-	| '&' expr_primary                                  # expr_dereference   // value -> address
-	| '*' expr_primary                                  # expr_reference   // address -> value
+    : literal                                               # expr_primary_literal
+    | Identifier                                            # expr_primary_identifier
+    | L_PAREN expr_list R_PAREN                             # expr_primary_parens  // 如果有多个expr, 则是tuple
+	// | type                                                  # expr_primary_type // 将type直接作为expr, 会带来一些歧义. 比如`(a,b)`, 这可能是一个tuple实例, 也可能是一个tuple类型
+	| expr_new                                              # expr_primary_new
+	| expr_primary L_PAREN expr_list_optional R_PAREN       # expr_primary_fncall
+	// | Identifier '::<' type_list GREATER                 # expr_primary_gparam       // 提供泛参将泛型函数实例化. 由于仅仅通过泛参无法实例化, 这个先搁置了
+	| expr_primary L_BRACKET expr R_BRACKET                 # expr_primary_access_array_element // 数组下标访问
+	| expr_primary '.' Identifier                           # expr_primary_access_attr  // 访问属性
+	| expr_init                                             # expr_primary_init   // 初始化
+	| '&' expr_primary                                      # expr_reference   // value -> address
+	| '*' expr_primary                                      # expr_dereference   // address -> value
+	| expr_primary AS type                                  # expr_type_cast // 将expr_primary的类型强制转换为type
 	;
 
 expr
@@ -93,6 +91,7 @@ parameter_list
 	| parameter (',' parameter)*
 	;
 
+fn_attr : (STATIC | CONSTRUCTOR)* ;
 
 stmt_fndef
 	: stmt_simple_fndef
@@ -102,7 +101,7 @@ stmt_fndef
 
 ////// 简单函数定义
 stmt_simple_fndef
-	: FN Identifier L_PAREN parameter_list R_PAREN type? stmt_block
+	: FN fn_attr Identifier L_PAREN parameter_list R_PAREN type? stmt_block
 	;
 generic_param_constraint
 	: Identifier
@@ -112,7 +111,7 @@ generic_param: Identifier generic_param_constraint;
 
 ////// 泛型函数定义
 stmt_generic_fndef
-	: FN Identifier L_BRACKET generic_param (',' generic_param)* R_BRACKET L_PAREN parameter_list R_PAREN type? stmt_block
+	: FN fn_attr Identifier L_BRACKET generic_param (',' generic_param)* R_BRACKET L_PAREN parameter_list R_PAREN type? stmt_block
 	;
 
 ////// 复杂函数定义
@@ -120,7 +119,7 @@ stmt_complex_fndef_implement
 	: (L_BRACKET generic_param (',' generic_param)* R_BRACKET)? L_PAREN parameter_list R_PAREN type? stmt_block
 	;
 stmt_complex_fndef
-	: FN Identifier L_CURLY stmt_complex_fndef_implement+ R_CURLY
+	: FN fn_attr Identifier L_CURLY stmt_complex_fndef_implement+ R_CURLY
 	;
 
 ////// return
@@ -209,8 +208,8 @@ statement
     ;
 
 literal
-    :   FloatLiteral
-    |   IntegerLiteral
+    :   (SUB)? FloatLiteral
+    |   (SUB)? IntegerLiteral
     |	StringLiteral
     |	BoolLiteral
 	|   PointerLiteral

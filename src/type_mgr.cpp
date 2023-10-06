@@ -15,6 +15,7 @@
 #include "type_str.h"
 #include "type_tuple.h"
 #include "type_type.h"
+#include "utils.h"
 #include "verify_context.h"
 
 TypeMgr g_typemgr;
@@ -68,10 +69,16 @@ void TypeMgr::InitTypes() {
 		assert(TYPE_ID_UINT64 == tid);
 	}
 	{
-		TypeInfoFloat* ti_float = new TypeInfoFloat();
+		TypeInfoFloat* ti_float = new TypeInfoFloat(TYPE_ID_FLOAT32);
 		ti_float->SetTypeId(allocate_typeid());
 		m_typeinfos.push_back(ti_float);
-		assert(TYPE_ID_FLOAT == ti_float->GetTypeId());
+		assert(TYPE_ID_FLOAT32 == ti_float->GetTypeId());
+	}
+	{
+		TypeInfoFloat* ti_float = new TypeInfoFloat(TYPE_ID_FLOAT64);
+		ti_float->SetTypeId(allocate_typeid());
+		m_typeinfos.push_back(ti_float);
+		assert(TYPE_ID_FLOAT64 == ti_float->GetTypeId());
 	}
 	{
 		TypeInfoBool* ti_bool = new TypeInfoBool();
@@ -99,6 +106,13 @@ void TypeMgr::InitTypes() {
 		m_typeinfos.push_back(ti);
 		assert(TYPE_ID_COMPLEX_FN == ti->GetTypeId());
 	}
+	{
+		TypeInfo* ti = new TypeInfo();
+		ti->SetTypeId(allocate_typeid());
+		ti->SetName("null");
+		m_typeinfos.push_back(ti);
+		assert(TYPE_ID_NULL == ti->GetTypeId());
+	}
 }
 void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_TYPE)->InitBuiltinMethods(ctx);
@@ -112,14 +126,14 @@ void TypeMgr::InitBuiltinMethods(VerifyContext& ctx) {
 	m_typeinfos.at(TYPE_ID_UINT32)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_UINT64)->InitBuiltinMethods(ctx);
 
-	m_typeinfos.at(TYPE_ID_FLOAT)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_FLOAT32)->InitBuiltinMethods(ctx);
+	m_typeinfos.at(TYPE_ID_FLOAT64)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_BOOL)->InitBuiltinMethods(ctx);
 	m_typeinfos.at(TYPE_ID_STR)->InitBuiltinMethods(ctx);
 
-	bool   added		 = false;
-	TypeId array_str_tid = GetOrAddTypeArray(ctx, TYPE_ID_STR, 0, added);
+	TypeId array_str_tid = GetOrAddTypeArray(ctx, TYPE_ID_STR, 0);
 	//m_main_fn_tid		 = GetOrAddTypeFn(ctx, std::vector<TypeId>{array_str_tid}, TYPE_ID_INT32);
-	m_main_fn_tid		 = GetOrAddTypeFn(ctx, std::vector<TypeId>{}, TYPE_ID_INT32);
+	m_main_fn_tid = GetOrAddTypeFn(ctx, std::vector<TypeId>{}, TYPE_ID_INT32);
 }
 
 TypeId TypeMgr::allocate_typeid() {
@@ -145,19 +159,30 @@ std::string TypeMgr::GetTypeName(std::vector<TypeId> vec_tid) const {
 }
 TypeId TypeMgr::add_type(TypeInfo* ti) {
 	ti->SetTypeId(allocate_typeid());
+	assert(!is_type_name_exists(ti->GetName()));
 	log_info("add new type: name[%s] typeid[%d]", ti->GetName().c_str(), ti->GetTypeId());
 	m_typeinfos.push_back(ti);
 
 	return ti->GetTypeId();
 }
-TypeId TypeMgr::GetOrAddTypeConstraint(TypeInfoConstraint* ti) {
-	return add_type(ti);
+bool TypeMgr::is_type_name_exists(std::string name) const {
+	for (auto& ti : m_typeinfos) {
+		if (ti->GetName() == name) {
+			return true;
+		}
+	}
+	return false;
 }
 TypeId TypeMgr::AddGenericType(TypeInfo* ti) {
 	ti->SetTypeGroupId(TYPE_GROUP_ID_VIRTUAL_GTYPE);
 	return add_type(ti);
 }
 TypeId TypeMgr::AddTypeInfo(TypeInfo* ti) {
+	return add_type(ti);
+}
+TypeId TypeMgr::AddConstraint(std::string constraint_name) {
+	TypeInfo* ti = new TypeInfo();
+	ti->SetOriginalName(constraint_name);
 	return add_type(ti);
 }
 TypeId TypeMgr::GetOrAddTypeFn(VerifyContext& ctx, std::vector<TypeId> params, TypeId return_tid) {
@@ -174,8 +199,7 @@ TypeId TypeMgr::GetOrAddTypeFn(VerifyContext& ctx, std::vector<TypeId> params, T
 	ti->InitBuiltinMethods(ctx);
 	return ti->GetTypeId();
 }
-TypeId TypeMgr::GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64_t static_size, bool& added) {
-	added = false;
+TypeId TypeMgr::GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64_t static_size) {
 	for (const auto ti : m_typeinfos) {
 		if (ti->IsArray()) {
 			const TypeInfoArray* tiarray = dynamic_cast<TypeInfoArray*>(ti);
@@ -184,7 +208,6 @@ TypeId TypeMgr::GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64
 			}
 		}
 	}
-	added			  = true;
 	TypeInfoArray* ti = new TypeInfoArray(element_tid, static_size);
 	add_type(ti);
 	ti->InitBuiltinMethods(ctx);
@@ -193,8 +216,7 @@ TypeId TypeMgr::GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64
 bool TypeMgr::IsTypeExist(TypeId tid) const {
 	return 0 < tid && tid < m_typeinfos.size();
 }
-TypeId TypeMgr::GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> element_tids, bool& added) {
-	added = false;
+TypeId TypeMgr::GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> element_tids) {
 	for (const auto ti : m_typeinfos) {
 		if (ti->IsTuple()) {
 			const TypeInfoTuple* ti_tuple = dynamic_cast<TypeInfoTuple*>(ti);
@@ -203,25 +225,32 @@ TypeId TypeMgr::GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> elemen
 			}
 		}
 	}
-	added			  = true;
 	TypeInfoTuple* ti = new TypeInfoTuple(element_tids);
 	add_type(ti);
 	ti->InitBuiltinMethods(ctx);
 	return ti->GetTypeId();
 }
-TypeId TypeMgr::GetOrAddTypePointer(VerifyContext& ctx, TypeId pointee_tid, bool& added){
-	added = false;
+TypeId TypeMgr::GetOrAddTypePointer(VerifyContext& ctx, TypeId pointee_tid) {
 	for (const auto ti : m_typeinfos) {
 		if (ti->IsPointer()) {
 			const TypeInfoPointer* ti_ptr = dynamic_cast<TypeInfoPointer*>(ti);
-			if(ti_ptr->GetPointeeTid() == pointee_tid){
+			if (ti_ptr->GetPointeeTid() == pointee_tid) {
 				return ti_ptr->GetTypeId();
 			}
 		}
 	}
-	added			  = true;
 	TypeInfoPointer* ti = new TypeInfoPointer(pointee_tid);
 	add_type(ti);
 	ti->InitBuiltinMethods(ctx);
+	return ti->GetTypeId();
+}
+TypeId TypeMgr::AddTypeClass(TypeInfoClass* ti) {
+	ti->SetTypeId(allocate_typeid());
+	// 不同作用域的class name是可以重复的. 这里添加typeid的目的是保持在IR name唯一
+	//ti->SetName(ti->GetName() + "#" + to_str(ti->GetTypeId()));
+	assert(!is_type_name_exists(ti->GetName()));
+	log_info("add new type: name[%s] originalname[%s] typeid[%d]", ti->GetName().c_str(), ti->GetOriginalName().c_str(), ti->GetTypeId());
+	m_typeinfos.push_back(ti);
+
 	return ti->GetTypeId();
 }

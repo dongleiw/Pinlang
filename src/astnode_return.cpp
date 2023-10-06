@@ -1,4 +1,5 @@
 #include "astnode_return.h"
+#include "astnode.h"
 #include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
@@ -18,16 +19,16 @@ AstNodeReturn::AstNodeReturn(AstNode* returned_expr) {
 }
 
 VerifyContextResult AstNodeReturn::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	m_is_exit_node = true;
 	if (m_returned_expr != nullptr) {
 		// 期望表达式的结果的类型 == return的类型
-		VerifyContextParam vparam_return;
-		vparam_return.SetReturnTid(vparam.GetReturnTid());
-		VerifyContextResult vr_result = m_returned_expr->Verify(ctx, vparam_return);
-		if (vparam.GetReturnTid() != TYPE_ID_INFER) {
-			if (vr_result.GetResultTypeId() != vparam.GetReturnTid()) {
+		VerifyContextResult vr_result = m_returned_expr->Verify(ctx, VerifyContextParam().SetExpectResultTid(vparam.GetExpectReturnTid()));
+		if (vparam.GetExpectReturnTid() != TYPE_ID_INFER) {
+			if (vr_result.GetResultTypeId() != vparam.GetExpectReturnTid()) {
 				panicf("type of return value is wrong. expect[%d:%s]. give[%d:%s]",
-					   vparam.GetReturnTid(), GET_TYPENAME_C(vparam.GetReturnTid()),
+					   vparam.GetExpectReturnTid(), GET_TYPENAME_C(vparam.GetExpectReturnTid()),
 					   vr_result.GetResultTypeId(), GET_TYPENAME_C(vr_result.GetResultTypeId()));
 			}
 		}
@@ -44,6 +45,7 @@ Variable* AstNodeReturn::Execute(ExecuteContext& ctx) {
 }
 AstNodeReturn* AstNodeReturn::DeepCloneT() {
 	AstNodeReturn* newone = new AstNodeReturn();
+	newone->Copy(*this);
 
 	if (m_returned_expr != nullptr)
 		newone->m_returned_expr = m_returned_expr->DeepClone();

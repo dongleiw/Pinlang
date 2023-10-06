@@ -32,15 +32,18 @@ public:
 	virtual AstNode*  DeepClone() override { return DeepCloneT(); }
 	AstNodeBlockStmt* DeepCloneT();
 
-	void SetGlobalBlock(bool b) { m_global_block = b; }
+	void		SetGlobalBlock(bool b) { m_is_global_block = b; }
+	void		SetSrcFilename(std::string src_filename) { m_src_filename = src_filename; }
+	std::string GetSrcFilename() const { return m_src_filename; }
 
 	void MergeAnother(AstNodeBlockStmt& another);
 
-	void VerifyIdentfier(AstNode* cur_node, std::string id, VerifyContext& ctx, VerifyContextParam vparam);
+	bool VerifyGlobalIdentifier(std::string id, VerifyContext& ctx, VerifyContextParam vparam);
+	bool HasGlobalDef(std::string id) const;
 
 private:
-	std::vector<AstNode*>					   m_predefine_stmts;
 	std::vector<AstNode*>					   m_stmts;
-	bool									   m_global_block;
+	bool									   m_is_global_block;
+	std::string								   m_src_filename;
 	std::vector<std::pair<AstNode*, AstNode*>> m_dependency; // 依赖关系. first依赖second
 };

@@ -1,4 +1,5 @@
 #include "astnode_continue.h"
+#include "astnode.h"
 #include "compile_context.h"
 #include "define.h"
 #include "log.h"
@@ -9,6 +10,8 @@ AstNodeContinue::AstNodeContinue() {
 }
 
 VerifyContextResult AstNodeContinue::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	if (!IsInFor()) {
 		panicf("break can only be used in for statement");
 	}
@@ -20,7 +23,9 @@ Variable* AstNodeContinue::Execute(ExecuteContext& ctx) {
 	return nullptr;
 }
 AstNodeContinue* AstNodeContinue::DeepCloneT() {
-	return new AstNodeContinue();
+	AstNodeContinue* newone = new AstNodeContinue();
+	newone->Copy(*this);
+	return newone;
 }
 CompileResult AstNodeContinue::Compile(CompileContext& cctx) {
 	assert(cctx.GetContinueBlock() != nullptr);

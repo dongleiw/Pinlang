@@ -13,6 +13,13 @@
 #include <array>
 #include <vector>
 
+AstNodeType::AstNodeType() {
+	m_type_kind			 = TYPE_KIND_NONE;
+	m_fn_return_type	 = nullptr;
+	m_array_element_type = nullptr;
+	m_array_size_expr	 = nullptr;
+	m_pointee_type		 = nullptr;
+}
 void AstNodeType::InitWithType() {
 	m_type_kind = TYPE_KIND_TYPE;
 }
@@ -44,9 +51,10 @@ void AstNodeType::InitWithTargetTypeId(TypeId tid) {
 }
 
 /*
- * 调用函数
  */
 VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	log_debug("verify type: type_kind[%d] id[%s]", m_type_kind, m_id.c_str());
 	VerifyContextResult vr;
 	switch (m_type_kind) {
@@ -78,24 +86,24 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam v
 	case TYPE_KIND_ARRAY:
 	{
 		TypeId	 element_tid = m_array_element_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
-		bool	 added		 = false;
 		uint64_t array_size	 = 0;
 		if (m_array_size_expr != nullptr) {
-			VerifyContextResult vr_result = m_array_size_expr->Verify(ctx, VerifyContextParam().SetResultTid(TYPE_ID_UINT64));
-			if (!vr_result.IsConst()) {
-				panicf("array size is not compile-time-constant");
+			VerifyContextResult vr_result = m_array_size_expr->Verify(ctx, VerifyContextParam().SetExpectResultTid(TYPE_ID_UINT64));
+			if (vr_result.GetResultTypeId() != TYPE_ID_UINT64) {
+				panicf("array size type is not u64");
 			}
-			array_size = vr_result.GetConstResult()->GetValueUInt64();
+			if (vr_result.IsConst()) {
+				array_size = vr_result.GetConstResult()->GetValueU64();
+			}
 		}
-		TypeId array_tid = g_typemgr.GetOrAddTypeArray(ctx, element_tid, array_size, added);
+		TypeId array_tid = g_typemgr.GetOrAddTypeArray(ctx, element_tid, array_size);
 		vr.SetResultTypeId(array_tid);
 		break;
 	}
 	case TYPE_KIND_POINTER:
 	{
 		TypeId pointee_tid = m_pointee_type->Verify(ctx, VerifyContextParam()).GetResultTypeId();
-		bool   added	   = false;
-		TypeId pointer_tid = g_typemgr.GetOrAddTypePointer(ctx, pointee_tid, added);
+		TypeId pointer_tid = g_typemgr.GetOrAddTypePointer(ctx, pointee_tid);
 		vr.SetResultTypeId(pointer_tid);
 		break;
 	}
@@ -105,8 +113,7 @@ VerifyContextResult AstNodeType::Verify(VerifyContext& ctx, VerifyContextParam v
 		for (auto iter : m_tuple_element_types) {
 			tuple_element_tids.push_back(iter->Verify(ctx, VerifyContextParam()).GetResultTypeId());
 		}
-		bool   added	 = false;
-		TypeId tuple_tid = g_typemgr.GetOrAddTypeTuple(ctx, tuple_element_tids, added);
+		TypeId tuple_tid = g_typemgr.GetOrAddTypeTuple(ctx, tuple_element_tids);
 		vr.SetResultTypeId(tuple_tid);
 		break;
 	}
@@ -214,8 +221,7 @@ AstNodeType* AstNodeType::DeepCloneT() {
 		newone->m_array_size_expr	 = m_array_size_expr == nullptr ? nullptr : m_array_size_expr->DeepClone();
 		break;
 	case TYPE_KIND_POINTER:
-		newone->m_pointee_type	  = m_pointee_type->DeepCloneT();
-	//	newone->m_array_size_expr = m_array_size_expr == nullptr ? nullptr : m_array_size_expr->DeepClone();
+		newone->m_pointee_type = m_pointee_type->DeepCloneT();
 		break;
 	case TYPE_KIND_TUPLE:
 		for (auto iter : m_tuple_element_types) {
@@ -242,4 +248,10 @@ void AstNodeType::merge_infer_result(std::map<std::string, TypeId>& to, std::map
 			panicf("infer type encounter conflict: typename[%s] => {%d:%s,%d:%s}", iter.first.c_str(), iter.second, GET_TYPENAME_C(iter.second), found->second, GET_TYPENAME_C(found->second));
 		}
 	}
+}
+bool AstNodeType::IsSelf() const {
+	return m_type_kind == TYPE_KIND_IDENTIFIER && m_id == "self";
+}
+bool AstNodeType::IsPointerSelf() const {
+	return m_type_kind == TYPE_KIND_POINTER && m_pointee_type->IsSelf();
 }

@@ -11,11 +11,11 @@ enum TypeGroupId {
 	 * 未完成定义的类别. 由于解析的顺序问题, 可能类型的使用先于类型的定义. 这种会先临时标记为unresolved
 	 * 在后续解析到类型定义时, 在修正为实际类型
 	 */
-	TYPE_GROUP_ID_UNRESOLVE = 0,
-	TYPE_GROUP_ID_PRIMARY	= 1,
-	TYPE_GROUP_ID_ARRAY		= 2,
-	TYPE_GROUP_ID_FUNCTION	= 3,
-	TYPE_GROUP_ID_CLASS		= 4,
+	TYPE_GROUP_ID_NONE	   = 0,
+	TYPE_GROUP_ID_PRIMARY  = 1,
+	TYPE_GROUP_ID_ARRAY	   = 2,
+	TYPE_GROUP_ID_FUNCTION = 3,
+	TYPE_GROUP_ID_CLASS	   = 4,
 	/*
 	 * constraint
 	 */
@@ -43,20 +43,22 @@ enum TypeId {
 	TYPE_ID_UINT32 = 9,
 	TYPE_ID_UINT64 = 10,
 
-	TYPE_ID_FLOAT = 11,
+	TYPE_ID_FLOAT32 = 11,
+	TYPE_ID_FLOAT64 = 12,
 
-	TYPE_ID_BOOL			   = 12,
-	TYPE_ID_STR				   = 13,
-	TYPE_ID_GENERIC_CONSTRAINT = 14, // 泛型约束
-	TYPE_ID_COMPLEX_FN		   = 15, // 复杂函数
-	TYPE_ID_NULL			   = 16, // null指针
+	TYPE_ID_BOOL			   = 13,
+	TYPE_ID_STR				   = 14,
+	TYPE_ID_GENERIC_CONSTRAINT = 15, // 泛型约束
+	TYPE_ID_COMPLEX_FN		   = 16, // 复杂函数
+	TYPE_ID_NULL			   = 17, // null指针
 };
-
-#define CONSTRAINT_ID_NONE ((TypeId)0)
 
 #define is_integer_type(tid) (TYPE_ID_INT8 <= (tid) && (tid) <= TYPE_ID_UINT64)
 #define is_unsigned_integer_type(tid) (TYPE_ID_UINT8 <= (tid) && (tid) <= TYPE_ID_UINT64)
 #define is_signed_integer_type(tid) (TYPE_ID_INT8 <= (tid) && (tid) <= TYPE_ID_INT64)
+int get_integer_bits(TypeId tid);
+
+#define is_float_type(tid) (TYPE_ID_FLOAT32 <= (tid) && (tid) <= TYPE_ID_FLOAT64)
 
 class VerifyContext;
 class ExecuteContext;
@@ -72,7 +74,12 @@ class AstNodeType;
 struct ParserParameter {
 	std::string	 name; // 参数名. 为空代表未指定
 	AstNodeType* type; // 参数类型
+	//bool		 is_hidden_this;
 
+	//ParserParameter(std::string name, AstNodeType* type) : name(name), type(type), is_hidden_this(false) {
+	//}
+	//ParserParameter(std::string name, AstNodeType* type, bool is_hidden_this) : name(name), type(type), is_hidden_this(is_hidden_this) {
+	//}
 	ParserParameter DeepClone();
 };
 /*
@@ -124,6 +131,7 @@ struct MethodIndex {
 };
 
 bool is_vec_typeid_equal(const std::vector<TypeId>& a, const std::vector<TypeId>& b);
+bool is_vec_typeid_equal(const std::vector<TypeId>& a, const std::vector<TypeId>& b, size_t shift_a, size_t shift_b);
 
 // 泛参的实际类型
 struct ConcreteGParam {
@@ -144,4 +152,27 @@ struct ParserClassImplConstraint {
 	std::string						  constraint_name;
 	std::vector<AstNodeType*>		  constraint_gparams;
 	std::vector<AstNodeComplexFnDef*> constraint_fns;
+};
+
+enum FnAttr {
+	FN_ATTR_NONE		= 0,
+	FN_ATTR_CONSTRUCTOR = 1 << 0,
+	FN_ATTR_STATIC		= 1 << 1,
+};
+void validate_fn_attr(FnAttr attr);
+
+enum FnParamAttr {
+	FN_PARAM_ATTR_NONE	   = 0,
+	FN_PARAM_ATTR_PTR_SELF = 1 << 0, // 该参数是*self
+};
+void validate_fn_param_attr(FnParamAttr attr);
+
+// 类型的方法
+struct Method {
+	std::string			 method_name;
+	AstNodeComplexFnDef* method_node;
+};
+struct ConstraintInstance {
+	std::string constraint_name;
+	std::string constraint_instance_name;
 };

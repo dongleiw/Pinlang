@@ -1,22 +1,21 @@
 lexer grammar Pinlang;
 
 FloatLiteral
-    :   Digit+ '.' Digit+
-    //|   '.' Digit+
-    //|   Digit+ '.'
+    :   Digit+ '.' Digit+ (FloatLiteralType)?
+    |   Digit+ FloatLiteralType
     ;
 IntegerLiteral
-    : NonZeroDigit Digit*
-    | '0'
+    : NonZeroDigit Digit* IntegerLiteralType?
+    | '0' IntegerLiteralType?
     ;
 StringLiteral
-    : '"' (~["] | EscapeCharacter )* '"'
-    //| '"' EscapeCharacter+ '"'
+    : '"' (~["]  |  EscapeCharacter )* '"'
+    // |  '"' EscapeCharacter+ '"'
     ;
 
 BoolLiteral
     : TRUE
-    | FALSE
+     |  FALSE
     ;
 
 PointerLiteral
@@ -55,7 +54,9 @@ INT_I64     : 'i64';
 FLOAT_F32   : 'f32';
 FLOAT_F64   : 'f64';
 BOOL        : 'bool';
-STR         : 'str';
+NEW         : 'new';
+CONSTRUCTOR : 'constructor';
+AS          : 'as';
 
 // Relation operators
 EQUALS                 : '==';
@@ -66,7 +67,7 @@ GREATER                : '>';
 GREATER_OR_EQUALS      : '>=';
 
 // Logical
-LOGICAL_OR             : '||';
+LOGICAL_OR             : ' |  | ';
 LOGICAL_AND            : '&&';
 
 // operators
@@ -87,13 +88,16 @@ R_BRACKET		: ']';
 ASSIGN : '=';
 
 Identifier
-    :   Letter (Letter | Digit)*
+    :   Letter (Letter  |  Digit)*
     ;
 
 
 fragment Digit: [0-9];
 fragment NonZeroDigit: [1-9];
 fragment Letter :   [a-zA-Z_];
+fragment IntegerLiteralType : 'i8' | 'i16' | 'i32' | 'i64' | 'u8' | 'u16' | 'u32' | 'u64' ;
+fragment FloatLiteralType : 'f32' | 'f64' ;
+
 /*
     \a   (Unicode value 0x07) alert or bell
     \b   (Unicode value 0x08) backspace

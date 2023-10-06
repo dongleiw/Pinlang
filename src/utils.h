@@ -1,12 +1,14 @@
 #pragma once
 
+#include <functional>
 #include <llvm-12/llvm/IR/Type.h>
 #include <string>
 #include <vector>
 
-int	  str_to_int(const std::string& s);
-float str_to_float(const std::string& s);
-bool  str_to_bool(const std::string& s);
+int		str_to_int(const std::string& s);
+uint64_t str_to_uint64(const std::string& s);
+float	str_to_float(const std::string& s);
+bool	str_to_bool(const std::string& s);
 
 std::string to_str(int8_t i);
 std::string to_str(int16_t i);
@@ -58,3 +60,16 @@ template <>
 const char* get_type_name<bool>();
 
 std::string get_string_of_llvm_ir_type(llvm::Type* ty);
+
+class Defer {
+public:
+	Defer(std::function<void(void)> f) {
+		m_f = f;
+	}
+	~Defer() {
+		m_f();
+	}
+
+private:
+	std::function<void(void)> m_f;
+};

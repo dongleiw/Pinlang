@@ -14,7 +14,7 @@
 #include "verify_context.h"
 
 /*
- * *address
+ * &address
  * get value of address
  */
 class AstNodeReference : public AstNode {

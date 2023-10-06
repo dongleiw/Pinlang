@@ -1,51 +1,57 @@
 #include "astnode_reference.h"
 #include "compile_context.h"
+#include "log.h"
 #include "type.h"
 #include "type_mgr.h"
 #include "type_pointer.h"
 
 AstNodeReference::AstNodeReference(AstNode* expr) {
-	m_expr					= expr;
-	m_compile_to_left_value = false;
+	m_expr = expr;
 }
+/*
+ * `&expr`
+ *		`expr`的类型假设为T
+ *		`&expr`的类型是*T
+ *		如果被要求返回rvalue:
+ *			要求`expr`返回lvalue
+ *			return `expr`返回的lvalue
+ *		如果被要求返回lvalue:
+ *			错误. 不允许返回lvalue
+ *
+ */
 VerifyContextResult AstNodeReference::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
-	verify_begin();
+	VERIFY_BEGIN;
+
+	if (vparam.ExpectLeftValue()) {
+		panicf("&expr cannot be lvalue");
+	}
+
+	VerifyContextResult vr_value = m_expr->Verify(ctx, VerifyContextParam().SetExepectLeftValue(true));
 
 	m_compile_to_left_value = vparam.ExpectLeftValue();
+	m_result_typeid			= g_typemgr.GetOrAddTypePointer(ctx, vr_value.GetResultTypeId());
 
-	VerifyContextResult vr_value = m_expr->Verify(ctx, VerifyContextParam().SetExepectLeftValue(false));
-
-	TypeInfo* ti = g_typemgr.GetTypeInfo(vr_value.GetResultTypeId());
-	if (!ti->IsPointer()) {
-		panicf("type[%d:%s] is not pointer. cannot do reference operation", vr_value.GetResultTypeId(), GET_TYPENAME_C(vr_value.GetResultTypeId()));
-	}
-	TypeInfoPointer* ti_pointer = dynamic_cast<TypeInfoPointer*>(ti);
-
-	m_result_typeid = ti_pointer->GetPointeeTid();
-
-	verify_end();
-
-	return VerifyContextResult(m_result_typeid).SetTmp(false);
+	return VerifyContextResult(m_result_typeid).SetTmp(true);
 }
 Variable* AstNodeReference::Execute(ExecuteContext& ctx) {
 	panicf("not implemented");
 }
 CompileResult AstNodeReference::Compile(CompileContext& cctx) {
+	if (m_compile_to_left_value) {
+		panicf("&expr cannot be lvalue");
+	}
+
 	CompileResult cr_value = m_expr->Compile(cctx);
 
-	TypeInfo* ti_pointee = g_typemgr.GetTypeInfo(m_result_typeid);
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_result_typeid);
 
-	llvm::Type* ir_type_pointee = ti_pointee->GetLLVMIRType(cctx);
-	assert(cr_value.GetResult()->getType() == ir_type_pointee->getPointerTo());
+	assert(cr_value.GetResult()->getType() == ti->GetLLVMIRType(cctx));
 
-	if (m_compile_to_left_value) {
-		return CompileResult().SetResult(cr_value.GetResult());
-	} else {
-		return CompileResult().SetResult(IRB.CreateLoad(ir_type_pointee, cr_value.GetResult()));
-	}
+	return CompileResult().SetResult(cr_value.GetResult());
 }
 AstNodeReference* AstNodeReference::DeepCloneT() {
 	AstNodeReference* newone = new AstNodeReference();
+	newone->Copy(*this);
 
 	newone->m_expr = m_expr->DeepClone();
 

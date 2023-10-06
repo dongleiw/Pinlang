@@ -1,0 +1,44 @@
+调用malloc/free来申请/释放heap内存
+
+申请内存:
+	var id = new expr(arg1, ...);
+	expr
+		[size]T
+			是一个数组类型, 结果为*T
+			申请大小为n*sizeof(T)的内存
+		constructor
+			expr是一个类型T的构造函数. 
+			申请大小为sizeof(T)的内存, 然后调用构造函数
+		T
+			其他类型. 
+			申请大小为sizeof(T)的内存. 不进行初始化
+	arg1, ...
+		不同类型的含义不同
+
+	例子:
+		基础类型
+			var a = new i32; // 不初始化
+			var a = new i32(); // 不初始化
+			var a = new i32(expr); // 使用expr的结果进行初始化
+
+			var a = new bool(); // 不初始化
+			var a = new bool(true); // 初始化为true
+
+		数组类型
+			var a = new [expr_size]i32(); // 申请大小为expr_size的数组, 不进行初始化
+
+		class类型
+			class Foo{
+				a i32
+				b i64
+				fn Foo(){
+					this.a=1;
+					this.b=99;
+				}
+				fn constructor Food(a i32, b i64){
+					this.a=a;
+					this.b=b;
+				}
+			}
+			var a = new Foo(); // a.ltype = *Foo. 分配内存, 然后调用构造函数
+			var a = new Foo.Food(1,2); // a.ltype = *Foo. 分配内存, 然后调用构造函数

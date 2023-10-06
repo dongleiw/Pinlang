@@ -1,0 +1,133 @@
+fn test1() {
+	class Foo{
+		a i32;
+		b i32;
+
+		fn GetA(*self) i32{
+			return self.a;
+		}
+		fn SetB(*self, nb i32) {
+			self.b = nb;
+		}
+	}
+	var f = Foo{
+		a:1,
+		b:2,
+	};
+	assert(f.a==1);
+	assert(f.b==2);
+
+	assert(f.GetA()==1);
+
+	f.SetB(10);
+	assert(f.b == 10);
+}
+// 数组field
+fn test2() {
+	class Foo2{
+		a i32;
+		array [2]i32;
+
+		fn Foo2(*self){
+			self.a=0;
+			self.array =  [2]i32{1,2};
+		}
+		fn GetArray(*self) [2]i32{
+			return self.array;
+		}
+		fn SetArray(*self, array [2]i32) {
+			self.array = array;
+		}
+	}
+	var f = new Foo2();
+	assert(f.array[0]==1);
+	assert(f.array[1]==2);
+
+	var array = [2]i32{3,4};
+	f.SetArray(array);
+
+	assert(f.array[0]==3);
+	assert(f.array[1]==4);
+
+	f.array[1]=5;
+	assert(f.array[1]==5);
+}
+// new构造函数
+fn test3(){
+	class Foo3{
+		id i32;
+
+		fn Foo3{
+			(*self){
+				self.id=1;
+			}
+
+			(*self, id i32){
+				self.id = id;
+			}
+		}
+
+		fn constructor Bar(*self){
+			self.id=3;
+		}
+	}
+
+	{
+		var f = new Foo3();
+		assert(f.id==1);
+	}
+	{
+		var f = new Foo3(2);
+		assert(f.id==2);
+	}
+	{
+		var f = new Foo3.Bar();
+		assert(f.id==3);
+	}
+}
+// 缺省构造函数
+fn test4(){
+	class A{
+		a i32;
+	}
+	class B{
+		b u64;
+	}
+	class C{
+		a A;
+		b B;
+	}
+
+	var c = new C();
+	assert(c.a.a==0);
+}
+// 接受self的方法重载
+fn test5(){
+	class Foo{
+		id u8;
+
+		fn Foo(*self){
+			self.id=1;
+		}
+		fn GetA{
+			(*self) u8{
+				return self.id;	
+			}
+			(*self, q u8) u8{
+				return self.id+q;
+			}
+		}
+	}
+
+	var f = Foo();
+	assert(f.GetA() == 1u8);
+	assert(f.GetA(1u8) == 2u8);
+}
+fn main() i32 {
+	test1();
+	test2();
+	test3();
+	test4();
+	test5();
+	return 0;
+}

@@ -1,0 +1,55 @@
+fn test1(){
+	// unsigned upper cast
+	{
+		var i = 255u8;
+		var j = i as u16;
+		assert(j==255u16);
+	}
+
+	// unsigned down cast
+	{
+		var i = 10u32;
+		var j = i as u8;
+		assert(j==10u8);
+	}
+
+	// signed uppper cast
+	{
+		var i = 10i8;
+		var j = i as i16;
+		assert(j==10i16);
+	}
+
+	// signed down cast
+	{
+		var i = 10i32;
+		var j = i as i8;
+		assert(j==10i8);
+	}
+
+	// signed to unsigned bit cast
+	{
+		var i = 10i8;
+		var j = i as u8;
+		assert(j==10u8);
+	}
+
+	// unsigned to signed bit cast
+	{
+		var i = 10u8;
+		var j = i as i8;
+		assert(j==10i8);
+	}
+}
+// overflow
+fn test2(){
+	{
+		var i = 255u8;
+		var j = i as i8;
+		assert(j==-1i8);
+	}
+}
+fn main() i32 {
+	test2();
+	return 0;
+}

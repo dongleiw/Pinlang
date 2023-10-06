@@ -4,12 +4,12 @@
 
 #include "astnode.h"
 #include "compile_context.h"
+#include "define.h"
 #include "execute_context.h"
 #include "fntable.h"
 #include "instruction.h"
 #include "type.h"
 #include "variable.h"
-#include "verify_context.h"
 
 /*
  * 标识符(变量名, 函数名, 类型名)
@@ -26,13 +26,21 @@ public:
 	virtual VerifyContextResult Verify(VerifyContext& ctx, VerifyContextParam vr_param) override;
 	virtual Variable*			Execute(ExecuteContext& ctx) override;
 	virtual CompileResult		Compile(CompileContext& cctx) override;
+	virtual void				ClearVerifyState() override;
 
 	virtual AstNode*   DeepClone() override { return DeepCloneT(); }
 	AstNodeIdentifier* DeepCloneT();
 
+	bool IsSimpleFn(VerifyContext& vctx);
+
+	std::string GetId() const { return m_id; }
+
+	// 来自access_attr语法
+	VerifyContextResult Verify_as_tid(VerifyContext& ctx, bool &is_type);
+
 private:
 	std::string m_id;
 
-	std::string m_fn_id;   // 如果identifier为静态函数, 保存函数的实际的名字
+	std::string m_fn_id; // 如果identifier为静态函数, 保存函数的实际的名字
 	bool		m_is_complex_fn;
 };

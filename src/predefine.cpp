@@ -1,39 +1,62 @@
 #include "predefine.h"
-#include "astnode_complex_fndef.h"
-#include "define.h"
-#include "execute_context.h"
-#include "fntable.h"
-#include "log.h"
-#include "type_fn.h"
-#include "type_mgr.h"
-#include "utils.h"
-#include "variable.h"
+#include "astnode_blockstmt.h"
+#include "visitor.h"
 
-// void* malloc(uint64_t size);
-// libc
-//static AstNodeComplexFnDef* define_builin_fn_malloc() {
-//	std::vector<AstNodeComplexFnDef::Implement> implements;
-//
-//	AstNodeType* param0_type = new AstNodeType();
-//	param0_type->InitWithTargetTypeId(TYPE_ID_UINT64);
-//
-//	std::vector<ParserGenericParam> gparams;
-//	std::vector<ParserParameter>	params{ParserParameter{
-//		   .name = "size",
-//		   .type = param0_type,
-//	   }};
-//
-//	AstNodeType* return_type = new AstNodeType();
-//	return_type->InitWithIdentifier("T" + idx);
-//	params.push_back({ParserParameter{
-//		.name = "a" + idx,
-//		.type = value_type,
-//	}});
-//	return AstNodeComplexFnDef::Implement(gparams, params, nullptr, builtin_fn_printf_verify);
-//
-//	AstNodeComplexFnDef* astnode_complex_fndef = new AstNodeComplexFnDef("printf", implements);
-//
-//	return astnode_complex_fndef;
-//}
-void register_predefine(AstNodeBlockStmt& astnode_block_stmt) {
+#include "ANTLRFileStream.h"
+#include "CommonTokenStream.h"
+#include "PinlangLexer.h"
+#include "PinlangParser.h"
+#include "PinlangVisitor.h"
+#include "antlr4-runtime.h"
+
+AstNodeBlockStmt* load_predefine() {
+	AstNodeBlockStmt* predefine_block_stmts = nullptr;
+
+	{
+		const std::string predefine_filename = "../code/predefine/predefine.pin";
+
+		antlr4::ANTLRFileStream input;
+		input.loadFromFile(predefine_filename);
+		std::string				  ss = input.getSourceName();
+		PinlangLexer			  lexer(&input);
+		antlr4::CommonTokenStream tokens(&lexer);
+
+		PinlangParser			 parser(&tokens);
+		antlr4::tree::ParseTree* tree = parser.start();
+
+		Visitor visitor;
+		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
+		predefine_block_stmts->SetGlobalBlock(true);
+		predefine_block_stmts->SetSrcFilename(predefine_filename);
+		BuiltinFn::register_builtin_fns(*predefine_block_stmts);
+	}
+
+	{
+		std::vector<std::string> src_files = {
+			"../code/predefine/u8.pin",
+			"../code/predefine/u16.pin",
+			"../code/predefine/u32.pin",
+			"../code/predefine/u64.pin",
+			"../code/predefine/i8.pin",
+			"../code/predefine/i16.pin",
+			"../code/predefine/i32.pin",
+			"../code/predefine/i64.pin",
+		};
+		for (auto& srcfile : src_files) {
+			antlr4::ANTLRFileStream input;
+			input.loadFromFile(srcfile);
+			std::string				  ss = input.getSourceName();
+			PinlangLexer			  lexer(&input);
+			antlr4::CommonTokenStream tokens(&lexer);
+
+			PinlangParser			 parser(&tokens);
+			antlr4::tree::ParseTree* tree = parser.start();
+
+			Visitor			  visitor;
+			AstNodeBlockStmt* block_stmt = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
+			predefine_block_stmts->MergeAnother(*block_stmt);
+		}
+	}
+
+	return predefine_block_stmts;
 }

@@ -1,0 +1,45 @@
+类型转换
+将一种类型的值转换为另一种类型
+
+
+转换的限制:
+	1. integer 
+		=> integer
+		=> float
+		=> enum
+	2. float
+		=> integer
+		=> float
+	3. enum
+		=> int
+	4. class
+		=> 有继承关系的另一个class type
+
+
+语法选择:
+	1. 类似构造函数的方式
+		(T)value  或者 T(value)
+		C C++ Java Golang C#使用这种方式
+		这种语法和函数调用冲突, 需要特殊处理才能区分
+	2. 使用关键字as
+		v as T 
+		Rust Kotlin c# 使用这种方式
+		这种是最容易实现的, 也没有语法上的歧义
+	3. 使用方法
+		i.asInstanceOf(T)
+		Scala使用这种方式
+	2. 借用初始化表达式的语法
+		好处是节省了一个语法
+		坏处是和其他语言相比有点不一致
+		T{value}
+			
+		例如:
+			var i i32=100
+			u8{i}
+
+	最终决定用2
+
+语法:
+	1u8 as u32 
+		将u8类型的值1转换为u32. 
+		根据外部需求, 返回lvalue或者rvalue

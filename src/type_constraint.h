@@ -22,7 +22,7 @@ public:
 public:
 	TypeInfoConstraint(std::string constraint_name, std::string constraint_instance_name, std::vector<Rule> rules) {
 		m_constraint_name = constraint_name;
-		m_name			  = constraint_instance_name;
+		m_original_name	  = constraint_instance_name;
 		m_rules			  = rules;
 		m_typegroup_id	  = TYPE_GROUP_ID_CONSTRAINT;
 	}

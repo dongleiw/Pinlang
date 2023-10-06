@@ -12,6 +12,7 @@ public:
 	TypeInfoPointer(TypeId pointee_tid);
 	void				InitBuiltinMethods(VerifyContext& ctx) override;
 	virtual llvm::Type* GetLLVMIRType(CompileContext& cctx) override;
+	virtual void		ConstructDefault(CompileContext& cctx, llvm::Value* obj) override;
 
 	TypeId GetPointeeTid() const { return m_pointee_tid; }
 

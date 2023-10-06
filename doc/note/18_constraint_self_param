@@ -1,0 +1,28 @@
+constraint中可以支持self参数. 之前遗漏了这一点
+
+目前constraint需要提供泛型参数进行实例化, 然后将实例化出的规则和相关的方法实例作为一个整体绑定到typeinfo上.
+但是constraint的实例化仅仅提供了泛型参数, 并没有提供所属的objtype. 导致无法获得self的具体类型? 这该如何处理?
+
+constraint可以重名:
+	constraint有一个名字, 这个名字在不同的block内可以指向不同的constraint. 比如下面两个constraint虽然名字和约束规则完全相同, 但仍然是不同的
+		{
+			constraint A{
+				fn a();
+			}
+		}
+		{
+			constraint A{
+				fn a();
+			}
+		}
+	
+	为了区分同名constraint, 给每一个定义分配一个唯一typeid. constraint-instance的名字中包含该typeid
+
+
+方法:
+	在实例化constraint时, 提供objtype. 然后就可以推导出self的类型. 
+	constraint-instance:
+		{
+			constraint_name          # constraint的定义的名字
+			constraint_instance_name # 该instance的唯一名字
+		}

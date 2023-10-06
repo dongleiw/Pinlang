@@ -1,0 +1,158 @@
+// 编译器内置的预定义的类型
+constraint Add[AnotherT,ReturnT]{
+	fn add(another AnotherT) ReturnT;
+}
+constraint Sub[AnotherT,ReturnT]{
+	fn sub(another AnotherT) ReturnT;
+}
+constraint Mul[AnotherT,ReturnT]{
+	fn sub(another AnotherT) ReturnT;
+}
+constraint Div[AnotherT,ReturnT]{
+	fn sub(another AnotherT) ReturnT;
+}
+constraint Mod[AnotherT,ReturnT]{
+	fn sub(another AnotherT) ReturnT;
+}
+constraint Equal[AnotherT]{
+	fn equal(another AnotherT) bool;
+}
+constraint NotEqual[AnotherT]{
+	fn notEqual(another AnotherT) bool;
+}
+constraint LessThan[AnotherT]{
+	fn less(another AnotherT) bool;
+}
+constraint LessEqual[AnotherT]{
+	fn lessEqual(another AnotherT) bool;
+}
+constraint GreaterThan[AnotherT]{
+	fn greaterThan(another AnotherT) bool;
+}
+constraint GreaterEqual[AnotherT]{
+	fn greaterEqual(another AnotherT) bool;
+}
+constraint Index[ReturnT]{
+	fn index(idx i32) ReturnT;
+}
+
+// 所有fn都自动实现该约束
+constraint Fn{
+}
+
+// 增加约束的隐藏类型参数?
+//constraint Index{
+//	type ReturnT;
+//	fn index(idx int) ReturnT;
+//}
+
+fn assert(cond bool){
+	if(cond){
+	}else{
+		abort();
+	}
+}
+
+// 内置String类, 自动申请/释放内存
+class String{
+	size u64;
+	data *u8;
+
+	fn String(*self, size u64, data *u8){
+		self.size = size;
+		self.data = data;
+	}
+
+	fn Size(*self) u64 { return self.size; }
+	fn Data(*self) *u8 { return self.data; }
+
+	//impl constraint ToString{
+	//	fn tostring(*self) String{
+	//		return self;
+	//	}
+	//}
+}
+
+// 内置str类
+class Str{
+	size u64;
+	data *u8;
+
+	fn Str(*self, size u64, data *u8){
+		self.size = size;
+		self.data = data;
+	}
+
+	fn Size(*self) u64 { return self.size; }
+	fn Data(*self) *u8 { return self.data; }
+
+	impl constraint ToString{
+		fn tostring(*self) String{
+			return String(self.size, self.data);
+		}
+	}
+}
+
+
+constraint ToString{
+	fn tostring(*self) String;
+}
+
+//fn print{
+//	(msg Str){
+//		write(0, msg.Data(), msg.Size());
+//	}
+//	(msg String){
+//		write(0, msg.Data(), msg.Size());
+//	}
+//}
+
+fn print{
+	[T1 ToString] (a1 T1){
+		var s1 = a1.tostring();
+		write(0, s1.Data(), s1.Size());
+	}
+	[T1 ToString, T2 ToString] (a1 T1, a2 T2){
+		var space = []u8{32};
+
+		var s1 = a1.tostring();
+		write(0, s1.Data(), s1.Size());
+		write(0, &(space[0]), 1);
+
+		var s2 = a2.tostring();
+		write(0, s2.Data(), s2.Size());
+	}
+}
+/*
+	内置函数
+	fn abort();
+	fn write(fn i32, data *u8, size u64) i64;
+	fn malloc(size u64) *u8;
+*/
+
+
+// var msg = "hello world";
+// const msg *u8 = "hello world";
+// 
+// // ssize_t write(int fd, const void *buf, size_t count);
+// write(fd i32, data *u8, size u64) u64;
+// write(0, msg.data, msg.size);
+// 
+// 	write(0, msg.data, msg.size);
+// fn print{
+// 	[T1 ToString] (a1 *T1){}
+// 	[T1 ToString, T2 ToString] (a1 *T1, a2 *T2){}
+// 	[T1 ToString, T2 ToString, T3 ToString] (a1 *T1, a2 *T2, a3 *T3){}
+// 	[T1 ToString, T2 ToString, T3 ToString, T4 ToString] (a1 *T1, a2 *T2, a3 *T3, a4 *T4){}
+// 	[T1 ToString, T2 ToString, T3 ToString, T4 ToString, T5 ToString] (a1 *T1, a2 *T2, a3 *T3, a4 *T4, a5 *T5){}
+// }
+// fn printf[T ToString](msg *Str, args ...T):
+// fn printf{
+// 	(msg *Str){}
+// 	[T1 ToString] (msg *Str, a1 *T1){}
+// 	[T1 ToString, T2 ToString] (msg *Str, a1 *T1, a2 *T2){}
+// }
+// fn printf(msg *Str, args ...ToString):
+// fn printf(msg *Str, args *ToString){
+//	args[i].
+//}

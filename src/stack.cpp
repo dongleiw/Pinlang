@@ -15,6 +15,7 @@ void Stack::EnterBlock(VariableTable* vt) {
 }
 void Stack::LeaveBlock() {
 	assert(m_vt_list.empty() == false);
+	(*m_vt_list.rbegin())->Destroy();
 	m_vt_list.pop_back();
 }
 VariableTable* Stack::GetCurVariableTable() {

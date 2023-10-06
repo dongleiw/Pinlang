@@ -196,3 +196,45 @@
 			约束的类型参数分为两种:
 				1. 如果想让使用者可以实现多个该约束, 就作为泛参
 				2. 如果不需要实现多个, 就隐藏在约束定义内
+
+8. `type`类型的属性和static方法的歧义问题
+	class Foo{
+		fn static st_ma(){
+		}
+	}
+	目前访问st_ma方法的语法是: `Foo.st_ma`. 但是这个是有歧义的
+	`Foo`的类型是`type`. 而`type`类型有一些自己的方法, 比如TypeName, TypeId, TypeGroupId. 
+	因此语法`T.attr_name`有两种解释:
+		访问`type`类型的attr_name属性
+		访问T类型的attr_name静态方法
+
+	解决方法:
+		1. 提供两种语法区分开
+			a.b
+				假设a的类型为T. 该语法是访问T类型的b属性.
+				例如:
+					f.id // 访问变量f的属性id
+					1.tostring // 访问常量1的方法tostring
+					Foo.TypeName // Foo是类型为type的变量. 因此这里访问的是type的方法TypeName
+			a::b
+				a的类型必须是type, 该type类型存放的类型是T. 该语法访问T类型的静态属性b
+				例如:
+					Foo::st_ma
+	
+		2. 类型`type`不在有属性. 提供内置函数get_type_name, get_type_id, get_type_group_id
+			a.b
+				如果a的类型是`type`:
+					a保存的类型是T, 访问T的属性b
+				否则:
+					a的类型是T
+					访问T的属性b
+				例如:
+					f.id // 访问变量f的属性id
+					1.tostring // 访问常量1的方法tostring
+					Foo.st_ma // Foo的类型为type, 保存的类型是Foo. 因此这里访问的是Foo的方法st_ma
+					
+					get_type_name(T) // 获取T的类型名
+					get_type_id(T) // 获取T的类型id
+
+
+			决定选择这种方式: 节省一个语法. 更容易理解

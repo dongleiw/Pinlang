@@ -21,6 +21,7 @@ public:
 	TypeId GetVariableType(std::string name);
 	bool   HasVariable(std::string name);
 	void   AddVariable(std::string name, Variable* variable);
+	void   Destroy();
 
 	void InitAsGlobal();
 

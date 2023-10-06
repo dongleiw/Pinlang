@@ -27,7 +27,7 @@ public:
 	};
 
 public:
-	AstNodeType() : m_type_kind(TYPE_KIND_NONE) {}
+	AstNodeType();
 	void InitWithType();
 	void InitWithIdentifier(std::string id);
 	void InitWithFn(std::vector<ParserParameter> params, AstNodeType* return_type);
@@ -57,12 +57,22 @@ public:
 	virtual AstNode* DeepClone() override { return DeepCloneT(); }
 	AstNodeType*	 DeepCloneT();
 
+	bool	 IsArrayType() const { return m_type_kind == TYPE_KIND_ARRAY; }
+	AstNode* GetArraySizeExpr() const { return m_array_size_expr; }
+
+	bool IsSelf() const;
+	bool IsPointerSelf() const;
+
 private:
 	void merge_infer_result(std::map<std::string, TypeId>& to, std::map<std::string, TypeId> another) const;
 
 private:
-	TypeKind					 m_type_kind;
-	std::string					 m_id;
+	TypeKind m_type_kind;
+
+	// identifier
+	std::string m_id;
+
+	// fn
 	std::vector<ParserParameter> m_fn_params;
 	AstNodeType*				 m_fn_return_type;
 
@@ -70,6 +80,7 @@ private:
 	AstNodeType* m_array_element_type;
 	AstNode*	 m_array_size_expr;
 
+	// target type id
 	TypeId m_target_tid;
 
 	// tuple

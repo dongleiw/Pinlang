@@ -1,0 +1,26 @@
+// reference and dereference
+fn test1(){
+	var i=1;
+	var pi=&i;
+	var j=*pi;
+}
+fn test2(){
+	fn foo(pi *i32) *i32{
+		return pi;
+	}
+	
+	var i=1;
+
+	var j=*foo(&i);
+	assert(j==1);
+
+	*foo(&i)=2;
+
+	var pi=foo(&i);
+	assert(*pi==2);
+}
+fn main() i32 {
+	test1();
+	test2();
+	return 0;
+}

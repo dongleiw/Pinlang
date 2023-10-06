@@ -1,0 +1,14 @@
+// mul vs dereference
+fn test1(){
+	var i=1;
+	var j=2;
+	var pi=&i;
+
+	//var s=j*pi;
+	var s=*pi*j;
+	var m=j**pi;
+}
+fn main() i32 {
+	test1();
+	return 0;
+}

@@ -1,0 +1,35 @@
+fn test1(){
+	fn check(a bool, b bool) i32{
+		if(a){
+			if(b){
+				return 1;
+			}
+			return 2;
+		}else{
+			if(b){
+				return 3;
+			}
+			return 4;
+		}
+	}
+	assert( 1 == check(true,true) );
+	assert( 2 == check(true,false) );
+	assert( 3 == check(false,true) );
+	assert( 4 == check(false,false) );
+}
+fn test2(){
+	var v u8 = 103;
+	var size = 0;
+	if v>=100u8 {
+		size=3;
+	}else if v>10u8{
+		size=2;
+	}else{
+		size=1;
+	}
+	assert(size==3);
+}
+fn main() i32 {
+	test1();
+	return 0;
+}

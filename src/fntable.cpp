@@ -1,10 +1,12 @@
 #include "fntable.h"
 #include "astnode_blockstmt.h"
 #include "builtin_fn.h"
+#include "compile_context.h"
 #include "define.h"
 #include "instruction.h"
 #include "log.h"
 #include "type.h"
+#include "type_class.h"
 #include "type_fn.h"
 #include "type_mgr.h"
 #include "utils.h"
@@ -14,70 +16,140 @@
 #include <llvm-12/llvm/IR/Function.h>
 #include <llvm-12/llvm/IR/Type.h>
 
-std::string FnTable::AddUserDefineFn(VerifyContext& ctx, std::string fnname, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, AstNodeBlockStmt* body, bool is_nested) {
-	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_tid));
-
-	std::string fnid = generate_fnid(fnname, obj_tid, gparams, fn_tid, is_nested);
-
-	// 构造block
-	VariableTable* params_vt = new VariableTable();
-	// 将泛参定义到block中
-	for (auto iter : gparams) {
-		params_vt->AddVariable(iter.gparam_name, Variable::CreateTypeVariable(iter.gparam_tid));
-	}
-	// 将参数定义到block中
-	for (size_t i = 0; i < tifn->GetParamNum(); i++) {
-		params_vt->AddVariable(params_name.at(i), new Variable(tifn->GetParamType(i)));
-	}
-	// 如果是方法, 将this定义到block中
-	if (obj_tid != TYPE_ID_NONE) {
-		params_vt->AddVariable("this", new Variable(obj_tid));
-	}
-
-	ctx.PushStack();
-	ctx.GetCurStack()->EnterBlock(params_vt);
-	body->Verify(ctx, VerifyContextParam().SetReturnTid(tifn->GetReturnTypeId()));
-	ctx.PopSTack();
-
-	FnInfo fninfo = FnInfo{
-		.fnname		 = fnname,
-		.fnid		 = fnid,
-		.fn_tid		 = fn_tid,
-		.obj_tid	 = obj_tid,
-		.gparams	 = gparams,
-		.params_name = params_name,
-		.body		 = body,
-		.compile_cb	 = nullptr,
-		.llvm_ir_fn	 = nullptr,
-	};
-
-	if (m_fn_table.find(fnid) != m_fn_table.end()) {
-		panicf("duplicate fnid[%s]", fnid.c_str());
-	}
-	m_fn_table[fnid] = fninfo;
-	return fnid;
+FnInfo::FnInfo() {
+	m_fn_tid	 = TYPE_ID_NONE;
+	m_obj_tid	 = TYPE_ID_NONE;
+	m_body		 = nullptr;
+	m_fn_attr	 = (FnAttr)0;
+	m_compile_cb = nullptr;
+	m_llvm_ir_fn = nullptr;
+	m_is_nested	 = false;
 }
-std::string FnTable::AddBuiltinFn(VerifyContext& ctx, std::string fnname, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<std::string> params_name, BuiltinFnCompileCallback compile_cb) {
+FnInfo::FnInfo(std::string fn_name, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<FnParam> params, FnAttr fn_attr, BuiltinFnCompileCallback compile_cb) {
+	m_fn_name	 = fn_name;
+	m_fn_tid	 = fn_tid;
+	m_obj_tid	 = obj_tid;
+	m_gparams	 = gparams;
+	m_params	 = params;
+	m_body		 = nullptr;
+	m_fn_attr	 = fn_attr;
+	m_compile_cb = compile_cb;
+	m_llvm_ir_fn = nullptr;
+	m_is_nested	 = false;
 
-	std::string fnid = generate_fnid(fnname, obj_tid, gparams, fn_tid, false);
-
-	FnInfo fninfo = FnInfo{
-		.fnname		 = fnname,
-		.fnid		 = fnid,
-		.fn_tid		 = fn_tid,
-		.obj_tid	 = obj_tid,
-		.gparams	 = gparams,
-		.params_name = params_name,
-		.body		 = nullptr,
-		.compile_cb	 = compile_cb,
-		.llvm_ir_fn	 = nullptr,
-	};
-
-	if (m_fn_table.find(fnid) != m_fn_table.end()) {
-		panicf("duplicate fnid[%s]", fnid.c_str());
+	if (fn_attr & FnAttr::FN_ATTR_CONSTRUCTOR) {
+		assert(m_obj_tid != TYPE_ID_NONE);
 	}
-	m_fn_table[fnid] = fninfo;
-	return fnid;
+}
+FnInfo::FnInfo(std::string fn_name, TypeId fn_tid, TypeId obj_tid, std::vector<ConcreteGParam> gparams, std::vector<FnParam> params, FnAttr fn_attr, AstNodeBlockStmt* body, bool is_nested) {
+	m_fn_name	 = fn_name;
+	m_fn_tid	 = fn_tid;
+	m_obj_tid	 = obj_tid;
+	m_gparams	 = gparams;
+	m_params	 = params;
+	m_body		 = body;
+	m_fn_attr	 = fn_attr;
+	m_compile_cb = nullptr;
+	m_llvm_ir_fn = nullptr;
+	m_is_nested	 = is_nested;
+}
+bool FnInfo::IsMethod() const {
+	return m_obj_tid != TYPE_ID_NONE;
+}
+bool FnInfo::HasSelfParam() const {
+	return m_params.size() > 0 && m_params.at(0).IsSelfParam();
+}
+llvm::Function* FnInfo::GetLLVMIRFn() const {
+	return m_llvm_ir_fn;
+}
+bool FnInfo::IsConstructor() const {
+	return m_fn_attr & FnAttr::FN_ATTR_CONSTRUCTOR;
+}
+std::string FnInfo::GetFnName() const {
+	return m_fn_name;
+}
+std::string FnInfo::GetFnId() const {
+	return m_fn_id;
+}
+TypeId FnInfo::GetObjTid() const {
+	return m_obj_tid;
+}
+std::vector<ConcreteGParam> FnInfo::GetGParams() const {
+	return m_gparams;
+}
+std::vector<FnParam> FnInfo::GetParams() const {
+	return m_params;
+}
+size_t FnInfo::GetParamNum() const {
+	return m_params.size();
+}
+size_t FnInfo::GetParamNum_no_self() const {
+	return m_params.size() - (HasSelfParam() ? 1 : 0);
+}
+TypeId FnInfo::GetParamType_no_self(size_t idx) const {
+	if (HasSelfParam()) {
+		idx++;
+	}
+	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(m_fn_tid));
+	return tifn->GetParamType(idx);
+}
+std::string FnInfo::GetParamName(size_t i) const {
+	return m_params.at(i).GetParamName();
+}
+TypeId FnInfo::GetFnTid() const {
+	return m_fn_tid;
+}
+bool FnInfo::IsNested() const {
+	return m_is_nested;
+}
+AstNodeBlockStmt* FnInfo::GetBody() const {
+	return m_body;
+}
+bool FnInfo::IsBuiltin() const {
+	return m_compile_cb != nullptr;
+}
+BuiltinFnCompileCallback FnInfo::GetCompileCB() const {
+	return m_compile_cb;
+}
+void FnInfo::SetLLVMIRFn(llvm::Function* llvm_ir_fn) {
+	m_llvm_ir_fn = llvm_ir_fn;
+}
+void FnInfo::SetFnId(std::string fn_id) {
+	m_fn_id = fn_id;
+}
+std::string FnTable::AddUserDefineFn(VerifyContext& ctx, FnInfo fn_info) {
+	TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_info.GetFnTid()));
+
+	if (fn_info.IsBuiltin()) {
+		assert(!fn_info.IsNested());
+	}
+
+	std::string fn_id = generate_fnid(fn_info.GetFnName(), fn_info.GetObjTid(), fn_info.GetGParams(), fn_info.GetFnTid(), fn_info.IsNested());
+	fn_info.SetFnId(fn_id);
+
+	if (!fn_info.IsBuiltin()) {
+		// 构造block
+		VariableTable* params_vt = new VariableTable();
+		// 将泛参定义到block中
+		for (auto iter : fn_info.GetGParams()) {
+			params_vt->AddVariable(iter.gparam_name, Variable::CreateTypeVariable(iter.gparam_tid));
+		}
+		// 将参数定义到block中
+		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
+			params_vt->AddVariable(fn_info.GetParams().at(i).GetParamName(), new Variable(tifn->GetParamType(i)));
+		}
+
+		ctx.PushStack();
+		ctx.GetCurStack()->EnterBlock(params_vt);
+		fn_info.GetBody()->Verify(ctx, VerifyContextParam().SetExpectReturnTid(tifn->GetReturnTypeId()));
+		ctx.PopStack();
+	}
+
+	if (m_fn_table.find(fn_id) != m_fn_table.end()) {
+		panicf("duplicate fn_id[%s]", fn_id.c_str());
+	}
+	m_fn_table[fn_id] = fn_info;
+	return fn_id;
 }
 FnAddr FnTable::AddDynamicFn(TypeId fn_tid, int dynlib_instance_id, void* dynlib_fn, DynamicFnExecuteCallback cb) {
 	DynamicFnInfo fninfo = DynamicFnInfo{
@@ -103,27 +175,42 @@ TypeId FnTable::GetFnTypeId(std::string fnid) const {
 	if (found == m_fn_table.end()) {
 		panicf("unknown fnid[%s]", fnid.c_str());
 	}
-	return found->second.fn_tid;
+	return found->second.GetFnTid();
+}
+const FnInfo* FnTable::GetFnInfo(std::string fnid) const {
+	auto found = m_fn_table.find(fnid);
+	if (found == m_fn_table.end()) {
+		panicf("unknown fnid[%s]", fnid.c_str());
+	}
+	return &(found->second);
+}
+bool FnTable::IsMethod(std::string fnid) const {
+	auto found = m_fn_table.find(fnid);
+	if (found == m_fn_table.end()) {
+		panicf("unknown fnid[%s]", fnid.c_str());
+	}
+	return found->second.IsMethod();
+}
+bool FnTable::IsConstructor(std::string fnid) const {
+	auto found = m_fn_table.find(fnid);
+	if (found == m_fn_table.end()) {
+		panicf("unknown fnid[%s]", fnid.c_str());
+	}
+	return found->second.IsConstructor();
 }
 void FnTable::Compile(CompileContext& cctx) {
 	compile_builtin_fn(cctx);
 	compile_user_define_fn(cctx);
 }
 void FnTable::compile_user_define_fn(CompileContext& cctx) {
-	// 构建fn,
+	// 构建fn
 	for (auto iter = m_fn_table.begin(); iter != m_fn_table.end(); iter++) {
 		FnInfo& fn_info = iter->second;
-		assert((fn_info.body != nullptr && fn_info.compile_cb == nullptr) || (fn_info.body == nullptr && fn_info.compile_cb != nullptr));
-		if (fn_info.body == nullptr) {
+		if (fn_info.IsBuiltin()) {
 			continue;
 		}
-		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_info.fn_tid));
-
-		// 如果是main函数, 不增加参数类型和返回值类型信息. 否则没法调用了
-		std::string fn_name = fn_info.fnid;
-		if (fn_info.fnid == "main[]()i32") {
-			fn_name = "main";
-		}
+		TypeInfoFn* tifn = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_info.GetFnTid()));
+		assert(fn_info.GetParamNum() == tifn->GetParamNum());
 
 		// 构建fn type
 		llvm::Type* fn_return_type = nullptr;
@@ -134,11 +221,6 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 			fn_return_type = llvm::Type::getVoidTy(IRC);
 		}
 		std::vector<llvm::Type*> fn_arg_types;
-		if (fn_info.obj_tid != TYPE_ID_NONE) {
-			// 如果是方法, 增加一个隐藏的this指针指向当前obj
-			TypeInfo* ti_obj = g_typemgr.GetTypeInfo(fn_info.obj_tid);
-			fn_arg_types.push_back(ti_obj->GetLLVMIRType(cctx)->getPointerTo());
-		}
 		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
 			TypeId	  arg_tid = tifn->GetParamType(i);
 			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
@@ -155,73 +237,101 @@ void FnTable::compile_user_define_fn(CompileContext& cctx) {
 		llvm::FunctionType* fn_type = llvm::FunctionType::get(fn_return_type, fn_arg_types, false);
 
 		// 构建fn
-		fn_info.llvm_ir_fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage, fn_name, IRM);
-		if (fn_info.obj_tid != TYPE_ID_NONE) {
-			assert(fn_info.params_name.size() + 1 == fn_info.llvm_ir_fn->arg_size());
-			fn_info.llvm_ir_fn->getArg(0)->setName("this");
-			for (size_t i = 1; i < fn_info.llvm_ir_fn->arg_size(); i++) {
-				llvm::Argument* arg = fn_info.llvm_ir_fn->getArg(i);
+		// 如果是main函数, 不增加参数类型和返回值类型信息. 否则没法调用了
+		std::string fn_id = fn_info.GetFnId();
+		if (fn_id == "main[]()i32") {
+			fn_id = "main";
+		}
+		fn_info.SetLLVMIRFn(llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage, fn_id, IRM));
+		for (size_t i = 0; i < tifn->GetParamNum(); i++) {
+			llvm::Argument* arg = fn_info.GetLLVMIRFn()->getArg(i);
 
-				arg->setName(fn_info.params_name.at(i - 1));
+			arg->setName(fn_info.GetParamName(i));
 
-				TypeId	  arg_tid = tifn->GetParamType(i - 1);
-				TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
+			TypeId	  arg_tid = tifn->GetParamType(i);
+			TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
 
-				llvm::Type* ir_type_arg = arg_ti->GetLLVMIRType(cctx);
-				if (arg_ti->IsArray()) {
-					// 如果函数参数类型为[N]T, 则替换为*[N]T, 并添加byval属性.
-					// 这样llvm会将数组clone一份新数据, 然后将新的数组的指针传递给callee
-					llvm::AttrBuilder attr_builder;
-					attr_builder.addByValAttr(ir_type_arg);
-					arg->addAttrs(attr_builder);
-				}
-			}
-		} else {
-			assert(fn_info.params_name.size() == fn_info.llvm_ir_fn->arg_size());
-			for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
-				llvm::Argument* arg = fn_info.llvm_ir_fn->getArg(i);
-
-				arg->setName(fn_info.params_name.at(i));
-
-				TypeId	  arg_tid = tifn->GetParamType(i);
-				TypeInfo* arg_ti  = g_typemgr.GetTypeInfo(arg_tid);
-
-				llvm::Type* ir_type_arg = arg_ti->GetLLVMIRType(cctx);
-				if (arg_ti->IsArray()) {
-					// 如果函数参数类型为[N]T, 则替换为*[N]T, 并添加byval属性.
-					// 这样llvm会将数组clone一份新数据, 然后将新的数组的指针传递给callee
-					llvm::AttrBuilder attr_builder;
-					attr_builder.addByValAttr(ir_type_arg);
-					arg->addAttrs(attr_builder);
-				}
+			llvm::Type* ir_type_arg = arg_ti->GetLLVMIRType(cctx);
+			if (arg_ti->IsArray()) {
+				// 如果函数参数类型为[N]T, 则替换为*[N]T, 并添加byval属性.
+				// 这样llvm会将数组clone一份新数据, 然后将新的数组的指针传递给callee
+				//llvm::AttrBuilder attr_builder;
+				//attr_builder.addByValAttr(ir_type_arg);
+				//arg->addAttrs(attr_builder);
 			}
 		}
 
-		cctx.AddNamedValue(fn_name, fn_info.llvm_ir_fn);
+		cctx.AddNamedValue(fn_id, fn_info.GetLLVMIRFn());
 	}
+
+	// 编译fn
 	for (auto iter = m_fn_table.begin(); iter != m_fn_table.end(); iter++) {
 		FnInfo& fn_info = iter->second;
-		assert((fn_info.body != nullptr && fn_info.compile_cb == nullptr) || (fn_info.body == nullptr && fn_info.compile_cb != nullptr));
-		if (fn_info.body == nullptr) {
+		if (fn_info.IsBuiltin()) {
 			continue;
 		}
-		cctx.SetCurFn(fn_info.llvm_ir_fn);
-		cctx.SetCurFnIsMethod(fn_info.obj_tid != TYPE_ID_NONE);
+		TypeInfoFn*		tifn	   = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(fn_info.GetFnTid()));
+		llvm::Function* llvm_ir_fn = fn_info.GetLLVMIRFn();
+		cctx.SetCurFn(llvm_ir_fn);
+		cctx.SetCurFnIsMethod(fn_info.GetObjTid() != TYPE_ID_NONE);
 
 		cctx.EnterBlock();
 
 		// 声明参数到符号表
-		for (size_t i = 0; i < fn_info.llvm_ir_fn->arg_size(); i++) {
-			llvm::Argument* arg = fn_info.llvm_ir_fn->getArg(i);
+		for (size_t i = 0; i < llvm_ir_fn->arg_size(); i++) {
+			llvm::Argument* arg = llvm_ir_fn->getArg(i);
 			cctx.AddNamedValue(arg->getName().str(), arg);
 		}
-		llvm::BasicBlock* entry_block = llvm::BasicBlock::Create(IRC, "entry", fn_info.llvm_ir_fn);
+		llvm::BasicBlock* entry_block = llvm::BasicBlock::Create(IRC, "entry", llvm_ir_fn);
 		IRB.SetInsertPoint(entry_block);
 
-		fn_info.body->Compile(cctx);
+		// 对所有参数(除self指针)进行rvalue=>lvalue的处理. 后续再考虑优化
+		{
+			assert(tifn->GetParamNum() == llvm_ir_fn->arg_size());
+			for (size_t i = 0; i < tifn->GetParamNum(); i++) {
+				TypeInfo* arg_ti = g_typemgr.GetTypeInfo(tifn->GetParamType(i));
+				if (i == 0 && fn_info.HasSelfParam()) {
+					if (arg_ti->IsPointer()) {
+						// 该函数第一个参数是一个*self
+						// 指针self只能作为rvalue使用
+					} else {
+						// 该函数第一个参数是一个self
+						// 禁止
+						panicf("self not allowed");
+					}
+				} else if (arg_ti->IsArray()) {
+					// 参数类型为数组, 编译时会转换为指向数组的指针. caller传递指针给callee.
+					// callee克隆一份数组作为真正的参数使用 (这样callee内部对数组修改不会影响原数组)
+					// 引出数组类型的参数不能直接进行rvalue=>lvalue的转换
+					// 而是需要申请一块内存, 将数组load进来, 然后store到新内存里
+					llvm::Type*		ir_type_array = arg_ti->GetLLVMIRType(cctx);
+					llvm::Argument* arg			  = llvm_ir_fn->getArg(i);
+					assert(ir_type_array->getPointerTo() == arg->getType());
+					llvm::Value* array		  = IRB.CreateLoad(ir_type_array, arg);
+					llvm::Value* cloned_array = IRB.CreateAlloca(ir_type_array);
+					IRB.CreateStore(array, cloned_array);
+					cctx.ReplaceNamedValue(arg->getName().str(), cloned_array);
+				} else {
+					llvm::Argument* arg = llvm_ir_fn->getArg(i);
+					llvm::Value*	ptr = IRB.CreateAlloca(arg->getType());
+					IRB.CreateStore(arg, ptr);
+					cctx.ReplaceNamedValue(arg->getName().str(), ptr);
+				}
+			}
+		}
+
+		// 如果当前函数是构造函数, 则先默认构造所有field. 后面才是构造函数中的初始化代码
+		// 如果一个field有显式初始化, 默认构造是否应该去掉?
+		if (fn_info.IsConstructor()) {
+			assert(fn_info.IsMethod() && fn_info.HasSelfParam());
+			// 构造所有fields
+			TypeInfoClass* ti_class = dynamic_cast<TypeInfoClass*>(g_typemgr.GetTypeInfo(fn_info.GetObjTid()));
+			ti_class->ConstructFields(cctx, llvm_ir_fn->getArg(0));
+		}
+		fn_info.GetBody()->Compile(cctx);
 
 		// 处理返回值
-		if (fn_info.llvm_ir_fn->getReturnType()->isVoidTy()) {
+		if (llvm_ir_fn->getReturnType()->isVoidTy()) {
 			IRB.CreateRetVoid();
 		}
 
@@ -237,17 +347,15 @@ void FnTable::compile_builtin_fn(CompileContext& cctx) {
 	// 构建fn
 	for (auto iter = m_fn_table.begin(); iter != m_fn_table.end(); iter++) {
 		FnInfo& fn_info = iter->second;
-		assert((fn_info.body != nullptr && fn_info.compile_cb == nullptr) || (fn_info.body == nullptr && fn_info.compile_cb != nullptr));
-		if (fn_info.body != nullptr) {
-			continue;
+		if (fn_info.IsBuiltin()) {
+			fn_info.GetCompileCB()(cctx, fn_info);
 		}
-		fn_info.compile_cb(cctx, fn_info.fnid);
 	}
 }
 std::string FnTable::generate_fnid(std::string fnname, TypeId obj_tid, std::vector<ConcreteGParam> concrete_generic_params, TypeId fn_tid, bool is_nested) {
 	std::string fnid;
 	if (obj_tid != TYPE_ID_NONE) {
-		fnid = sprintf_to_stdstr("%d:%s::", obj_tid, GET_TYPENAME_C(obj_tid));
+		fnid = sprintf_to_stdstr("%s::", GET_TYPENAME_C(obj_tid));
 	}
 	fnid += fnname + "[";
 	for (size_t i = 0; i < concrete_generic_params.size(); i++) {
@@ -273,13 +381,13 @@ std::string FnTable::generate_fnid(std::string fnname, TypeId obj_tid, std::vect
 	}
 
 	if (is_nested) {
-		auto found = m_nested_fnid_seed.find(fnname);
+		auto found = m_nested_fnid_seed.find(fnid);
 		if (found == m_nested_fnid_seed.end()) {
+			m_nested_fnid_seed[fnid] = 1;
 			fnid += " #1";
-			m_nested_fnid_seed[fnname] = 1;
 		} else {
-			fnid += " #" + to_str(found->second);
 			found->second++;
+			fnid += " #" + to_str(found->second);
 		}
 	}
 

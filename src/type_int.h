@@ -12,4 +12,5 @@ public:
 	TypeInfoInt(TypeId tid);
 	void				InitBuiltinMethods(VerifyContext& ctx) override;
 	virtual llvm::Type* GetLLVMIRType(CompileContext& cctx) override;
+	virtual void		ConstructDefault(CompileContext& cctx, llvm::Value* obj) override;
 };

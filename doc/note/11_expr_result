@@ -1,0 +1,285 @@
+表达式的结果和编译的方法
+	表达式的结果类型是固定不变的. 但表达式的编译结果是受上下文影响的.
+	例如:
+		var b = a; // 这里的语义是获取a的值, 复制给b. 因此表达式`a`的编译结果是一个值. 称为rvalue
+		a = 1; // 这里的语义是获取1的值, 复制给a. 因此表达式`a`的编译结果是一个存储值的内存地址. 称为lvalue
+	在verify阶段, 需要确定每个expr返回lvalue还是rvalue
+	另外有一些expr不能作为lvalue. 比如&f
+
+	表达式的结果还有临时值和非临时值的区别:
+		`f.id`结果不是临时值
+		1+2的结果是临时值
+
+		临时值也可以是lvalue. 但是临时值不能被赋值. 
+		比如1+2=a. 这种赋值没有意义
+
+例子:
+	假设:
+		class Foo{
+			id i32;
+			Foo(id i32){
+				this.id = id;
+			}
+		}
+		var a=1;
+		var f=Foo(1);
+		var pf=&f;
+
+	1:
+		类型为i32
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			return constant_int(1);
+		如果要求返回lvalue: 
+			错误. literall不能返回lvalue
+
+	1+2
+		类型为i32
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+		如果要求返回lvalue: 
+			错误. tmp不能作为lvalue
+
+	a
+		类型为i32
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			从内存load到寄存器, 返回
+		如果要求返回lvalue: 
+			返回变量a的内存地址
+		
+	a+1
+		类型为i32
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			要求`a`和`1`返回rvalue
+		如果要求返回lvalue: 
+			错误. tmp不能返回lvalue
+
+	f
+		类型为Foo
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			从内存load到寄存器, 返回
+		如果要求返回lvalue: 
+			返回变量f的内存地址
+
+	f.id
+		类型为i32
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			如果f是指针, 那么要求f返回rvalue. 否则要求f返回lvalue
+		如果要求返回lvalue: 
+			返回`f`的`id`属性的内存地址
+			如果f是指针, 那么要求f返回rvalue. 否则要求f返回lvalue
+
+	&f
+		类型为*Foo
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			也就是变量f的内存地址
+		如果要求返回lvalue: 
+			错误. &f不能作为lvalue
+
+	pf
+		类型为*Foo
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			也就是指针pf存储的内存地址
+		如果要求返回lvalue: 
+			返回变量pf的内存地址
+
+	*pf
+		类型为Foo
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			要求`pf`返回rvalue, 也就是pf指向的数据的内存地址
+			从内存中load到register, 返回
+		如果要求返回lvalue: 
+			要求pf返回rvalue. 也就是pf指向的数据的内存地址
+			返回pf的rvalue
+		
+
+	Foo(1)
+		类型为Foo
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			var tmp = alloca(Foo);
+			Foo(tmp, 1);
+			return load(tmp); // 从内存中加载到register中, 得到一个值
+		如果要求返回lvalue: 
+			var tmp = alloca(Foo);
+			Foo(tmp, 1);
+			return tmp; // 从内存中加载到register中, 得到一个值
+		
+	Foo(1).id
+		类型为i32
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			要求`Foo(1)`返回lvalue
+			获取`id`属性的值, 返回
+		如果要求返回lvalue: 
+			要求`Foo(1)`返回lvalue
+			获取`id`属性的内存地址, 返回
+
+	new Foo(a)
+		类型为*Foo
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			var tmp = call malloc(Foo);
+			Foo(tmp, 1);
+			return tmp;
+		如果要求返回lvalue: 
+			错误. 该表达式不能作为lvalue
+
+	new Foo(a).id
+		类型为i32
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			如果`new Foo(a)`是指针, 那么要求`new Foo(a)`返回rvalue. 否则要求`new Foo(a)`返回lvalue
+			获取`id`属性的值, 返回
+		如果要求返回lvalue: 
+			如果`new Foo(a)`是指针, 那么要求`new Foo(a)`返回rvalue. 否则要求`new Foo(a)`返回lvalue
+			获取`id`属性的内存地址, 返回
+
+	1.tostring();
+		`1.tostring()`: 
+			内置方法, 并不是普通的方法调用. 而是转换为:
+				i32::tostring( (1+2) );
+			期望`1`返回rvalue
+
+规则:
+	literal:
+		类型为T
+		结果是temp
+		如果要求返回rvalue: 
+			return constant
+		如果要求返回lvalue: 
+			允许literal返回lvalue, 以支持语法`1.tostring()`
+
+	id
+		类型为T
+		结果不是temp
+		如果要求返回rvalue: 
+			从内存load到寄存器, 返回
+		如果要求返回lvalue: 
+			返回变量a的内存地址
+
+	left_expr operator right_expr // left_expr类型为LT, right_expr类型为RT. operator为(+ - * / % > >= == < <= !=)
+		类型为T
+		结果是temp
+		如果要求返回rvalue: 
+			结果是值. 没有内存地址
+			期望left_expr和right_expr返回rvalue
+		如果要求返回lvalue: 
+			错误. 只能返回rvalue
+
+	obj_expr.attr_name
+		类型为属性attr_name的类型
+		结果不是temp
+		如果要求返回rvalue: 
+			返回`obj_expr`的`attr_name`属性的值
+			如果obj_expr是指针, 那么要求obj_expr返回rvalue. 否则要求obj_expr返回lvalue
+		如果要求返回lvalue: 
+			返回`obj_expr`的`attr_name`属性的内存地址
+			如果obj_expr是指针, 那么要求obj_expr返回rvalue. 否则要求obj_expr返回lvalue
+
+	&expr //reference
+		假设expr的类型是T
+		类型为*T
+		结果不是temp
+		如果要求返回rvalue: 
+			返回expr的lvalue
+			要求expr返回lvalue
+		如果要求返回lvalue: 
+			错误. 不能作为lvalue
+
+	*expr // dereference
+		假设expr的类型是*T
+		类型为T
+		结果不是temp
+		如果要求返回rvalue: 
+			要求`expr`返回rvalue
+			将expr的value作为内存地址load到register, 返回
+		如果要求返回lvalue: 
+			要求`expr`返回rvalue
+			返回expr的rvalue
+		
+
+	Foo(arg_list) // 构造函数
+		类型为Foo
+		如果要求返回rvalue: 
+			要求arg_list返回rvalue
+			var tmp = alloca(Foo);
+			Foo(tmp, 1);
+			return load(tmp); // 从内存中加载到register中, 得到一个值
+		如果要求返回lvalue: 
+			要求arg_list返回rvalue
+			var tmp = alloca(Foo);
+			Foo(tmp, 1);
+			return tmp; // 从内存中加载到register中, 得到一个值
+
+	new Foo(a) // 构造函数
+		类型为*Foo
+		如果要求返回rvalue: 
+			var tmp = call malloc(Foo);
+			Foo(tmp, 1);
+			return tmp;
+		如果要求返回lvalue: 
+			错误. 该表达式不能作为lvalue
+
+	add(arg_list) // 函数调用
+		类型为add方法的返回类型
+		如果要求返回rvalue: 
+			要求arg_list返回rvalue
+			var call_ret = call add(arg_list);
+			return load(call_ret);
+		如果要求返回lvalue: 
+			要求arg_list返回rvalue
+			var call_ret = call add(arg_list);
+			return call_ret;
+
+	expr[idx_expr]
+		如果`expr`类型是数组[]T:
+			类型为T
+			结果不是temp
+			如果要求返回rvalue: 
+				要求expr返回lvalue
+				要求idx_expr返回rvalue
+				返回下标对应的数组元素的值
+			如果要求返回lvalue: 
+				要求expr返回lvalue
+				要求idx_expr返回rvalue
+				返回下标对应的数组元素的地址
+		如果`expr`类型是指针*T:
+			类型为T
+			结果不是temp
+			如果要求返回rvalue: 
+				要求expr返回rvalue
+				要求idx_expr返回rvalue
+				返回下标对应的数组元素的值
+			如果要求返回lvalue: 
+				要求expr返回rvalue
+				要求idx_expr返回rvalue
+				返回下标对应的数组元素的地址
+			
+		
+
+	T{} // 初始化
+		类型为T
+		如果要求返回rvalue: 
+			分配对象, 初始化, 返回值
+			var tmp = alloca(T);
+			init tmp
+			return load(tmp);
+		如果要求返回lvalue:
+			分配对象, 初始化, 返回值
+			var tmp = alloca(T);
+			init tmp
+			return tmp;
+
+	// obj_expr.tostring();
+	// 	`obj_expr.tostring()`: 
+	// 		内置方法, 并不是普通的方法调用. 而是转换为:
+	// 			i32::tostring( obj_expr );
+	// 		期望`obj_expr`返回rvalue

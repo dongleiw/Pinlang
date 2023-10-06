@@ -1,0 +1,88 @@
+问题:
+	假如要定义一个参数不固定的printf函数, 使用泛型:
+	fn printf{
+		(fmt_str Str){}
+		[T ToString](fmt_str Str, args ...T){}
+	}
+	这种方式的问题是: T是编译期确定的, 所有参数的类型都是相同的. 这不符合需求
+
+解决办法:
+	使用重载:
+		fn printf{
+			(fmt_str Str){}
+			[T1 ToString](fmt_str Str, a1 T1){}
+			[T1 ToString, T2 ToString](fmt_str Str, a1 T1, a2 T2){}
+			[T1 ToString, T2 ToString, T3 ToString](fmt_str Str, a1 T1, a2 T2, a3 T3){}
+			// ...
+		}
+		也算是一个方法. 就是实在太啰嗦
+	提供一个新的语法, 调用一批满足某个约束的值的某个方法:
+		fn printf(fmt_str Str, args ...ToString){
+			/*
+				args代表的是一组类型可能不同但是都满足ToString约束的值. 
+				编译时, 将args.ToString()展开得到
+					var results = []Str{
+						args_0.ToString(),
+						args_1.ToString(),
+						args_2.ToString(),
+						// ...
+					};
+			*/
+			var results = args.ToString();
+			_printf(fmt_str, results);
+		}
+		fn _printf(fmt_str Str, args ...Str){
+		}
+		当调用printf("%d %s", a, b)时:
+			_printf("%d %s", a.ToString(), b.ToString())
+
+	宏:
+		// args是一个长度不确定的一组参数, 每个参数类型未知, 但是都满足ToString约束
+		#define printf(fmt_str Str, args ...ToString) _printf(fmt_str, args.ToString());
+
+	将vaarg转换为tuple:
+		fn _printf(fmt_str, args (T1, T2, T3, ...)){
+			// T1/T2/T3/...满足ToString
+			args.size() // tuple size
+			args.f0 // tuple第一个元素
+			args[i] // 动态index没法做
+		}
+		这个方法不行. tuple没法做dynamic-index
+	自动展开for循环:
+		fn printf(fmt_str, args (T1, T2, T3, ...)){
+			for(var i=0; i<args.Size(); i++){
+				fmt_str.replace(args.field(i));
+			}
+		}
+		args.Size()是编译期常量, 因此for可以编译期展开:
+			for(var i=0; i<3; i++){
+				fmt_str.replace(args.field(i));
+			}
+			fmt_str.replace(args.f0);
+			fmt_str.replace(args.f1);
+			fmt_str.replace(args.f2);
+
+
+	提供constraint object:
+		*ToString
+			是一个*T, T满足ToString约束
+		&ToString
+			是一个&T, T满足ToString约束
+
+		然后可以实现以下函数:
+			fn print(a &ToString){
+				var s = a.ToString();
+				// write s to stdout
+			}
+			print(i);
+			print("hello");
+
+			fn printf(fmt_str Str, args ...&ToString){
+				// args指向一个数组, 每个数组元素都是一个&ToString
+			}
+
+静态分发(泛型,重载)和动态分发(OO中的多态,动态约束)的区别:
+	1. 实现数量不同
+		静态分发中, 类型是编译期固定的. 不同类型自动生成不同实现.
+		而动态分发只有一个实现. 编译期只进行约束检查
+	2. 动态分发和多态很类似?

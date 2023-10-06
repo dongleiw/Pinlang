@@ -1,0 +1,66 @@
+f.M(a,b);
+	这个语句解析为:
+		astnode_fncall:
+			astnode_access_attr
+				astnode_identifier (f)
+				astnode_identifier (M)
+			arguments (a,b)
+foo(a,b);
+	这个语法解析为:
+		astnode_fncall:
+			astnode_identifier (foo)
+			arguments (a,b)
+
+
+目前method和普通function调用的处理是分开的. method有一个隐藏this指针需要特殊处理. 导致一些问题上处理比较麻烦
+	比如:
+		integer的tostring方法, 我打算把代码以一个普通函数的形式放到predefine中 (u8的tostring方法命名为__compile_u8_tostring), 
+		然后将这个__compile_u8_tostring和integer的tostring方法关联起来. 这样就不用在编译期内部hardcode一个tostring实现了.
+		但问题在于普通函数和方法处理上不一致, 导致两者不太好关联. 
+	因此有一个想法: 也许可以将方法转换为普通函数, 抹平两则处理上的差异. 这样可以简化代码
+
+统一方法和普通函数的思路:
+	相比于普通函数, 方法特别之处在于:
+		和某个type绑定
+			将方法的可见性限制在type内, 并且分配一个唯一id即可解决
+		有一个隐藏的this参数(静态方法除外)
+			可以将this参数暴露出来
+			但是__compile_u8_tostring的参数是u8, 但是隐藏this指针类型是*u8. 不匹配. 所以还是需要进行一次转换.
+			或者和Rust一样, 将this参数显式定义出来, 然后就可以支持定义多种不同类型的this参数了.
+			例如:
+				class u8{
+					fn fm() String{ // 静态方法
+					}
+					fn fm(self) String{ // 接受一个拷贝
+					}
+					fn fm(*self) String{ // 接受一个引用
+					}
+					fn fm(*immutable self) String{ // 接受一个只读引用
+					}
+				}
+			然后给u8定义一个tostring方法: 
+				fn __compile_u8_tostring(v u8) String
+				class u8{
+					fn tostring(self) String
+				}
+				这样方法和函数的类型就一致了. 可以将一个普通函数的实现和内置类型的方法绑定了. 
+			问题:
+				fn(self)的方式会进行隐式的内存拷贝, 可能会引入性能问题. 而且由于原obj不会被修改, 可能会引入一些隐藏的bug. 最好还是禁止掉.
+				还是不用这种方式解决类型不匹配问题了. 但是将隐藏的this指针暴露出来还是保留
+	
+	f.M(a,b)
+		这个语句目前解析为:
+			astnode_fncall:
+				astnode_access_attr
+					astnode_identifier (f)
+					astnode_identifier (M)
+				arguments (a,b)
+		将其改造为: M(f,a,b)
+			astnode_fncall:
+				astnode_identifier(M)
+				arguments (f,a,b)
+	
+想要的是 
+	u8::tostring() String
+	实际类型是: u8::tostring(this *u8) String
+目前有的是: __compile_u8_tostring(v u8) String

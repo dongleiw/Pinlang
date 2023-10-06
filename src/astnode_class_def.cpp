@@ -15,13 +15,15 @@
 
 // TODO 检查字段名和方法名不重复
 VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextParam vparam) {
+	VERIFY_BEGIN;
+
 	log_debug("verify class def[%s]", m_class_name.c_str());
 
 	if (ctx.GetCurStack()->IsVariableExist(m_class_name)) {
 		panicf("conflict class name[%s]", m_class_name.c_str());
 	}
 
-	m_class_tid = g_typemgr.AddTypeInfo(new TypeInfoClass(m_class_name));
+	m_class_tid = g_typemgr.AddTypeClass(new TypeInfoClass(m_class_name));
 	ctx.GetCurStack()->GetCurVariableTable()->AddVariable(m_class_name, Variable::CreateTypeVariable(m_class_tid));
 	TypeInfoClass* ti = dynamic_cast<TypeInfoClass*>(g_typemgr.GetTypeInfo(m_class_tid));
 
@@ -39,10 +41,26 @@ VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextPar
 	ti->SetFields(fields);
 
 	// 检查类的普通(非约束)方法
-	for (auto iter : m_method_list) {
-		iter->Verify(ctx, VerifyContextParam());
+	for (auto method : m_method_list) {
+		method->SetObjTypeId(m_class_tid);
+		if (method->GetName() == m_class_name) {
+			method->SetFnAttr((FnAttr)(method->GetFnAttr() | FnAttr::FN_ATTR_CONSTRUCTOR));
+		}
+		method->Verify(ctx, VerifyContextParam());
 	}
-	ti->AddConstraint(CONSTRAINT_ID_NONE, m_method_list);
+	ti->AddConstraint(ConstraintInstance{}, m_method_list);
+
+	if (!ti->HasConstructor()) {
+		// 如果没有定义, 添加默认构造函数
+		ti->AddDefaultConstructor(ctx);
+	}
+	std::vector<std::string> constructors = ti->GetConstructor(ctx, ti->GetOriginalName(), std::vector<TypeId>{});
+	if (constructors.empty()) {
+	} else if (constructors.size() > 1) {
+		panicf("multiple candidates constructor match");
+	} else {
+		ti->SetDefaultConstrutorFnId(constructors.at(0));
+	}
 
 	// 检查实现的约束
 	// TODO 检查实现的函数是否和constraint声明的一致, 是否有遗漏
@@ -51,15 +69,25 @@ VerifyContextResult AstNodeClassDef::Verify(VerifyContext& ctx, VerifyContextPar
 		for (auto gparam_type : impl.constraint_gparams) {
 			gparam_tids.push_back(gparam_type->Verify(ctx, VerifyContextParam()).GetResultTypeId());
 		}
-		AstNodeConstraint* astnode_constraint	   = ctx.GetCurStack()->GetVariable(impl.constraint_name)->GetValueConstraint();
-		TypeId			   constraint_instance_tid = astnode_constraint->Instantiate(ctx, gparam_tids);
+		Variable* constraint = ctx.GetCurStack()->GetVariableOrNull(impl.constraint_name);
+		if (constraint == nullptr) {
+			ctx.VerifyGlobalIdentifier(this, impl.constraint_name, VerifyContextParam());
+			constraint = ctx.GetCurStack()->GetVariableOrNull(impl.constraint_name);
+			if (constraint == nullptr) {
+				panicf("unknown constraint[%s]", impl.constraint_name.c_str());
+			}
+		}
+
+		AstNodeConstraint*					  astnode_constraint  = constraint->GetValueConstraint();
+		ConstraintInstance constraint_instance = astnode_constraint->Instantiate(ctx, gparam_tids, m_class_tid);
 
 		for (auto fn : impl.constraint_fns) {
+			fn->SetObjTypeId(m_class_tid);
 			ctx.GetCurStack()->EnterBlock(new VariableTable());
 			fn->Verify(ctx, VerifyContextParam());
 			ctx.GetCurStack()->LeaveBlock();
 		}
-		ti->AddConstraint(constraint_instance_tid, impl.constraint_fns);
+		ti->AddConstraint(constraint_instance, impl.constraint_fns);
 	}
 
 	ctx.GetCurStack()->LeaveBlock();
@@ -71,6 +99,7 @@ Variable* AstNodeClassDef::Execute(ExecuteContext& ctx) {
 }
 AstNodeClassDef* AstNodeClassDef::DeepCloneT() {
 	AstNodeClassDef* newone = new AstNodeClassDef();
+	newone->Copy(*this);
 
 	newone->m_class_name = m_class_name;
 	for (auto iter : m_field_list) {
@@ -86,12 +115,7 @@ AstNodeClassDef* AstNodeClassDef::DeepCloneT() {
 	return newone;
 }
 CompileResult AstNodeClassDef::Compile(CompileContext& cctx) {
-	std::vector<llvm::Type*> ir_type_fields;
-	TypeInfo*				 ti = g_typemgr.GetTypeInfo(m_class_tid);
-	for (auto f : ti->GetField()) {
-		TypeInfo* ti_field = g_typemgr.GetTypeInfo(f.tid);
-		ir_type_fields.push_back(ti_field->GetLLVMIRType(cctx));
-	}
-	llvm::StructType* ty = llvm::StructType::create(ir_type_fields, m_class_name);
+	TypeInfo* ti = g_typemgr.GetTypeInfo(m_class_tid);
+	ti->GetLLVMIRType(cctx);
 	return CompileResult();
 }

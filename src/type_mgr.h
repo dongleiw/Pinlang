@@ -2,6 +2,7 @@
 
 #include "define.h"
 #include "type.h"
+#include "type_class.h"
 #include "type_constraint.h"
 #include "type_fn.h"
 #include "verify_context.h"
@@ -30,13 +31,15 @@ public:
 	 */
 	TypeId GetOrAddTypeFn(VerifyContext& ctx, std::vector<TypeId> params, TypeId return_tid);
 
-	TypeId GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64_t static_size, bool& added);
-	TypeId GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> element_tids, bool& added);
-	TypeId GetOrAddTypePointer(VerifyContext& ctx, TypeId pointee_tid, bool& added);
+	TypeId GetOrAddTypeArray(VerifyContext& ctx, TypeId element_tid, uint64_t static_size);
+	TypeId GetOrAddTypeTuple(VerifyContext& ctx, std::vector<TypeId> element_tids);
+	TypeId GetOrAddTypePointer(VerifyContext& ctx, TypeId pointee_tid);
+	TypeId AddTypeClass(TypeInfoClass* ti);
 
 	TypeId AddTypeInfo(TypeInfo* ti);
-	TypeId GetOrAddTypeConstraint(TypeInfoConstraint* ti);
 	TypeId AddGenericType(TypeInfo* ti);
+
+	TypeId AddConstraint(std::string constraint_name);
 
 	void InitTypes();
 	void InitBuiltinMethods(VerifyContext& ctx);
@@ -51,6 +54,8 @@ private:
 	 */
 	TypeId add_type(TypeInfo* heap_alloc_ti);
 	TypeId allocate_typeid();
+
+	bool is_type_name_exists(std::string name) const;
 
 private:
 	std::vector<TypeInfo*> m_typeinfos;

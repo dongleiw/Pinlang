@@ -49,3 +49,15 @@ CompileResult AstNode::Compile(CompileContext& cctx) {
 Variable* AstNode::Execute(ExecuteContext& ctx) {
 	panicf("not implemented");
 }
+void AstNode::Copy(AstNode& from) {
+	m_result_typeid = from.m_result_typeid;
+	//m_parent				= from.m_parent;
+	//m_verify_status			= from.m_verify_status;
+	m_is_exit_node			= from.m_is_exit_node;
+	m_compile_to_left_value = from.m_compile_to_left_value;
+}
+void AstNode::ClearVerifyState() {
+	m_result_typeid			= TYPE_ID_NONE;
+	m_verify_status			= NOT_VERIFIED;
+	m_compile_to_left_value = false;
+}

@@ -56,30 +56,14 @@ void compile(std::string src_path, std::vector<std::string> str_args) {
 
 	g_typemgr.InitTypes();
 
+	std::vector<AstNodeBlockStmt*> global_block_stmts;
+
 	// 加载predefine
-	AstNodeBlockStmt* predefine_block_stmts;
-	{
-		const std::string predefine_filename = "../example_code/predefine.pin";
-		ANTLRFileStream	  input;
-		input.loadFromFile(predefine_filename);
-		std::string		  ss = input.getSourceName();
-		PinlangLexer	  lexer(&input);
-		CommonTokenStream tokens(&lexer);
+	global_block_stmts.push_back(load_predefine());
 
-		PinlangParser	 parser(&tokens);
-		tree::ParseTree* tree = parser.start();
-
-		Visitor visitor;
-		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
-		register_predefine(*predefine_block_stmts);
-		BuiltinFn::register_builtin_fns(*predefine_block_stmts);
-	}
-
-	Visitor			  visitor;
-	AstNodeBlockStmt* global_block_stmt = new AstNodeBlockStmt();
-	global_block_stmt->SetGlobalBlock(true);
-	global_block_stmt->AddPreDefine(*predefine_block_stmts);
+	// parse all source files
 	for (auto src_file : src_files) {
+		Visitor visitor;
 		log_info("load src file[%s]", src_file.c_str());
 		ANTLRFileStream input;
 		input.loadFromFile(src_file);
@@ -89,17 +73,14 @@ void compile(std::string src_path, std::vector<std::string> str_args) {
 		PinlangParser	 parser(&tokens);
 		tree::ParseTree* tree = parser.start();
 
-		AstNodeBlockStmt* block_stmt = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
-		global_block_stmt->MergeAnother(*block_stmt);
+		AstNodeBlockStmt* global_block_stmt = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
+		global_block_stmt->SetGlobalBlock(true);
+		global_block_stmt->SetSrcFilename(src_file);
+		global_block_stmts.push_back(global_block_stmt);
 	}
 
-	VerifyContext vctx(global_block_stmt);
-	{
-		vctx.PushStack();
-		log_info("verify begin");
-		global_block_stmt->Verify(vctx, VerifyContextParam());
-		log_info("verify end");
-	}
+	VerifyContext vctx(global_block_stmts);
+	vctx.Verify();
 
 	// 实例化出main函数
 	std::string main_fn_name;
@@ -108,100 +89,17 @@ void compile(std::string src_path, std::vector<std::string> str_args) {
 		if (main_complex_fn == nullptr) {
 			panicf("main function not found");
 		}
-		AstNodeComplexFnDef*		  astnode_complex_fn_def = main_complex_fn->GetValueComplexFn();
-		AstNodeComplexFnDef::Instance instance				 = astnode_complex_fn_def->Instantiate_type(vctx, g_typemgr.GetMainFnTid());
-		main_fn_name										 = instance.instance_name;
+		AstNodeComplexFnDef* astnode_complex_fn_def = main_complex_fn->GetValueComplexFn();
+		main_fn_name								= astnode_complex_fn_def->Instantiate_type(vctx, g_typemgr.GetMainFnTid());
 	}
 
 	log_info("compile begin");
 	CompileContext cctx;
 	cctx.Init();
+	BuiltinFn::register_external_fn(cctx);
 	vctx.GetFnTable().Compile(cctx);
 	cctx.GetModule().print(llvm::outs(), nullptr);
 	log_info("compile end");
-}
-void execute(std::string src_path, std::vector<std::string> str_args) {
-	log_info("execute src_path[%s]", src_path.c_str());
-
-	std::vector<std::string> src_files = list_src_files(src_path);
-
-	g_typemgr.InitTypes();
-
-	// 加载predefine
-	AstNodeBlockStmt* predefine_block_stmts;
-	{
-		const std::string predefine_filename = "../example_code/predefine.pin";
-		ANTLRFileStream	  input;
-		input.loadFromFile(predefine_filename);
-		std::string		  ss = input.getSourceName();
-		PinlangLexer	  lexer(&input);
-		CommonTokenStream tokens(&lexer);
-
-		PinlangParser	 parser(&tokens);
-		tree::ParseTree* tree = parser.start();
-
-		Visitor visitor;
-		predefine_block_stmts = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
-		register_predefine(*predefine_block_stmts);
-	}
-
-	Visitor			  visitor;
-	AstNodeBlockStmt* global_block_stmt = new AstNodeBlockStmt();
-	global_block_stmt->SetGlobalBlock(true);
-	global_block_stmt->AddPreDefine(*predefine_block_stmts);
-	for (auto src_file : src_files) {
-		log_info("load src file[%s]", src_file.c_str());
-		ANTLRFileStream input;
-		input.loadFromFile(src_file);
-		PinlangLexer	  lexer(&input);
-		CommonTokenStream tokens(&lexer);
-
-		PinlangParser	 parser(&tokens);
-		tree::ParseTree* tree = parser.start();
-
-		AstNodeBlockStmt* block_stmt = std::any_cast<AstNodeBlockStmt*>(tree->accept(&visitor));
-		global_block_stmt->MergeAnother(*block_stmt);
-	}
-
-	FnAddr		  main_fn_addr;
-	VerifyContext vctx(global_block_stmt);
-	{
-		vctx.PushStack();
-		log_info("verify begin");
-		global_block_stmt->Verify(vctx, VerifyContextParam());
-		log_info("verify end");
-
-		Variable* main_complex_fn = vctx.GetGlobalVt()->GetVariableOrNull("main");
-		if (main_complex_fn == nullptr) {
-			panicf("main function not found");
-		}
-		AstNodeComplexFnDef*		  astnode_complex_fn_def = main_complex_fn->GetValueComplexFn();
-		AstNodeComplexFnDef::Instance instance				 = astnode_complex_fn_def->Instantiate_type(vctx, g_typemgr.GetMainFnTid());
-		main_fn_addr										 = instance.fn_addr;
-	}
-
-	ExecuteContext ectx;
-	ectx.SetFnTable(vctx.GetFnTable());
-	ectx.PushStack();
-	log_info("execute begin");
-	global_block_stmt->Execute(ectx);
-
-	// 构造main函数的参数
-	Variable* main_fn_arg;
-	{
-		std::vector<Variable*> str_var_array;
-		for (auto iter : str_args) {
-			str_var_array.push_back(new Variable(std::string(iter)));
-		}
-		TypeInfoFn* main_fn_ti = dynamic_cast<TypeInfoFn*>(g_typemgr.GetTypeInfo(g_typemgr.GetMainFnTid()));
-
-		main_fn_arg = new Variable(main_fn_ti->GetParamType(0), str_var_array);
-	}
-
-	//Variable* main_ret_v = ectx.GetFnTable().CallFn(main_fn_addr, ectx, nullptr, std::vector<Variable*>{main_fn_arg});
-	log_info("execute end");
-
-	printf("execute end. succ\n");
 }
 
 int main(int argc, char* argv[]) {

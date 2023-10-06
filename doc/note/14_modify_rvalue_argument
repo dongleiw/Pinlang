@@ -1,0 +1,33 @@
+fn __compile_u8_tostring(v u8) {
+	var size u64=1;
+	while v != 0u8 { // A 
+		v = v / 10u8; // B
+	}
+}
+__compile_u8_tostring(1u8);
+
+遇到一个rvalue的函数参数被修改的问题.
+上述代码中, v作为一个rvalue被传递, 在函数内部A位置被作为rvalue被访问, 这并没有问题
+在B位置被作为lvalue被访问, 此时符号表中的v变量被修改位lvalue(解释). 这导致A和B位置访问的v变量是两个不通变量. 然后出现死循环
+
+解释:
+	针对rvalue的参数被当作lvalue访问的情况, 目前的处理方式是:
+		申请stack内存, 将rvalue的参数值存放进去, 然后是用该内存的地址(lvalue)覆盖符号表中的rvalue.
+		覆盖符号表的目的是: 后续访问时可以获取到正确的值.
+		但这种处理方式有个bug: 第一次访问必须是lvalue. 而上述例子中第一次访问是rvalue
+
+解决方法:
+	1. 在编译函数body之前, 检测所有参数是否需要lvalue访问, 如果需要, 在开头位置先进行rvalue=>lvalue的处理
+		以下是否正确:
+			只以rvalue访问的一定是immutable, 但是immutable可能以lvalue访问?
+	2. 在函数开头, 对所有参数都进行rvalue=>lvalue的处理. 后续再优化
+		有个问题:
+			fn foo(array [2]i32){}
+			var a = [2]i32{1,2};
+			foo(a);
+
+			传递的是数组, 编译时实际caller实际传递的是a的内存地址. 在callee内, 克隆一份新的数组, 并将参数指向新数组.
+			所以, 对于类型为数组的参数, 不能简单的进行rvalue=>lvalue的处理. 而应该是:
+				获取数组的内存地址
+				克隆一份数组
+				后续访问都访问这个新数组

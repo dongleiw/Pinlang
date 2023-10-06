@@ -36,7 +36,7 @@ void VariableTable::AddVariable(std::string name, Variable* variable) {
 	if (HasVariable(name)) {
 		panicf("var[%s] already exists", name.c_str());
 	}
-	log_debug("add var name[%s] type[%d:%s] to vt: value[%s]", name.c_str(), variable->GetTypeId(), GET_TYPENAME_C(variable->GetTypeId()), variable->ToString().c_str());
+	log_debug("add variable to vt: name[%s] type[%d:%s]", name.c_str(), variable->GetTypeId(), GET_TYPENAME_C(variable->GetTypeId()));
 	m_table[name] = variable;
 }
 void VariableTable::InitAsGlobal() {
@@ -52,7 +52,13 @@ void VariableTable::InitAsGlobal() {
 	AddVariable("u32", Variable::CreateTypeVariable(TYPE_ID_UINT32));
 	AddVariable("u64", Variable::CreateTypeVariable(TYPE_ID_UINT64));
 
-	AddVariable("float", Variable::CreateTypeVariable(TYPE_ID_FLOAT));
+	AddVariable("f32", Variable::CreateTypeVariable(TYPE_ID_FLOAT32));
+	AddVariable("f64", Variable::CreateTypeVariable(TYPE_ID_FLOAT64));
 	AddVariable("str", Variable::CreateTypeVariable(TYPE_ID_STR));
 	AddVariable("bool", Variable::CreateTypeVariable(TYPE_ID_BOOL));
+}
+void VariableTable::Destroy() {
+	for (auto v : m_table) {
+		log_debug("destroy variable[%s]", v.first.c_str());
+	}
 }
